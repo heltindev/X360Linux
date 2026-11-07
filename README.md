@@ -31,6 +31,10 @@ A separate, **unverified preservation archive** is available for the early XeLLL
 
 Only use with a compatible previously modified console and recovery method; never flash an unknown XeLL image. The 2011 system may be insecure for modern internet use.
 
+### 📥 X360Linux v0.1.0-alpha — development preview
+
+**[Download the latest XWT Boot developer pre-release](https://github.com/heltindev/X360Linux/releases/tag/v0.1.0-alpha)**: verified Actions build artifacts for the native ELF manager, optional launcher ISO9660, and separate PowerPC64 BusyBox initramfs. **No full Linux kernel image is bundled; no console hardware boot has been verified.** This release is distinct from the preserved 2011 legacy archive.
+
 ## 🧩 XWT Boot — native ELF boot manager
 
 **XWT Boot is a separate bare-metal application** with its own framebuffer menu, controller navigation, folder selection, and persistent boot configuration. It is not the Linux operating system, and it does not need XeLL's menu after its own ELF has been launched.
