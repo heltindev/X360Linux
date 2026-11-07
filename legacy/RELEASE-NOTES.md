@@ -4,6 +4,10 @@
 
 The maintainer supplied a legacy folder with XeLLLaunch, XeLL, a PowerPC Linux boot image and a SquashFS live filesystem. File timestamps and signatures indicate an early-2011 era boot pack, resembling the historical Ubuntu Xenon packages.
 
+**Release ZIP:** `X360Linux-legacy-2011-UNVERIFIED.zip` (627,770,485 bytes)
+
+**SHA-256:** `e5dccef7dc184259e46f6f99fbd90ad8444ef3098357a05358d9390528ced7e7`
+
 ## Contents
 
 - `default.xex` — legacy XeLLLaunch application, XEX2 format

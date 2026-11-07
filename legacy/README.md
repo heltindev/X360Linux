@@ -14,6 +14,15 @@ The project maintainer provided a local directory named `LINUX 360`. Inspection 
 
 Total size of these five files: **627,768,433 bytes** (approximately 598.7 MiB). SHA-256 hashes are recorded in [SHA256SUMS](SHA256SUMS).
 
+## Release archive checksum
+
+- File: `X360Linux-legacy-2011-UNVERIFIED.zip`
+- Size: **627,770,485 bytes**
+- SHA-256: `e5dccef7dc184259e46f6f99fbd90ad8444ef3098357a05358d9390528ced7e7`
+- [Download the historical pre-release](https://github.com/heltindev/X360Linux/releases/tag/legacy-2011-archive)
+
+The ZIP adds only `README-FIRST.txt` to the five original files.
+
 ## Context
 
 The folder layout resembles historical Ubuntu Xenon live boot packs. We cannot independently establish the exact distribution release, license provenance of the launcher, original build toolchain, security updates or compatibility with each Xbox 360 revision from the binaries alone.
