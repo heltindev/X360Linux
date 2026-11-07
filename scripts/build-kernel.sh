@@ -33,11 +33,13 @@ fi
 apply_patch() {
   local name="$1"
   local patchfile="$2"
+  local strip="${3:-1}"
+  [[ "$strip" == 0 || "$strip" == 1 ]] || { echo "Invalid patch strip level" >&2; exit 1; }
   [[ -f "$patchfile" ]] || { echo "Missing patch $patchfile" >&2; exit 1; }
-  if patch --batch --dry-run -d "$kernel_dir" -p1 < "$patchfile" >/dev/null 2>&1; then
+  if patch --batch --dry-run -d "$kernel_dir" -p"$strip" < "$patchfile" >/dev/null 2>&1; then
     echo "Applying $name"
-    patch --batch -d "$kernel_dir" -p1 < "$patchfile"
-  elif patch --batch --dry-run -R -d "$kernel_dir" -p1 < "$patchfile" >/dev/null 2>&1; then
+    patch --batch -d "$kernel_dir" -p"$strip" < "$patchfile"
+  elif patch --batch --dry-run -R -d "$kernel_dir" -p"$strip" < "$patchfile" >/dev/null 2>&1; then
     echo "Already applied: $name"
   else
     echo "Cannot cleanly apply $name; verify clean Linux 6.18.58 and patch revision." >&2
@@ -46,7 +48,7 @@ apply_patch() {
 }
 
 apply_patch "Free60 Xenon Linux 6.18" "$patch_dir/patch-6.18-xenon0.30.diff"
-apply_patch "sis190 TX fix" "$gpu_patch_dir/0001-sis190-tx-wake-race.patch"
+apply_patch "sis190 TX fix" "$gpu_patch_dir/0001-sis190-tx-wake-race.patch" 0
 apply_patch "VMX not advertised" "$gpu_patch_dir/0002-xenon-vmx-not-advertised.patch"
 
 cp "$patch_dir/xenon-6.18.defconfig" "$kernel_dir/.config"
