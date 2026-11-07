@@ -27,28 +27,30 @@ root="$work/root"
 mkdir -p "$root"
 tar -xzpf "$source_tar" -C "$root" --no-same-owner
 mkdir -p "$root/sbin" "$root/etc" "$root/root" "$root/bootusb"
-install -m 0755 "$rescue_bin" "$root/sbin/x360-rescue"
+install -D -m 0755 "$rescue_bin" "$root/usr/lib/x360linux/busybox"
 cat > "$root/sbin/init" <<'EOF'
 #!/bin/sh
 # First boot starts the actual Debian filesystem from the USB ext4 image.
 # The kernel already mounted /proc, /sys, /dev and the FAT32 USB boot drive.
 PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
 export PATH
+export HOME=/root
+BB=/usr/lib/x360linux/busybox
 hostname x360linux
 echo
 echo "=================================================="
 echo " X360Linux | Debian Ports powerpc (USB installation)"
 echo " This Linux system lives on the USB drive, not Xbox HDD."
 echo "=================================================="
-echo "This is the first USB Debian boot test; the desktop is not ready."
-echo "Use a USB keyboard to test: uname -a ; ls / ; df -h"
+echo "Debian USB console (terminal hotfix)."
+echo "Use a USB keyboard to test: cat /etc/os-release"
 echo "To preserve files, shut down cleanly before unplugging the USB."
 echo
 # Linux PID 1 must never exit, or the kernel would panic.
 while :; do
-  /sbin/x360-rescue cttyhack /bin/bash -i
+  "$BB" setsid "$BB" cttyhack /bin/bash -i
   echo "Shell exited; returning to the Debian console..."
-  /sbin/x360-rescue sleep 2
+  "$BB" sleep 2
 done
 EOF
 chmod 0755 "$root/sbin/init"
@@ -65,6 +67,14 @@ cat > "$root/root/.bashrc" <<'EOF'
 export PS1='X360Linux:\w # '
 echo "Debian PowerPC shell ready. Your files are saved in the USB ext4 image."
 EOF
+# Exercise the installed BusyBox under the name used by init.
+sh -n "$root/sbin/init"
+installed_busybox="$root$(sed -n 's/^BB=//p' "$root/sbin/init")"
+qemu-ppc -cpu 750 "$installed_busybox" sleep 0
+qemu-ppc -cpu 750 "$installed_busybox" setsid /bin/true
+qemu-ppc -cpu 750 "$installed_busybox" cttyhack /bin/true
+printf '%s\n' "X360LINUX_DEBIAN_CONSOLE_APPLETS_OK"
+
 # Validate the actual Debian runtime before putting it inside an ext4 image.
 bash_path="$root/usr/bin/bash"
 [[ -x "$bash_path" ]] || bash_path="$root/bin/bash"

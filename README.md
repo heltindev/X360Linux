@@ -13,15 +13,15 @@
 | Xenon kernel + static PowerPC32 BusyBox | ✅ Booted on real RGH Xbox 360 |
 | Early X360Desk GUI (v0.3) | ✅ Showed on real Xbox 360, but **discontinued** |
 | Real signed Debian Ports PowerPC base | ✅ Built and tested on QEMU PowerPC |
-| Debian installed in a USB ext4 image | 🟡 Implemented; build and hardware boot need verification |
-| Boot Debian directly from USB | 🟡 XeLL → Xenon kernel → USB ext4 → Debian; **not hardware-tested** |
+| Debian installed in a USB ext4 image | ✅ Mounted and reached Debian init on a real Xbox 360 |
+| Boot Debian directly from USB | 🟡 Reached Debian init on hardware; interactive console hotfix needs retesting |
 | USB file persistence after reboot | 🟡 Designed; **not hardware-tested** |
 | Desktop, audio, browser, mouse and controller inside Debian | ⬜ Future milestones |
 | Xbox 360 XEX launcher | ⬜ Last milestone, after stable USB Linux |
 
 **Current direction:** X360Linux boots the actual Debian Ports **32-bit big-endian PowerPC** filesystem from a preinstalled ext4 file on a FAT32 pendrive. The previous Photos/Videos/System demo is not started and is not included in the new boot initramfs.
 
-The Xenon Linux kernel and early graphics have already run on actual hardware, but **the new USB ext4 Debian boot path has not yet been verified on a real Xbox 360**. The first goal is a working Debian command-line environment; a proper low-memory desktop comes later. Do not mistake compiling an image for a proven console installation.
+A real Xbox 360 mounted the USB ext4 image and reached Debian init. That build looped because it invoked BusyBox under an unrecognized name. The terminal hotfix needs another console test.
 
 ## 🚀 Quick start
 
