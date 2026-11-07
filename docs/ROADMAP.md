@@ -27,8 +27,10 @@
 ## 3. Our own lightweight X360Linux distribution
 
 - [ ] Evaluate Debian PPC64 big-endian packages without assuming they work on Xenon.
-- [ ] Build a low-memory desktop suitable for 512 MB RAM.
-- [ ] Add picture viewing, practical video playback and controller-friendly navigation.
+- [x] Implement the initial C framebuffer desktop, image viewer, silent X36V player and Linux input mapping.
+- [ ] Test X360Desk framebuffer, gamepad cursor and media on a physical RGH console; optimize for 512 MB RAM.
+- [x] Build an initial JPG/PNG/BMP image viewer, silent raw X36V player and analog-stick cursor.
+- [ ] Add actual MP4/H.264 decode, sound, production video performance and a full desktop after console tests.
 - [ ] Add software installation and updates.
 - [ ] Investigate a compatible web browser with modern TLS.
 - [ ] Make beginner-friendly USB releases and consider an HDD installer only after persistence is safe and tested.

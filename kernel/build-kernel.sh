@@ -62,9 +62,11 @@ make -C "$kernel_dir" ARCH=powerpc CROSS_COMPILE=xenon- olddefconfig
 # This is not a claim that the Xbox 360's internal wireless receiver works.
 "$kernel_dir/scripts/config" --file "$kernel_dir/.config" \
   -e INPUT_EVDEV -e INPUT_JOYDEV -e JOYSTICK_XPAD \
-  -e HID_GENERIC -e USB_HID
+  -e HID_GENERIC -e USB_HID \
+  -e SCSI -e BLK_DEV_SD -e USB_STORAGE -e FAT_FS -e VFAT_FS \
+  -e DEVTMPFS -e DEVTMPFS_MOUNT
 make -C "$kernel_dir" ARCH=powerpc CROSS_COMPILE=xenon- olddefconfig
-for option in CONFIG_COMPAT CONFIG_INPUT_EVDEV CONFIG_INPUT_JOYDEV CONFIG_JOYSTICK_XPAD; do
+for option in CONFIG_COMPAT CONFIG_INPUT_EVDEV CONFIG_INPUT_JOYDEV CONFIG_JOYSTICK_XPAD CONFIG_USB_STORAGE CONFIG_VFAT_FS CONFIG_BLK_DEV_SD CONFIG_DEVTMPFS; do
   grep -qx "$option=y" "$kernel_dir/.config" || {
     echo "Required builtin controller option unavailable: $option" >&2
     exit 1

@@ -78,6 +78,10 @@ jobs:
           qemu-ppc -cpu 750 distro/work/busybox-1.37.0/busybox sh -c 'echo X360LINUX_PPC32_SMOKE_OK'
           qemu-ppc -cpu 750 distro/work/busybox-1.37.0/busybox --list | grep -qx cttyhack
           grep -q 'exec /bin/busybox cttyhack /bin/sh -i' distro/rootfs/init
+          test -s distro/desktop/x360desk
+          qemu-ppc -cpu 750 distro/desktop/x360desk --self-test \
+            distro/work/demo/photos/x360linux-demo.png \
+            distro/work/demo/videos/x360linux-demo.x360v
           test -s distro/out/initramfs.cpio.gz
           file distro/out/initramfs.cpio.gz
       - uses: actions/upload-artifact@v4

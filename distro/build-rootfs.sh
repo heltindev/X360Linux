@@ -9,7 +9,7 @@ work="${WORK_DIR:-$repo/distro/work}"
 bb_version="1.37.0"
 bb_src="$work/busybox-$bb_version"
 
-for cmd in curl tar make python3 powerpc-linux-gnu-gcc powerpc-linux-gnu-readelf; do
+for cmd in curl tar make python3 qemu-ppc powerpc-linux-gnu-gcc powerpc-linux-gnu-readelf; do
     command -v "$cmd" >/dev/null || { echo "Install $cmd" >&2; exit 1; }
 done
 mkdir -p "$work" "$out"
@@ -54,12 +54,21 @@ if powerpc-linux-gnu-readelf -l "$bb_src/busybox" | grep -q 'INTERP'; then
     echo "BusyBox is dynamic; refusing to package without shared libraries" >&2
     exit 1
 fi
+# Compile the first framebuffer UI and verify its photo/video parsers in
+# a baseline emulated PowerPC CPU. Hardware framebuffer remains untested.
+make -C "$repo/distro/desktop" CC=powerpc-linux-gnu-gcc
+python3 "$repo/distro/desktop/generate_demo.py" --output-dir "$work/demo"
+qemu-ppc -cpu 750 "$repo/distro/desktop/x360desk" --self-test \
+    "$work/demo/photos/x360linux-demo.png" \
+    "$work/demo/videos/x360linux-demo.x360v"
 python3 "$repo/distro/pack_initramfs.py" \
     --busybox "$bb_src/busybox" --init "$repo/distro/rootfs/init" \
+    --desktop "$repo/distro/desktop/x360desk" --demo-dir "$work/demo" \
     --output "$out/initramfs.cpio.gz"
 (cd "$out" && sha256sum initramfs.cpio.gz > SHA256SUMS)
 printf '%s\n' "Experimental X360Linux PowerPC32 big-endian userspace on a 64-bit Xenon kernel." \
     "Requires a separate, compatible Free60-patched Linux ELF32 kernel." \
-    "The initramfs is a BusyBox shell, NOT a full Linux desktop." \
+    "Includes experimental X360Desk framebuffer images + silent X36V video preview." \
+    "Debian, MP4 decoding, audio, controller mouse and USB mounting require real hardware verification." \
     "BusyBox copyright and license: https://busybox.net/license.html (GPL-2.0)." \
     > "$out/READ-ME-FIRST.txt"

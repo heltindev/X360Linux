@@ -21,8 +21,8 @@ fi
 /bin/busybox echo " PowerPC32 big-endian userspace / 64-bit Xenon kernel"
 /bin/busybox echo "=================================================="
 /bin/busybox echo "Linux started successfully on this Xbox 360!"
-/bin/busybox echo "No desktop is installed yet. This is a command-line shell."
-/bin/busybox echo "Connect a USB keyboard to enter commands."
+/bin/busybox echo "X360Desk framebuffer preview is starting (if /dev/fb0 works)."
+/bin/busybox echo "Connect a USB keyboard, or try the Xbox 360 USB controller."
 /bin/busybox echo "Type: uname -a, dmesg, cat /proc/meminfo"
 /bin/busybox echo "To reboot: reboot -f"
 /bin/busybox echo ""
@@ -30,4 +30,16 @@ fi
 # cttyhack applet (for PID 1: "exec cttyhack sh"), which detects an active
 # real tty on Xenon's framebuffer console before launching the shell.
 # Source: https://busybox.net/FAQ.html (job control / can't access tty).
+# Attempt FAT32 media access in read-only mode; never write USB or Xbox HDD.
+# Device numbering may vary across consoles, so do not assume one disk.
+for part in /dev/sda1 /dev/sdb1 /dev/sdc1; do
+    if [ -b "$part" ] && /bin/busybox mount -t vfat -o ro "$part" /media/usb 2>/dev/null; then
+        /bin/busybox echo "USB media mounted read-only."
+        break
+    fi
+done
+if [ -x /bin/x360desk ]; then
+    /bin/x360desk
+    /bin/busybox echo "X360Desk exited or framebuffer unavailable; opening terminal."
+fi
 exec /bin/busybox cttyhack /bin/sh -i </dev/console >/dev/console 2>&1

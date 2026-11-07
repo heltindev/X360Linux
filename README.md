@@ -2,7 +2,7 @@
   <img src="assets/x360linux-banner.svg" alt="X360Linux" width="100%" />
   <h2>Linux for Xbox 360. Native hardware. Open source.</h2>
   <p>I'm building an Xbox 360 Linux distribution that runs directly on the console's original hardware.</p>
-  <p><a href="https://github.com/heltindev/X360Linux/releases/tag/v0.2.0-alpha">Download experimental v0.2.0-alpha</a> · <a href="https://github.com/heltindev/X360Linux/releases/tag/v0.1.0-alpha">Menu-only v0.1.0-alpha</a> · <a href="docs/TESTING.md">Beginner guide</a></p>
+  <p><a href="https://github.com/heltindev/X360Linux/releases/tag/v0.3.0-alpha">v0.3.0-alpha graphical preview (experimental)</a> · <a href="https://github.com/heltindev/X360Linux/releases/tag/v0.2.0-alpha">v0.2.0-alpha known shell build</a> · <a href="https://github.com/heltindev/X360Linux/releases/tag/v0.1.0-alpha">Menu-only v0.1.0-alpha</a> · <a href="docs/TESTING.md">Beginner guide</a></p>
 </div>
 
 ## 🧪 Project status
@@ -14,14 +14,16 @@
 | **XeLL bootloader** | ✅ Reference builds compile |
 | **Xbox 360 Linux kernel** | ✅ Booted on a real RGH Xbox 360; reached PID 1 |
 | **Linux booting on a real Xbox 360** | ✅ Kernel and BusyBox shell started; interactive keyboard/TTY still under test |
-| **Graphics, sound, networking and storage** | ⬜ Not verified in this project |
-| **Experimental Linux ISO and USB image** | 🟡 v0.2 alpha available; boot not yet verified |
+| **X360Desk graphical media preview** | 🟡 PPC32 implementation; real Xbox 360 GUI/controller/video tests pending |
+| **Graphics acceleration, sound, Ethernet, HDD persistence** | ⬜ Not verified in this project |
+| **Experimental Linux ISO and USB image** | 🟡 v0.2 tested to shell; v0.3 GUI preview requires console testing |
 
-**Milestone achieved:** the Xenon kernel and PowerPC32 BusyBox reached the `#` shell prompt on a real RGH Xbox 360. The latest change uses BusyBox `cttyhack` to address the controlling-terminal warning and starts Linux automatically if the USB folder is complete. **Keyboard interaction, TTY control and a full desktop are not yet verified.** This is experimental, not a finished distribution.
+**Milestone achieved:** the Xenon kernel and PowerPC32 BusyBox reached the `#` shell prompt on a real RGH Xbox 360. The **v0.3 graphical preview** builds an original framebuffer image/video viewer with optional USB controller input, but **it has not yet been tested on a real Xbox 360**. Debian, native MP4/audio playback, GPU acceleration and a normal desktop are not included.
 
 ## 🚀 Start here
 
-1. **[v0.1.0-alpha — menu test](https://github.com/heltindev/X360Linux/releases/tag/v0.1.0-alpha)**: choose the RGH or ABadAvatar/FreeMyXe ZIP. The X360Boot menu is confirmed.
+1. **[v0.3.0-alpha — graphical preview](https://github.com/heltindev/X360Linux/releases/tag/v0.3.0-alpha)**: experimental framebuffer desktop, JPG/PNG/BMP viewer, silent converted videos and controller input; **not yet verified on actual hardware**. See the [v0.3 guide](docs/V03-GRAPHICAL-PREVIEW.md).
+2. **[v0.1.0-alpha — menu test](https://github.com/heltindev/X360Linux/releases/tag/v0.1.0-alpha)**: choose the RGH or ABadAvatar/FreeMyXe ZIP. The X360Boot menu is confirmed.
 2. **[v0.2.0-alpha — experimental Linux test](https://github.com/heltindev/X360Linux/releases/tag/v0.2.0-alpha)**: USB packs now include the kernel, device tree and minimal shell; an untested ISO is also available.
 3. Read **[Getting started and Xbox 360 testing](docs/TESTING.md)**. Only extract the ZIP for USB; the ISO is for compatible XeLL optical boot methods.
 4. **Autostart:** launch your working XeLL with the USB drive inserted. X360Boot detects the `X360Linux/` folder and starts it automatically after a 3-second window. **Press B to cancel** and keep the menu. The terminal is still minimal BusyBox, not Debian or a graphical desktop.
@@ -68,8 +70,10 @@ X360Linux/
 - [ ] Build a reproducible X360Linux distribution optimized for the Xbox 360's 512 MB RAM.
 - [x] Make X360Boot detect a complete `X360Linux/` folder and start automatically after a 3-second, B-to-cancel window.
 - [ ] Package a simple bootable USB image; investigate optional HDD installation after persistence works.
-- [ ] Add a lightweight desktop, mouse and keyboard support.
-- [ ] Implement lightweight picture viewing and video playback suitable for Xenon's framebuffer and 512 MB RAM.
+- [x] Implement an original lightweight framebuffer GUI and a controller cursor (PowerPC32 build test only).
+- [ ] Confirm GUI and controller cursor work on a real Xbox 360; Linux framebuffer and USB controller devices may be missing.
+- [x] Implement JPEG/PNG/BMP/PPM viewers and experimental silent X36V playback.
+- [ ] Confirm actual graphical image/video performance on the Xbox 360, then add native compressed-video and audio support.
 - [ ] Support controller navigation inside Linux and test wired and wireless controller compatibility separately.
 - [ ] Improve the Xbox 360-specific kernel drivers and automatic hardware configuration.
 - [ ] Add package management, practical updates and modern TLS/certificates.

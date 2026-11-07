@@ -15,17 +15,20 @@ import zipfile
 README = """X360LINUX EXPERIMENTAL SYSTEM IMAGE
 ---------------------------------
 The Linux kernel reached /init on an actual RGH Xbox 360.
-The updated PowerPC32 BusyBox shell is still NOT verified on hardware.
-Not a PC bootable ISO or a NAND flashing tool.
+The Xenon kernel and BusyBox shell prompt have started on real RGH hardware.
+X360Desk graphics, media decoding, gamepad input, and USB mounting are
+NOT yet tested on an Xbox 360. No Debian or MP4 player is included.
+Not a PC bootable ISO or NAND flashing tool.
 
 XeLL: ISO9660 root contains vmlinux, initramfs.cpio.gz and
 kboot.conf. XeLL may load this via a compatible optical boot path.
-X360Boot: extract the USB ZIP to FAT32, highlight the X360Linux
-folder, and press A once. No configuration is written to USB.
+X360Boot: extract the correct USB ZIP to a FAT32 drive. The launcher
+autostarts Linux when the X360Linux folder is found (press B to cancel).
+No configuration is written to USB.
 The X360Boot ELF launcher is a SEPARATE program, not the Linux OS.
 
 A compiled ELF and a correct device tree do not prove boot stability.
-The Linux image provides an early BusyBox shell, not a GUI desktop.
+The image includes X360Desk framebuffer preview and BusyBox shell fallback.
 NEVER rename these files to updxell.bin or updflash.bin.
 """
 
@@ -98,7 +101,7 @@ def main():
                 digest = hashlib.file_digest(fd, "sha256").hexdigest()
             hashes.write(f"{digest}  {path.name}\n")
     (out/"README-FIRST.txt").write_text(README, encoding="ascii")
-    print("The Xenon kernel reached /init on real hardware; an interactive shell remains unverified.")
+    print("X360Desk graphical preview is built, but not yet verified on real Xbox 360 hardware.")
 
 if __name__=="__main__":
     main()

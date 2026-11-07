@@ -66,7 +66,11 @@ jobs:
           qemu-ppc -cpu 750 distro/work/busybox-1.37.0/busybox --list | grep -qx cttyhack
           grep -q 'exec /bin/busybox cttyhack /bin/sh -i' distro/rootfs/init
           powerpc-linux-gnu-readelf -h distro/work/busybox-1.37.0/busybox
-          echo "QEMU smoke test does NOT replace real Xbox 360 testing."
+          test -s distro/desktop/x360desk
+          qemu-ppc -cpu 750 distro/desktop/x360desk --self-test \
+            distro/work/demo/photos/x360linux-demo.png \
+            distro/work/demo/videos/x360linux-demo.x360v
+          echo "QEMU smoke tests do NOT replace real Xbox 360 graphical testing."
       - uses: actions/upload-artifact@v4
         with:
           name: X360Linux-rootfs-EXPERIMENTAL
