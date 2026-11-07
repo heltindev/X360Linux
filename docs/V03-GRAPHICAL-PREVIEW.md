@@ -6,7 +6,7 @@
 
 The console has a big-endian PowerPC Xenon CPU and 512 MB RAM. Debian's official `ppc64el` architecture is **little-endian** and incompatible. Debian Ports has unofficial `powerpc` (32-bit) and `ppc64` (big-endian) ports, but even their packages need hardware, CPU-instruction and RAM testing on Xenon.
 
-The active boot image keeps the known-booting **Linux 64-bit Xenon kernel + static 32-bit big-endian BusyBox**, with an original framebuffer interface. A separate reproducible build now prepares a **real, signed Debian Ports 32-bit big-endian root filesystem**, preserving its files in a tar.gz archive. **That optional Debian base is not yet booted by the console**; mounting an external Unix filesystem and running Debian software are separate future tests. This is not X.Org or a full Debian desktop yet.
+The active boot image keeps the known-booting **Linux 64-bit Xenon kernel + static 32-bit big-endian BusyBox**, with an original framebuffer interface. A separate reproducible build now prepares a **real, signed Debian Ports 32-bit big-endian root filesystem**, preserving its files in a tar.gz archive **inside the included ISO**. **That optional Debian base is not yet booted by the console**; mounting an external Unix filesystem and running Debian software are separate future tests. This is not X.Org or a full Debian desktop yet.
 
 Sources: [Debian ports](https://www.debian.org/ports/) · [Debian PPC64](https://wiki.debian.org/PPC64) · [Linux xpad driver](https://github.com/torvalds/linux/blob/master/drivers/input/joystick/xpad.c)
 

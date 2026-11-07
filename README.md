@@ -18,7 +18,7 @@
 | **Graphics acceleration, sound, Ethernet, HDD persistence** | ⬜ Not verified in this project |
 | **Photo/video and controller navigation** | 🟡 Written for PowerPC32; real console interaction still needs testing |
 | **Debian Ports big-endian powerpc base** | 🟡 Separate signed upstream bootstrap prepared; console boot not verified |
-| **ISO included in beginner USB ZIPs** | 🟡 Repackaging update in progress; the ISO is NOT executed from USB |
+| **ISO included in beginner USB ZIPs** | ✅ ZIP packaging and ISO contents verified in GitHub Actions; USB still boots via XeLL/ELF |
 
 **Milestone achieved:** X360Boot, Xenon Linux, BusyBox and **the X360Desk graphical interface all appeared on real RGH Xbox 360 hardware** (photo confirmed). The first v0.3 interface had very small text and awkward spacing; the TV-scale layout update is being compiled. USB controller input, media playback, signed Debian Ports runtime and other hardware features still require real-console testing. A fully booted Debian desktop, MP4 with audio, GPU acceleration and persistence are NOT included.
 

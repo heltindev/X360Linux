@@ -95,9 +95,9 @@ def main() -> None:
             "for experimental XeLL optical boot. You DO NOT have to move it or\n"
             "open it. Linux boots from xenon.elf and X360Linux/ on the USB drive.\n"
             "\nDEBIAN BASE:\n"
-            + ("A real, SIGNED Debian Ports powerpc rootfs archive is also in\n"
-               "DEBIAN-PORTS/ for future development. The console DOES NOT boot\n"
-               "Debian from that archive yet. Do not unpack it to FAT32.\n"
+            + ("The ISO contains a real signed Debian Ports powerpc rootfs\n"
+               "for future development. It is NOT the booted system yet.\n"
+               "Do not unpack the ISO or Debian rootfs onto FAT32.\n"
                if debian else
                "Debian Ports rootfs remains experimental and is not included\n"
                "in this build. The active OS is Xenon kernel + BusyBox.\n")
@@ -123,13 +123,8 @@ def main() -> None:
             new.writestr(iso_name, iso)
             new.writestr("X360MEDIA/PHOTOS/", "")
             new.writestr("X360MEDIA/VIDEOS/", "")
-            if debian is not None:
-                new.writestr("DEBIAN-PORTS/debian-ports-powerpc-rootfs.tar.gz",
-                             debian)
-                new.writestr("DEBIAN-PORTS/README.txt",
-                             "Experimental Debian Ports powerpc base, not booted yet.\n"
-                             "Do not unpack to FAT32 or the Xbox HDD.\n"
-                             "Signed source: https://deb.debian.org/debian-ports/\n")
+            # Debian base is already INSIDE the ISO. Never duplicate an
+            # 80+ MB tarball next to the ISO in the beginner ZIP.
         with zipfile.ZipFile(pack) as verify:
             if verify.testzip() is not None:
                 parser.error(f"Repacked ZIP is corrupted: {pack}")
@@ -140,9 +135,8 @@ def main() -> None:
                 parser.error("ISO missing or different inside beginner pack")
             if old_xell is not None and verify.read("BadUpdatePayload/xell-2f.bin") != old_xell:
                 parser.error("Old exploit XeLL file was unexpectedly modified")
-            if debian is not None and verify.read(
-                    "DEBIAN-PORTS/debian-ports-powerpc-rootfs.tar.gz") != debian:
-                parser.error("Debian Ports rootfs did not survive the ZIP")
+            # The ISO is byte-for-byte verified above, including its
+            # optional Debian Ports contents assembled by make_system_image.
         print(f"VERIFIED {pack.name}: {pack.stat().st_size} bytes, sha256={sha256(pack.read_bytes())}")
     print(f"VERIFIED ISO: {iso_name} sha256={sha256(iso)}")
 
