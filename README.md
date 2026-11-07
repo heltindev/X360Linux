@@ -23,6 +23,14 @@
 > [!IMPORTANT]
 > **This repository is a development integration, not a finished Linux distribution.** No X360Linux build has been verified on physical Xbox 360 hardware yet. The graphics results shown below are **credited to the upstream xenos-linux-gpu project**, not to this repository. Never flash NAND as part of this project.
 
+### 📦 Historical Linux archive (2011)
+
+A separate, **unverified preservation archive** is available for the early XeLLLaunch / PowerPC Linux boot pack. It contains legacy binaries, **not editable source code**, and must not be confused with the modern X360Linux kernel/GPU work.
+
+**[Browse the historical release](https://github.com/heltindev/X360Linux/releases/tag/legacy-2011-archive)** · **[Provenance, SHA-256 and warnings](legacy/README.md)**
+
+Only use with a compatible previously modified console and recovery method; never flash an unknown XeLL image. The 2011 system may be insecure for modern internet use.
+
 ## 🌱 What is X360Linux?
 
 X360Linux connects existing Xbox 360 Linux research into one **reproducible, inspectable development workspace**. Instead of promising a magical one-click operating system, it prioritizes reliable boot, GPU bring-up, a minimal usable desktop, hardware testing and practical documentation.
