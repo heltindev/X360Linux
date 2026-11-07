@@ -1,12 +1,12 @@
 # X360Linux v0.3 — experimental graphical preview
 
-**Status:** The Xenon Linux kernel and BusyBox shell reached the `#` prompt on a real RGH Xbox 360 with v0.2. The X360Desk graphical program, media viewers and Linux controller input in v0.3 are **not yet verified on real hardware**.
+**Status (November 2026):** Xenon Linux + BusyBox booted on real RGH hardware, and **the X360Desk GUI was displayed successfully on the Xbox 360**. The first TV layout suffered from tiny text and disproportionate navigation cards. This update adjusts font and layout sizes from the real framebuffer resolution. **The updated UI, controller input, USB media and actual playback still require hardware testing.**
 
 ## Why not install stock Debian?
 
 The console has a big-endian PowerPC Xenon CPU and 512 MB RAM. Debian's official `ppc64el` architecture is **little-endian** and incompatible. Debian Ports has unofficial `powerpc` (32-bit) and `ppc64` (big-endian) ports, but even their packages need hardware, CPU-instruction and RAM testing on Xenon.
 
-This build keeps the known-booting **Linux 64-bit Xenon kernel + static 32-bit big-endian BusyBox** and adds an original C framebuffer interface. This is not Debian, not X.Org and not a full desktop distribution yet.
+The active boot image keeps the known-booting **Linux 64-bit Xenon kernel + static 32-bit big-endian BusyBox**, with an original framebuffer interface. A separate reproducible build now prepares a **real, signed Debian Ports 32-bit big-endian root filesystem**, preserving its files in a tar.gz archive. **That optional Debian base is not yet booted by the console**; mounting an external Unix filesystem and running Debian software are separate future tests. This is not X.Org or a full Debian desktop yet.
 
 Sources: [Debian ports](https://www.debian.org/ports/) · [Debian PPC64](https://wiki.debian.org/PPC64) · [Linux xpad driver](https://github.com/torvalds/linux/blob/master/drivers/input/joystick/xpad.c)
 
@@ -22,7 +22,7 @@ Sources: [Debian ports](https://www.debian.org/ports/) · [Debian PPC64](https:/
 - FAT32 pendrive media mounted **read-only** from `/dev/sda1`, `sdb1` or `sdc1` when recognized
 - BusyBox terminal fallback if `/dev/fb0` is unavailable or the user quits X360Desk
 
-**Not verified:** Xbox 360 framebuffer mapping, image/video speed, controller device registration, USB storage mount, audio, wireless controllers, Ethernet, native browser, persistent storage.
+**Confirmed:** Xbox 360 framebuffer graphics appeared on real hardware. **Not yet verified:** updated TV-scale GUI, photo/video speed, controller events, USB media mounting, audio, wireless controllers, Ethernet, native browser and persistent storage.
 
 ## First-time USB test
 
@@ -41,6 +41,7 @@ USB:/
     vmlinux
     xenon.dtb
     initramfs.cpio.gz
+  X360Linux-v0.3.0-alpha-XeLL-UNTESTED.iso  # Optional reference image; not used for USB boot
   X360MEDIA/
     PHOTOS/
       photo.jpg

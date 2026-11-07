@@ -82,6 +82,9 @@ jobs:
           qemu-ppc -cpu 750 distro/desktop/x360desk --self-test \
             distro/work/demo/photos/x360linux-demo.png \
             distro/work/demo/videos/x360linux-demo.x360v
+          qemu-ppc -cpu 750 distro/desktop/x360desk --render-test 1280 720 /tmp/x360desk-720p.ppm
+          qemu-ppc -cpu 750 distro/desktop/x360desk --render-test 1920 1080 /tmp/x360desk-1080p.ppm
+          python3 -c 'from pathlib import Path; p=Path("/tmp/x360desk-1080p.ppm"); assert p.read_bytes().startswith(b"P6\n1920 1080\n255\n"); print("X360DESK_LAYOUT_1080P_VERIFIED")'
           test -s distro/out/initramfs.cpio.gz
           file distro/out/initramfs.cpio.gz
       - uses: actions/upload-artifact@v4

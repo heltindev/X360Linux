@@ -10,6 +10,7 @@ from pathlib import Path
 import shutil
 import subprocess
 import tempfile
+import tarfile
 import zipfile
 
 README = """X360LINUX EXPERIMENTAL SYSTEM IMAGE
@@ -55,6 +56,8 @@ def main():
     parser.add_argument("--initramfs", required=True, type=Path)
     parser.add_argument("--output-dir", required=True, type=Path)
     parser.add_argument("--iso", action="store_true")
+    parser.add_argument("--debian-rootfs", type=Path,
+                        help="Optional signed Debian Ports powerpc base tar.gz; NOT auto-booted")
     args = parser.parse_args()
     for name in ("kernel","dtb","initramfs"):
         path = getattr(args,name)
@@ -81,6 +84,21 @@ def main():
             'coherent_pool=6M video=xenosfb rdinit=/init '
             'initrd=initramfs.cpio.gz"\n', encoding="ascii")
         (root / "README.TXT").write_text(README, encoding="ascii")
+        if args.debian_rootfs:
+            if not args.debian_rootfs.is_file() or args.debian_rootfs.stat().st_size > 512 * 1024 * 1024:
+                parser.error("Debian Ports tarball missing or exceeds safety size limit")
+            with tarfile.open(args.debian_rootfs, "r:gz") as tf:
+                if not any(x.endswith("/usr/bin/bash") or x == "./usr/bin/bash"
+                           for x in tf.getnames()):
+                    parser.error("Debian Ports tarball missing a real bash runtime")
+            debian_dir = root / "DEBIAN-PORTS"
+            debian_dir.mkdir()
+            shutil.copyfile(args.debian_rootfs, debian_dir / "debian-ports-powerpc-rootfs.tar.gz")
+            (debian_dir / "README.TXT").write_text(
+                "Real Debian Ports powerpc rootfs (experimental). NOT auto-booted.\n"
+                "The console runs the tested BusyBox/X360Desk initramfs by default.\n"
+                "Do not extract this tar archive on FAT32 or format the Xbox HDD.\n",
+                encoding="ascii")
         zipout = out / "X360Linux-boot-files-UNVERIFIED.zip"
         with zipfile.ZipFile(zipout, "w", zipfile.ZIP_DEFLATED, compresslevel=6) as zf:
             for path in sorted(root.rglob("*")):

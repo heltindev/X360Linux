@@ -26,9 +26,11 @@
 
 ## 3. Our own lightweight X360Linux distribution
 
-- [ ] Evaluate Debian PPC64 big-endian packages without assuming they work on Xenon.
+- [x] Add a signed Debian Ports powerpc (32-bit big-endian) rootfs bootstrap workflow.
+- [ ] Test an optional Debian Ports userland in an external, read-only environment on a real console before making it the default.
 - [x] Implement the initial C framebuffer desktop, image viewer, silent X36V player and Linux input mapping.
-- [ ] Test X360Desk framebuffer, gamepad cursor and media on a physical RGH console; optimize for 512 MB RAM.
+- [x] Display X360Desk framebuffer on a physical RGH Xbox 360.
+- [ ] Validate the corrected TV-scale layout, gamepad cursor, and real image/video playback on hardware.
 - [x] Build an initial JPG/PNG/BMP image viewer, silent raw X36V player and analog-stick cursor.
 - [ ] Add actual MP4/H.264 decode, sound, production video performance and a full desktop after console tests.
 - [ ] Add software installation and updates.

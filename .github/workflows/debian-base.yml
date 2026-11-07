@@ -1,0 +1,35 @@
+name: Build Debian Ports base (experimental)
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  debian-powerpc:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 75
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install signed Debian Ports bootstrap tools
+        run: |
+          sudo apt-get update -qq
+          sudo DEBIAN_FRONTEND=noninteractive apt-get install -y \
+            debootstrap debian-ports-archive-keyring qemu-user-static \
+            qemu-user binfmt-support tar binutils
+          sudo update-binfmts --enable qemu-ppc
+          test -s /usr/share/keyrings/debian-ports-archive-keyring.gpg
+      - name: Bootstrap actual Debian Ports powerpc userland
+        run: sudo bash distro/debian/build-debian-rootfs.sh
+      - name: Verify root filesystem archive
+        run: |
+          test -s distro/out/debian-ports/debian-ports-powerpc-rootfs.tar.gz
+          (cd distro/out/debian-ports && sha256sum -c SHA256SUMS)
+          tar -tzf distro/out/debian-ports/debian-ports-powerpc-rootfs.tar.gz | grep -q 'usr/bin/bash'
+      - uses: actions/upload-artifact@v4
+        with:
+          name: X360Linux-Debian-Ports-powerpc-base-EXPERIMENTAL
+          path: distro/out/debian-ports/
+          if-no-files-found: error
+          retention-days: 14

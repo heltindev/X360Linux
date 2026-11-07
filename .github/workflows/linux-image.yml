@@ -70,6 +70,9 @@ jobs:
           qemu-ppc -cpu 750 distro/desktop/x360desk --self-test \
             distro/work/demo/photos/x360linux-demo.png \
             distro/work/demo/videos/x360linux-demo.x360v
+          qemu-ppc -cpu 750 distro/desktop/x360desk --render-test 1280 720 /tmp/x360desk-720p.ppm
+          qemu-ppc -cpu 750 distro/desktop/x360desk --render-test 1920 1080 /tmp/x360desk-1080p.ppm
+          test -s /tmp/x360desk-1080p.ppm
           echo "QEMU smoke tests do NOT replace real Xbox 360 graphical testing."
       - uses: actions/upload-artifact@v4
         with:

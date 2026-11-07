@@ -14,19 +14,21 @@
 | **XeLL bootloader** | ✅ Reference builds compile |
 | **Xbox 360 Linux kernel** | ✅ Booted on a real RGH Xbox 360; reached PID 1 |
 | **Linux booting on a real Xbox 360** | ✅ Kernel and BusyBox shell started; interactive keyboard/TTY still under test |
-| **X360Desk graphical media preview** | 🟡 PPC32 implementation; real Xbox 360 GUI/controller/video tests pending |
+| **X360Desk framebuffer interface** | ✅ Launched on an actual RGH Xbox 360; TV scaling is being improved |
 | **Graphics acceleration, sound, Ethernet, HDD persistence** | ⬜ Not verified in this project |
-| **Experimental Linux ISO and USB image** | 🟡 v0.2 tested to shell; v0.3 GUI preview requires console testing |
+| **Photo/video and controller navigation** | 🟡 Written for PowerPC32; real console interaction still needs testing |
+| **Debian Ports big-endian powerpc base** | 🟡 Separate signed upstream bootstrap prepared; console boot not verified |
+| **ISO included in beginner USB ZIPs** | 🟡 Repackaging update in progress; the ISO is NOT executed from USB |
 
-**Milestone achieved:** the Xenon kernel and PowerPC32 BusyBox reached the `#` shell prompt on a real RGH Xbox 360. The **v0.3 graphical preview** builds an original framebuffer image/video viewer with optional USB controller input, but **it has not yet been tested on a real Xbox 360**. Debian, native MP4/audio playback, GPU acceleration and a normal desktop are not included.
+**Milestone achieved:** X360Boot, Xenon Linux, BusyBox and **the X360Desk graphical interface all appeared on real RGH Xbox 360 hardware** (photo confirmed). The first v0.3 interface had very small text and awkward spacing; the TV-scale layout update is being compiled. USB controller input, media playback, signed Debian Ports runtime and other hardware features still require real-console testing. A fully booted Debian desktop, MP4 with audio, GPU acceleration and persistence are NOT included.
 
 ## 🚀 Start here
 
-1. **[v0.3.0-alpha — graphical preview](https://github.com/heltindev/X360Linux/releases/tag/v0.3.0-alpha)**: experimental framebuffer desktop, JPG/PNG/BMP viewer, silent converted videos and controller input; **not yet verified on actual hardware**. See the [v0.3 guide](docs/V03-GRAPHICAL-PREVIEW.md).
-2. **[v0.1.0-alpha — menu test](https://github.com/heltindev/X360Linux/releases/tag/v0.1.0-alpha)**: choose the RGH or ABadAvatar/FreeMyXe ZIP. The X360Boot menu is confirmed.
+1. **[v0.3.0-alpha — graphical preview](https://github.com/heltindev/X360Linux/releases/tag/v0.3.0-alpha)**: the native GUI already appeared on physical Xbox 360 hardware. A readability update is under development. See the [v0.3 guide](docs/V03-GRAPHICAL-PREVIEW.md).
+3. **[v0.1.0-alpha — menu test](https://github.com/heltindev/X360Linux/releases/tag/v0.1.0-alpha)**: choose the RGH or ABadAvatar/FreeMyXe ZIP. The X360Boot menu is confirmed.
 2. **[v0.2.0-alpha — experimental Linux test](https://github.com/heltindev/X360Linux/releases/tag/v0.2.0-alpha)**: USB packs now include the kernel, device tree and minimal shell; an untested ISO is also available.
-3. Read **[Getting started and Xbox 360 testing](docs/TESTING.md)**. Only extract the ZIP for USB; the ISO is for compatible XeLL optical boot methods.
-4. **Autostart:** launch your working XeLL with the USB drive inserted. X360Boot detects the `X360Linux/` folder and starts it automatically after a 3-second window. **Press B to cancel** and keep the menu. The terminal is still minimal BusyBox, not Debian or a graphical desktop.
+4. Read **[Getting started and Xbox 360 testing](docs/TESTING.md)**. The updated USB ZIP also includes the ISO as a reference. **The ISO is NOT what XeLL loads from the USB drive.**
+5. **Autostart:** launch your working XeLL with the USB drive inserted. X360Boot detects the `X360Linux/` folder and starts it automatically after a 3-second window. **Press B to cancel** and keep the menu. The terminal is still minimal BusyBox, not Debian or a graphical desktop.
 
 > **Required:** An already-working XeLL method: RGH/JTAG, or a compatible software exploit with FreeMyXe. The ABadAvatar ZIP is an add-on to existing exploit files, not an unlocker. There is no `default.xex` or NAND installer here. Never flash experimental boot files.
 
@@ -66,12 +68,14 @@ X360Linux/
 
 ### Phase 3 — Build our own lightweight distribution
 
-- [ ] Evaluate minimal Debian PPC64 **big-endian** packages against the current BusyBox base.
+- [x] Add a signed Debian Ports 32-bit big-endian bootstrap workflow, separate from the current working BusyBox boot.
+- [ ] Boot and test a real Debian Ports root filesystem on an external device without touching the Xbox HDD.
 - [ ] Build a reproducible X360Linux distribution optimized for the Xbox 360's 512 MB RAM.
 - [x] Make X360Boot detect a complete `X360Linux/` folder and start automatically after a 3-second, B-to-cancel window.
 - [ ] Package a simple bootable USB image; investigate optional HDD installation after persistence works.
 - [x] Implement an original lightweight framebuffer GUI and a controller cursor (PowerPC32 build test only).
-- [ ] Confirm GUI and controller cursor work on a real Xbox 360; Linux framebuffer and USB controller devices may be missing.
+- [x] Display X360Desk framebuffer GUI on a real RGH Xbox 360 (user photo).
+- [ ] Verify controller navigation, gallery playback, USB media mounting and improved TV-scale layout on real hardware.
 - [x] Implement JPEG/PNG/BMP/PPM viewers and experimental silent X36V playback.
 - [ ] Confirm actual graphical image/video performance on the Xbox 360, then add native compressed-video and audio support.
 - [ ] Support controller navigation inside Linux and test wired and wireless controller compatibility separately.
@@ -87,7 +91,7 @@ X360Linux/
 - [ ] Enable launching from Aurora while keeping XeLL as a fallback.
 - [ ] Publish XEX binaries **only after successful real-console tests**.
 
-**Current priority: test the Linux shell through XeLL. No XEX work yet.**
+**Current priority: improve the native GUI, verify controller/media features on real hardware, and prepare signed Debian Ports rootfs compatibility. No XEX work yet.**
 
 See [Roadmap](docs/ROADMAP.md). Contributions are welcome; see [Contributing](CONTRIBUTING.md). Licensing and source acknowledgements are maintained in [Credits & licenses](docs/CREDITS.md).
 
