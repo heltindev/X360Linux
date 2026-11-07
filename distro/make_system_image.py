@@ -2,7 +2,7 @@
 """Assemble an experimental Xbox 360 Linux boot folder + ISO9660 image.
 
 Requires a *separately compiled* Linux ELF32 Xenon kernel + Xenon DTB and
-PowerPC64 BE initramfs. This is NOT a PC/UEFI installer or verified console OS.
+PowerPC32 BE initramfs. This is NOT a PC/UEFI installer or verified console OS.
 """
 import argparse
 import hashlib
@@ -14,13 +14,14 @@ import zipfile
 
 README = """X360LINUX EXPERIMENTAL SYSTEM IMAGE
 ---------------------------------
-NOT VERIFIED ON A REAL XBOX 360.
+The Linux kernel reached /init on an actual RGH Xbox 360.
+The updated PowerPC32 BusyBox shell is still NOT verified on hardware.
 Not a PC bootable ISO or a NAND flashing tool.
 
 XeLL: ISO9660 root contains vmlinux, initramfs.cpio.gz and
 kboot.conf. XeLL may load this via a compatible optical boot path.
-X360Boot: copy X360Linux/ to a FAT32 USB drive, then select the
-folder in X360Boot and save its configuration.
+X360Boot: extract the USB ZIP to FAT32, highlight the X360Linux
+folder, and press A once. No configuration is written to USB.
 The X360Boot ELF launcher is a SEPARATE program, not the Linux OS.
 
 A compiled ELF and a correct device tree do not prove boot stability.
@@ -73,7 +74,7 @@ def main():
         shutil.copyfile(args.initramfs, root / "initramfs.cpio.gz")
         (root / "kboot.conf").write_text(
             '#KBOOTCONFIG\ntimeout=20\ndefault=x360linux\n'
-            'x360linux="vmlinux console=tty0 panic=30 maxcpus=6 '
+            'x360linux="vmlinux console=tty0 quiet loglevel=1 panic=30 maxcpus=6 '
             'coherent_pool=6M video=xenosfb rdinit=/init '
             'initrd=initramfs.cpio.gz"\n', encoding="ascii")
         (root / "README.TXT").write_text(README, encoding="ascii")
@@ -97,7 +98,7 @@ def main():
                 digest = hashlib.file_digest(fd, "sha256").hexdigest()
             hashes.write(f"{digest}  {path.name}\n")
     (out/"README-FIRST.txt").write_text(README, encoding="ascii")
-    print("No hardware boot has been verified.")
+    print("The Xenon kernel reached /init on real hardware; an interactive shell remains unverified.")
 
 if __name__=="__main__":
     main()
