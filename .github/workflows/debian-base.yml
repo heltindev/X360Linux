@@ -17,7 +17,15 @@ jobs:
           sudo apt-get update -qq
           sudo DEBIAN_FRONTEND=noninteractive apt-get install -y \
             debootstrap debian-ports-archive-keyring qemu-user-static \
-            qemu-user binfmt-support tar binutils
+            qemu-user binfmt-support tar binutils curl
+          # Ubuntu 24.04 has a 2024 archive keyring. Debian Ports rotated to
+          # its 2026 signing key (C6894E6BB25B9C99); fetch the Debian 2026
+          # keyring .deb and verify the SHA256 published by packages.debian.org.
+          curl -fsSL --retry 3 \
+            -o /tmp/debian-ports-archive-keyring_2026.02.04_all.deb \
+            https://deb.debian.org/debian/pool/main/d/debian-ports-archive-keyring/debian-ports-archive-keyring_2026.02.04_all.deb
+          echo '9b3feecd398b14969acc3141d42ed493f322c5a2140a33d4fda4bef2ea9441a6  /tmp/debian-ports-archive-keyring_2026.02.04_all.deb' | sha256sum -c -
+          sudo dpkg -i /tmp/debian-ports-archive-keyring_2026.02.04_all.deb
           sudo update-binfmts --enable qemu-ppc
           test -s /usr/share/keyrings/debian-ports-archive-keyring.gpg
       - name: Bootstrap actual Debian Ports powerpc userland
