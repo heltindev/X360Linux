@@ -40,9 +40,47 @@ X360Linux/
 └── docs/                 # Testing, roadmap and licenses
 ```
 
-## 🎯 Roadmap
+## 🎯 Development roadmap
 
-**First:** Linux shell on Xbox 360. **Next:** Better Xbox 360 hardware support. **Later:** Our own native desktop distribution and an optional XEX launcher.
+**Boot and test through XeLL first.** The native `default.xex` launcher is the **last milestone**, only after Linux boots successfully on a real Xbox 360. Checkmarks indicate completed development tasks, not verified console compatibility.
+
+### Phase 1 — First Linux shell (current focus)
+
+- [x] Build the native X360Boot PowerPC ELF launcher.
+- [x] Build a minimal PowerPC64 BusyBox Linux userspace.
+- [x] Compile experimental Xbox 360 Linux kernel candidates in GitHub Actions.
+- [ ] Verify the kernel, Xenon device tree and initramfs work together.
+- [ ] Boot the full system through XeLL on a **real Xbox 360**.
+- [ ] Reach an interactive Linux shell and document hardware test results.
+
+### Phase 2 — Reliable hardware and storage
+
+- [ ] Confirm USB storage, keyboard and controller input.
+- [ ] Detect wired Ethernet and configure networking automatically with DHCP.
+- [ ] Keep personal files and system settings after reboot (USB persistence first).
+- [ ] Read and write supported Xbox 360 HDD storage safely, **without formatting existing Xbox partitions**.
+- [ ] Test graphics, audio, network, storage, startup logs and recovery.
+
+### Phase 3 — Build our own lightweight distribution
+
+- [ ] Evaluate minimal Debian PPC64 **big-endian** packages against the current BusyBox base.
+- [ ] Build a reproducible X360Linux distribution optimized for the Xbox 360's 512 MB RAM.
+- [ ] Make X360Boot detect a complete `X360Linux/` boot folder automatically.
+- [ ] Package a simple bootable USB image; investigate optional HDD installation after persistence works.
+- [ ] Add a lightweight desktop, mouse and keyboard support.
+- [ ] Improve the Xbox 360-specific kernel drivers and automatic hardware configuration.
+- [ ] Add package management, practical updates and modern TLS/certificates.
+- [ ] Investigate an up-to-date web browser that can actually run on PowerPC64; compatibility and speed are not guaranteed.
+- [ ] Test everyday use on original hardware and publish a beginner-friendly release.
+
+### Phase 4 — XEX launcher (final step only)
+
+- [ ] After the XeLL-based distribution is proven, research a safe `default.xex` entry point.
+- [ ] Develop and test the handoff from XEX to the native Linux boot chain.
+- [ ] Enable launching from Aurora while keeping XeLL as a fallback.
+- [ ] Publish XEX binaries **only after successful real-console tests**.
+
+**Current priority: test the Linux shell through XeLL. No XEX work yet.**
 
 See [Roadmap](docs/ROADMAP.md). Contributions are welcome; see [Contributing](CONTRIBUTING.md). Licensing and source acknowledgements are maintained in [Credits & licenses](docs/CREDITS.md).
 
