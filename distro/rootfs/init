@@ -1,45 +1,65 @@
 #!/bin/sh
-# X360Linux minimal initramfs (PowerPC32 BE userspace, PPC64 kernel).
+# X360Linux: boot the Debian Ports PowerPC system from its USB ext4 image.
+# Safety: never mount the Xbox 360 internal HDD for writing or flash NAND.
 PATH=/bin:/sbin:/usr/bin:/usr/sbin
 export PATH
-/bin/busybox echo "[#########################---]  90%  Linux user-space started"
-/bin/busybox mount -t proc proc /proc
-/bin/busybox mount -t sysfs sysfs /sys
-/bin/busybox mount -t devtmpfs devtmpfs /dev
-/bin/busybox mkdir -p /dev/pts /run
-/bin/busybox mount -t devpts devpts /dev/pts
-/bin/busybox hostname x360linux
-/bin/busybox echo ""
-# Check the interactive shell can be launched before declaring the boot ready.
-if ! /bin/busybox sh -c ':'; then
-    /bin/busybox echo "X360Linux: interactive shell self-test failed."
-    exit 1
-fi
-/bin/busybox echo "[############################] 100%  X360Linux shell ready"
-/bin/busybox echo "=================================================="
-/bin/busybox echo " X360Linux - early experimental initramfs shell"
-/bin/busybox echo " PowerPC32 big-endian userspace / 64-bit Xenon kernel"
-/bin/busybox echo "=================================================="
-/bin/busybox echo "Linux started successfully on this Xbox 360!"
-/bin/busybox echo "X360Desk framebuffer preview is starting (if /dev/fb0 works)."
-/bin/busybox echo "Connect a USB keyboard, or try the Xbox 360 USB controller."
-/bin/busybox echo "Type: uname -a, dmesg, cat /proc/meminfo"
-/bin/busybox echo "To reboot: reboot -f"
-/bin/busybox echo ""
-# /dev/console cannot be a controlling terminal. Use the BusyBox-supported
-# cttyhack applet (for PID 1: "exec cttyhack sh"), which detects an active
-# real tty on Xenon's framebuffer console before launching the shell.
-# Source: https://busybox.net/FAQ.html (job control / can't access tty).
-# Attempt FAT32 media access in read-only mode; never write USB or Xbox HDD.
-# Device numbering may vary across consoles, so do not assume one disk.
-for part in /dev/sda1 /dev/sdb1 /dev/sdc1; do
-    if [ -b "$part" ] && /bin/busybox mount -t vfat -o ro "$part" /media/usb 2>/dev/null; then
-        /bin/busybox echo "USB media mounted read-only."
-        break
+BB=/bin/busybox
+$BB mount -t proc proc /proc
+$BB mount -t sysfs sysfs /sys
+$BB mount -t devtmpfs devtmpfs /dev
+$BB mkdir -p /dev/pts /run /media/usb /newroot
+$BB mount -t devpts devpts /dev/pts
+$BB hostname x360linux
+$BB echo "X360Linux | booting the Debian Ports system from USB..."
+$BB echo "The internal Xbox 360 drive is not used."
+
+# USB mass-storage detection can take several seconds after Xenon starts.
+found=0
+attempt=0
+while [ "$attempt" -lt 12 ] && [ "$found" -eq 0 ]; do
+  attempt=$((attempt + 1))
+  for part in /dev/sd[a-d][1-4]; do
+    [ -b "$part" ] || continue
+    $BB mount -t vfat -o ro "$part" /media/usb 2>/dev/null || continue
+    id=""
+    [ -f /media/usb/X360Linux/USB-ROOT.ID ] && \
+      id="$($BB cat /media/usb/X360Linux/USB-ROOT.ID)"
+    if [ "$id" = "X360LINUX-USB-ROOT-V1" ] && \
+       [ -f /media/usb/X360Linux/system.ext4 ]; then
+      found=1
+      device="$part"
+      $BB umount /media/usb
+      break
     fi
+    $BB umount /media/usb
+  done
+  [ "$found" -eq 1 ] || $BB sleep 1
 done
-if [ -x /bin/x360desk ]; then
-    /bin/x360desk
-    /bin/busybox echo "X360Desk exited or framebuffer unavailable; opening terminal."
+
+if [ "$found" -eq 1 ]; then
+  $BB echo "X360Linux USB installation located on $device"
+  # Reopen *only* the explicitly marked volume in RW mode. All other
+  # partitions remain untouched and are never mounted RW.
+  # devtmpfs normally creates loop0; make the standard node if missing.
+  [ -b /dev/loop0 ] || $BB mknod /dev/loop0 b 7 0
+  if $BB mount -t vfat -o rw,umask=0077 "$device" /media/usb &&
+     $BB losetup /dev/loop0 /media/usb/X360Linux/system.ext4 &&
+     $BB mount -t ext4 -o rw,noatime /dev/loop0 /newroot; then
+    $BB mkdir -p /newroot/dev /newroot/proc /newroot/sys /newroot/bootusb
+    # Keep the FAT32 backing volume mounted *inside* the new root.
+    # Without this, loop-backed writes may fail after switch_root.
+    if $BB mount -o bind /media/usb /newroot/bootusb &&
+       $BB mount -o move /proc /newroot/proc &&
+       $BB mount -o move /sys /newroot/sys &&
+       $BB mount -o move /dev /newroot/dev; then
+      $BB echo "Starting Debian Ports PowerPC from USB..."
+      exec $BB switch_root -c /dev/console /newroot /sbin/init
+    fi
+  fi
+  $BB echo "USB root could not be mounted: check ext4/loop support."
+else
+  $BB echo "No X360Linux USB installation found (marker/system.ext4)."
 fi
-exec /bin/busybox cttyhack /bin/sh -i </dev/console >/dev/console 2>&1
+
+$BB echo "Entering recovery shell. No changes to Xbox internal storage."
+exec $BB cttyhack /bin/sh -i </dev/console >/dev/console 2>&1

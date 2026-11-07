@@ -13,24 +13,18 @@ import tempfile
 import tarfile
 import zipfile
 
-README = """X360LINUX EXPERIMENTAL SYSTEM IMAGE
----------------------------------
-The Linux kernel reached /init on an actual RGH Xbox 360.
-The Xenon kernel and BusyBox shell prompt have started on real RGH hardware.
-X360Desk graphics, media decoding, gamepad input, and USB mounting are
-NOT yet tested on an Xbox 360. No Debian or MP4 player is included.
-Not a PC bootable ISO or NAND flashing tool.
-
-XeLL: ISO9660 root contains vmlinux, initramfs.cpio.gz and
-kboot.conf. XeLL may load this via a compatible optical boot path.
-X360Boot: extract the correct USB ZIP to a FAT32 drive. The launcher
-autostarts Linux when the X360Linux folder is found (press B to cancel).
-No configuration is written to USB.
-The X360Boot ELF launcher is a SEPARATE program, not the Linux OS.
-
-A compiled ELF and a correct device tree do not prove boot stability.
-The image includes X360Desk framebuffer preview and BusyBox shell fallback.
-NEVER rename these files to updxell.bin or updflash.bin.
+README = """X360LINUX USB-ONLY DEBIAN POWERPC ALPHA
+-----------------------------------------
+No Photos/Videos/System graphical launcher is started by Linux.
+XeLL/X360Boot loads the Xenon Linux kernel and a tiny BusyBox initramfs.
+The initramfs attempts to mount X360Linux/system.ext4 from a FAT32 USB
+partition with the correct X360Linux/USB-ROOT.ID marker.
+The ext4 image is a PREINSTALLED Debian Ports PowerPC filesystem.
+It is not necessary to run an installer wizard or format any Xbox HDD.
+A keyboard is still needed for the first Debian shell tests.
+The image is NOT a PC installer and the ISO is NOT opened from USB.
+USB ext4 loop boot/persistence have NOT yet been verified on real Xbox.
+Never flash NAND; do not rename to updflash.bin or updxell.bin.
 """
 
 def check_elf(path):
@@ -56,6 +50,8 @@ def main():
     parser.add_argument("--initramfs", required=True, type=Path)
     parser.add_argument("--output-dir", required=True, type=Path)
     parser.add_argument("--iso", action="store_true")
+    parser.add_argument("--usb-root", type=Path,
+                        help="Preinstalled ext4 Debian USB system image (no HDD installation)")
     parser.add_argument("--debian-rootfs", type=Path,
                         help="Optional signed Debian Ports powerpc base tar.gz; NOT auto-booted")
     args = parser.parse_args()
@@ -75,6 +71,15 @@ def main():
         for src, name in ((args.kernel,"vmlinux"),(args.dtb,"xenon.dtb"),
                           (args.initramfs,"initramfs.cpio.gz")):
             shutil.copyfile(src, linux_dir / name)
+        if args.usb_root:
+            if not args.usb_root.is_file() or args.usb_root.stat().st_size < 50 * 1024 * 1024:
+                parser.error("Preinstalled Debian ext4 USB image is missing or too small")
+            with args.usb_root.open("rb") as file:
+                file.seek(1080)
+                if file.read(2) != b"\x53\xef":
+                    parser.error("Invalid ext4 superblock: expected 0xEF53")
+            shutil.copyfile(args.usb_root, linux_dir / "system.ext4")
+            (linux_dir / "USB-ROOT.ID").write_text("X360LINUX-USB-ROOT-V1\n", encoding="ascii")
         # XeLL searches ISO9660 root for vmlinux and its kboot.conf menu.
         shutil.copyfile(args.kernel, root / "vmlinux")
         shutil.copyfile(args.initramfs, root / "initramfs.cpio.gz")
@@ -119,7 +124,7 @@ def main():
                 digest = hashlib.file_digest(fd, "sha256").hexdigest()
             hashes.write(f"{digest}  {path.name}\n")
     (out/"README-FIRST.txt").write_text(README, encoding="ascii")
-    print("X360Desk graphical preview is built, but not yet verified on real Xbox 360 hardware.")
+    print("Debian Ports USB ext4 boot package built; real Xbox USB switch_root still unverified.")
 
 if __name__=="__main__":
     main()

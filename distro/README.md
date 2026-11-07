@@ -1,40 +1,15 @@
-# X360Linux distribution
+# X360Linux Linux distribution
 
-This is a native experimental Linux userspace for the original Xbox 360 Xenon console. The kernel has already reached a BusyBox shell prompt on real RGH hardware.
+The default boot environment is now an **actual Debian Ports PowerPC32 big-endian USB filesystem**, NOT the old X360Desk Photos/Videos/System preview.
 
-## v0.3 graphical preview
+The FAT32 USB boot partition contains:
+- `xenon.elf` for the existing working XeLL → X360Boot startup
+- `X360Linux/vmlinux`, `xenon.dtb`, `initramfs.cpio.gz`
+- `X360Linux/USB-ROOT.ID`, an exact marker limiting writable media discovery
+- `X360Linux/system.ext4`, a **preinstalled Debian Ports root filesystem** with POSIX permissions and optional persistent files
 
-- **Architecture:** 64-bit Xenon Linux kernel + conservative static PowerPC32 big-endian BusyBox.
-- **Original desktop program:** `distro/desktop/x360desk.c`, a small framebuffer media interface.
-- **Photos:** JPG, PNG, BMP and PPM.
-- **Videos:** silent raw RGB `.x360v` clips converted on a computer. MP4, audio and browser are future work.
-- **Input:** experimental Linux `xpad` / evdev for an Xbox 360 USB controller, with analog stick cursor and A/B navigation.
-- **Storage:** attempt to mount a recognized USB FAT32 partition read-only; no HDD writes.
-- **Fallback:** if the framebuffer is unsupported, return to the BusyBox terminal.
+The initramfs uses the static big-endian PowerPC32 BusyBox solely as a safe USB detection and recovery stage. It attempts to mount the marked FAT32 partition, mounts `system.ext4` via the built-in Linux loop and ext4 drivers, and switches into a Debian `/sbin/init` shell. It no longer runs `/bin/x360desk`, and it contains no photos/videos or custom launcher cards.
 
-**This graphical preview is not yet confirmed on physical Xbox 360 hardware.** It is not Debian and does not include a full desktop environment.
+This is **not a proven Xbox 360 Debian boot yet**; build and QEMU tests are not hardware verification. No normal Debian graphical desktop is bundled until USB boot and persistence are tested. No internal HDD writes or NAND flashing.
 
-See [v0.3 beginner and technical guide](../docs/V03-GRAPHICAL-PREVIEW.md).
-
-## Building the userspace
-
-On Ubuntu with the cross compiler and PowerPC QEMU installed:
-
-```sh
-sudo apt update
-sudo apt install -y gcc-powerpc-linux-gnu libc6-dev-powerpc-cross \
-  binutils-powerpc-linux-gnu qemu-user make bzip2 curl python3
-bash distro/build-rootfs.sh
-```
-
-This compiles BusyBox and X360Desk, generates original demo media, runs a QEMU PowerPC CPU smoke test, and packages `distro/out/initramfs.cpio.gz`.
-
-The separate [Build Linux image workflow](../.github/workflows/linux-image.yml) compiles the Xenon kernel and assembles an experimental ISO and USB boot folder. The ISO is not a PC installer.
-
-## Debian Ports integration
-
-Debian's official `ppc64el` is **little-endian** and not the Xbox Xenon format. Debian Ports maintains unofficial `powerpc` and `ppc64` big-endian architectures. Their compatibility, performance, packages and runtime memory footprint still need validation. We are not substituting an untested Debian root filesystem for our working BusyBox yet.
-
-Sources, exact library licenses and attribution: [Credits & licenses](../docs/CREDITS.md).
-
-**Never flash NAND or format the Xbox internal disk with these alpha images.**
+Build/test instructions: [USB Debian guide](../docs/USB-DEBIAN-BOOT.md), [signed Debian builder](debian/README.md), [third-party license credits](../docs/CREDITS.md).

@@ -27,6 +27,9 @@ text=text.replace("# CONFIG_STATIC is not set", "CONFIG_STATIC=y")
 # cttyhack gives the interactive shell a real controlling terminal instead of
 # /dev/console (BusyBox upstream documentation explicitly recommends this).
 text=text.replace("# CONFIG_CTTYHACK is not set", "CONFIG_CTTYHACK=y")
+for applet in ("LOSETUP","SWITCH_ROOT","UMOUNT"):
+    text=text.replace(f"# CONFIG_{applet} is not set", f"CONFIG_{applet}=y")
+text=text.replace("# CONFIG_FEATURE_MOUNT_LOOP is not set", "CONFIG_FEATURE_MOUNT_LOOP=y")
 # Xenon can run 32-bit userspace; baseline PPC avoids requiring 64-bit or
 # AltiVec/VSX instructions that may not exist or be usable on this console.
 text=text.replace('CONFIG_EXTRA_CFLAGS=""', 'CONFIG_EXTRA_CFLAGS="-mcpu=powerpc -mno-altivec -mno-vsx"')
@@ -54,21 +57,17 @@ if powerpc-linux-gnu-readelf -l "$bb_src/busybox" | grep -q 'INTERP'; then
     echo "BusyBox is dynamic; refusing to package without shared libraries" >&2
     exit 1
 fi
-# Compile the first framebuffer UI and verify its photo/video parsers in
-# a baseline emulated PowerPC CPU. Hardware framebuffer remains untested.
-make -C "$repo/distro/desktop" CC=powerpc-linux-gnu-gcc
-python3 "$repo/distro/desktop/generate_demo.py" --output-dir "$work/demo"
-qemu-ppc -cpu 750 "$repo/distro/desktop/x360desk" --self-test \
-    "$work/demo/photos/x360linux-demo.png" \
-    "$work/demo/videos/x360linux-demo.x360v"
+# The USB boot loader must remain a tiny static recovery/init environment.
+# It NEVER starts the previous Photos / Videos / System framebuffer app.
+qemu-ppc -cpu 750 "$bb_src/busybox" sh -c 'echo X360LINUX_STATIC_RECOVERY_OK'
 python3 "$repo/distro/pack_initramfs.py" \
     --busybox "$bb_src/busybox" --init "$repo/distro/rootfs/init" \
-    --desktop "$repo/distro/desktop/x360desk" --demo-dir "$work/demo" \
     --output "$out/initramfs.cpio.gz"
-(cd "$out" && sha256sum initramfs.cpio.gz > SHA256SUMS)
+cp "$bb_src/busybox" "$out/busybox-static-ppc32"
+(cd "$out" && sha256sum initramfs.cpio.gz busybox-static-ppc32 > SHA256SUMS)
 printf '%s\n' "Experimental X360Linux PowerPC32 big-endian userspace on a 64-bit Xenon kernel." \
     "Requires a separate, compatible Free60-patched Linux ELF32 kernel." \
-    "Includes experimental X360Desk framebuffer images + silent X36V video preview." \
-    "Debian, MP4 decoding, audio, controller mouse and USB mounting require real hardware verification." \
+    "Boots an explicit-marker USB ext4 Debian Ports rootfs when available." \
+    "No X360Desk tile UI; Debian USB boot/USB persistence require real Xbox hardware testing." \
     "BusyBox copyright and license: https://busybox.net/license.html (GPL-2.0)." \
     > "$out/READ-ME-FIRST.txt"
