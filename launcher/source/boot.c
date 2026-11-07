@@ -2,6 +2,7 @@
 /* Experimental Linux handoff. The loader is libxenon's, not XeLL's UI.
    Platform/device-tree preparation still comes from the libxenon runtime. */
 #include "boot.h"
+#include <console/console.h>
 #include <elf/elf.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -11,6 +12,25 @@
 #define KERNEL_MAX (64u * 1024u * 1024u)
 #define DTB_MAX (64u * 1024u)
 #define INITRD_MAX (32u * 1024u * 1024u)
+
+/* Only real file-reading/handoff milestones are reported. The launcher cannot
+   measure Linux boot after elf_runWithDeviceTree transfers control. */
+static void boot_progress(unsigned percent, const char *stage) {
+    char bar[29];
+    unsigned i, count = percent * 28u / 100u;
+    for (i = 0; i < 28; ++i) bar[i] = i < count ? '#' : '-';
+    bar[28] = '\0';
+    console_clrscr();
+    puts("========================================================");
+    puts("                      X360LINUX");
+    puts("========================================================");
+    puts("");
+    printf("[%s] %3u%%\n", bar, percent);
+    puts(stage);
+    puts("");
+    puts("This measures preparation, NOT Linux boot success.");
+    puts("If the kernel fails, its error messages will still appear.");
+}
 
 static int file_path(char *out, size_t max, const char *folder, const char *name) {
     int n = snprintf(out, max, "%s%s", folder, name);
@@ -64,11 +84,13 @@ int x360_boot_linux(const struct x360_settings *settings) {
         printf("No valid Linux directory selected (requires vmlinux + xenon.dtb).\n");
         return -1;
     }
-    puts("Reading Xenon Linux ELF and device tree...");
+    boot_progress(0, "Checking Linux boot files...");
+    boot_progress(20, "Loading the Linux kernel and hardware settings...");
     if (read_limited(settings->folder, "vmlinux", KERNEL_MAX, &elf, &elf_len) ||
         read_limited(settings->folder, "xenon.dtb", DTB_MAX, &dtb, &dtb_len))
         goto done;
 
+    boot_progress(50, "Validating Linux boot files...");
     h = (const unsigned char *)elf;
     d = (const unsigned char *)dtb;
     if (elf_len < 52 || h[0] != 0x7f || h[1] != 'E' || h[2] != 'L' ||
@@ -82,6 +104,7 @@ int x360_boot_linux(const struct x360_settings *settings) {
         puts("Refusing device tree: invalid FDT magic.");
         goto done;
     }
+    boot_progress(65, "Preparing the Linux system...");
     kernel_reset_initrd();
     if (exists(settings->folder, "initramfs.cpio.gz")) {
         puts("Reading optional initramfs...");
@@ -89,8 +112,9 @@ int x360_boot_linux(const struct x360_settings *settings) {
                          INITRD_MAX, &initrd, &initrd_len)) goto done;
         if (kernel_prepare_initrd(initrd, (size_t)initrd_len)) goto done;
     }
+    boot_progress(85, "Starting the Linux kernel... (waiting for /init)");
     kernel_build_cmdline(settings->cmdline, NULL);
-    puts("EXPERIMENTAL handoff to Linux. Recovery may require power cycle.");
+    /* The kernel takes over at this point. 100% is shown by /init only. */
     /* libxenon transfers control and supplies Xenon FDT to Linux.
        Real-console stability is not established by a successful host build. */
     rc = elf_runWithDeviceTree(elf, elf_len, dtb, dtb_len);

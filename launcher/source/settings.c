@@ -8,7 +8,7 @@
 /* Portable settings code: host-tested without Xbox hardware. */
 void x360_settings_default(struct x360_settings *out) {
     memset(out, 0, sizeof(*out));
-    strcpy(out->cmdline, "console=tty0 panic=30 maxcpus=6 coherent_pool=6M video=xenosfb rdinit=/init");
+    strcpy(out->cmdline, "console=tty0 quiet loglevel=1 panic=30 maxcpus=6 coherent_pool=6M video=xenosfb rdinit=/init");
 }
 int x360_path_is_safe(const char *path) {
     size_t n, sep, i;

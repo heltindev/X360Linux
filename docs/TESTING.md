@@ -18,14 +18,14 @@
 3. Plug it into your Xbox 360 and start your existing **XeLL** (often with **Eject**).
 4. When **X360Boot** opens, you are ready to test the menu.
 
-**For v0.2.0-alpha only:** open the `X360Linux` folder using **A**, press **X** to select the folder for this session, and press **Y** to try starting Linux. The first Linux boot is **experimental and may freeze**. **X no longer writes configuration to USB.**
+**For the updated v0.2.0-alpha:** use the D-pad to highlight `X360Linux`, then press **A once** to try starting Linux. No X, Y or configuration save is needed. You will see a preparation progress bar, followed by the kernel's own startup. A kernel failure may still display technical messages.
 
 ## ABadAvatar/BadUpdate + FreeMyXe — 4 steps
 
 1. **Keep your existing exploit/FreeMyXe files** on the FAT32 USB drive. Do not delete them.
 2. Extract your **ABadAvatar-FreeMyXe** ZIP onto that same USB drive. **Merge** the `BadUpdatePayload` folder instead of replacing it. Back up an existing `xell-2f.bin` before replacing it.
 3. Run your normal exploit and choose **Launch XeLL** in FreeMyXe.
-4. If XeLL loads `xenon.elf`, **X360Boot** will open. For v0.2, open `X360Linux` with **A**, press **X** to select it for this session and **Y** to try Linux.
+4. When **X360Boot** opens, highlight **X360Linux** and press **A once**. The boot attempt will begin automatically.
 
 These steps are specifically for **FreeMyXe**. Other software exploit setups may require their own XeLL configuration.
 
@@ -51,9 +51,9 @@ The optional `.iso` on v0.2 is an **experimental ISO9660 image** containing Linu
 
 ## Controller and Linux status
 
-- The **X360Boot menu already supports the Xbox 360 controller**: D-pad to move, A to enter a folder, B to go back, X to select the Linux folder in memory, Y to try booting. **START/autoboot and saving settings across restarts are temporarily disabled** to avoid a FAT USB write crash.
+- The **X360Boot menu already supports the Xbox 360 controller**: D-pad to move, A to open a folder or boot Linux, B to go back, LB/RB to switch drives. No settings are written to USB. **Kernel startup is not measurable by the launcher; the progress bar only reports real preparation stages.**
 - **Inside Linux**, Xbox 360 controller support, graphics, audio, network and HDD persistence are still unverified. The first goal is to reach a command-line shell.
-- **Debian PPC64**, a desktop, browser and image/video players are future work. This alpha uses a minimal BusyBox shell.
+- **Debian PPC64**, a desktop, browser and image/video players are future work. This alpha tests a minimal **PowerPC32 BusyBox** userspace with a **64-bit Xenon kernel**, after a CPU illegal instruction in the older PowerPC64 build.
 
 ## How to report a test
 

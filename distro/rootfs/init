@@ -1,7 +1,8 @@
 #!/bin/sh
-# X360Linux minimal initramfs (PowerPC64 BE) — not a full distribution.
+# X360Linux minimal initramfs (PowerPC32 BE userspace, PPC64 kernel).
 PATH=/bin:/sbin:/usr/bin:/usr/sbin
 export PATH
+/bin/busybox echo "[#########################---]  90%  Linux user-space started"
 /bin/busybox mount -t proc proc /proc
 /bin/busybox mount -t sysfs sysfs /sys
 /bin/busybox mount -t devtmpfs devtmpfs /dev
@@ -9,9 +10,15 @@ export PATH
 /bin/busybox mount -t devpts devpts /dev/pts
 /bin/busybox hostname x360linux
 /bin/busybox echo ""
+# Check the interactive shell can be launched before declaring the boot ready.
+if ! /bin/busybox sh -c ':'; then
+    /bin/busybox echo "X360Linux: interactive shell self-test failed."
+    exit 1
+fi
+/bin/busybox echo "[############################] 100%  X360Linux shell ready"
 /bin/busybox echo "=================================================="
 /bin/busybox echo " X360Linux - early experimental initramfs shell"
-/bin/busybox echo " PowerPC64 big-endian / Free60 Xenon kernel"
+/bin/busybox echo " PowerPC32 big-endian userspace / 64-bit Xenon kernel"
 /bin/busybox echo "=================================================="
 /bin/busybox echo "No desktop is installed. This is a minimal shell."
 /bin/busybox echo "Type: uname -a, dmesg, cat /proc/meminfo"

@@ -64,7 +64,7 @@ make -C "$kernel_dir" ARCH=powerpc CROSS_COMPILE=xenon- olddefconfig
   -e INPUT_EVDEV -e INPUT_JOYDEV -e JOYSTICK_XPAD \
   -e HID_GENERIC -e USB_HID
 make -C "$kernel_dir" ARCH=powerpc CROSS_COMPILE=xenon- olddefconfig
-for option in CONFIG_INPUT_EVDEV CONFIG_INPUT_JOYDEV CONFIG_JOYSTICK_XPAD; do
+for option in CONFIG_COMPAT CONFIG_INPUT_EVDEV CONFIG_INPUT_JOYDEV CONFIG_JOYSTICK_XPAD; do
   grep -qx "$option=y" "$kernel_dir/.config" || {
     echo "Required builtin controller option unavailable: $option" >&2
     exit 1

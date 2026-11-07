@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Generate a deterministic Linux 'newc' initramfs with static ppc64 BusyBox.
+"""Generate a deterministic Linux 'newc' initramfs with static PowerPC BusyBox.
 
 This packages Linux userspace only; does not create a kernel or bootable ISO.
 """
@@ -26,9 +26,9 @@ def main():
     p.add_argument("--output", type=Path, required=True)
     args = p.parse_args()
     busybox = args.busybox.read_bytes()
-    if (len(busybox) < 10_000 or busybox[:6] != b"\x7fELF\x02\x02" or
-            busybox[18:20] != b"\x00\x15"):
-        p.error("Expected a 64-bit big-endian PowerPC64 Linux BusyBox ELF")
+    if (len(busybox) < 10_000 or busybox[:6] != b"\x7fELF\x01\x02" or
+            busybox[18:20] != b"\x00\x14"):
+        p.error("Expected a 32-bit big-endian PowerPC Linux BusyBox ELF")
     init = args.init.read_bytes()
     records = []
     ino = 1

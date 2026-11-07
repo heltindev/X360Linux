@@ -66,14 +66,16 @@ jobs:
     timeout-minutes: 40
     steps:
       - uses: actions/checkout@v4
-      - name: Install PowerPC64 Linux compiler
+      - name: Install PowerPC32 Linux compiler
         run: |
           sudo apt-get update -qq
-          sudo apt-get install -y gcc-powerpc64-linux-gnu libc6-dev-ppc64-cross \
-            binutils-powerpc64-linux-gnu make bzip2 curl python3
-      - name: Create Linux initramfs
+          sudo apt-get install -y gcc-powerpc-linux-gnu libc6-dev-powerpc-cross \
+            binutils-powerpc-linux-gnu qemu-user make bzip2 curl python3
+      - name: Create and emulate Linux initramfs
         run: |
           bash distro/build-rootfs.sh
+          qemu-ppc -cpu 750 distro/work/busybox-1.37.0/busybox true
+          qemu-ppc -cpu 750 distro/work/busybox-1.37.0/busybox sh -c 'echo X360LINUX_PPC32_SMOKE_OK'
           test -s distro/out/initramfs.cpio.gz
           file distro/out/initramfs.cpio.gz
       - uses: actions/upload-artifact@v4

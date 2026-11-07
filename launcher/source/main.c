@@ -30,6 +30,7 @@ static struct {
     char device[24];
     int handle;
     struct x360_settings boot;
+    char status[144];
 } ui;
 
 static int append_folder(char *out, size_t capacity, const char *name) {
@@ -54,6 +55,8 @@ static void refresh_folders(void) {
             /* Some mounted FAT drivers report DT_UNKNOWN. */
             if (stat(absolute, &info) || !S_ISDIR(info.st_mode)) continue;
         }
+        if (!strcmp(entry->d_name, "X360Linux"))
+            ui.selected = ui.count;
         strcpy(ui.names[ui.count++], entry->d_name);
     }
     closedir(dir);
@@ -67,6 +70,7 @@ static int set_device(int next) {
     strcpy(ui.device, name);
     if (snprintf(ui.current, sizeof(ui.current), "%s:/", name) >= (int)sizeof(ui.current)) return -1;
     x360_settings_default(&ui.boot);
+    ui.status[0] = 0;
     /* Loading/saving configuration on this libfat build is suspended.
        Selecting a folder must never write to the USB drive. */
     refresh_folders();
@@ -81,64 +85,57 @@ static void parent_folder(void) {
     ui.current[n] = 0;
     refresh_folders();
 }
-static void enter_folder(void) {
+/* A on a directory containing Linux files selects and starts Linux immediately.
+   Other directories can still be browsed normally. No FAT writes occur. */
+static int enter_folder(void) {
     char path[X360_PATH_MAX];
-    if (ui.count == 0 || ui.selected >= ui.count) return;
-    if (!append_folder(path, sizeof(path), ui.names[ui.selected])) return;
+    if (ui.count == 0 || ui.selected >= ui.count) return 0;
+    if (!append_folder(path, sizeof(path), ui.names[ui.selected])) return 0;
+    if (x360_linux_files_present(path)) {
+        if (x360_settings_select_folder(&ui.boot, path) != 0) return 0;
+        strcpy(ui.current, path);
+        return 1;
+    }
     strcpy(ui.current, path);
     refresh_folders();
-}
-static int select_current(void) {
-    if (!x360_linux_files_present(ui.current)) {
-        puts("This folder needs vmlinux and xenon.dtb. Press B to go back.");
-        return -1;
-    }
-    if (x360_settings_select_folder(&ui.boot, ui.current) != 0) {
-        puts("Invalid Linux directory. Press B to go back.");
-        return -1;
-    }
-    puts("Linux folder selected IN MEMORY. Press Y to try Linux.");
     return 0;
 }
 static void render(void) {
     int start, end, i;
     console_clrscr();
-    puts("=============================================================");
-    puts("    X360BOOT                                 EXPERIMENTAL");
-    puts("    Xbox 360 native Linux boot manager | libxenon / PowerPC");
-    puts("=============================================================");
-    printf("Device : %s\n", ui.device);
-    printf("Browse : %s\n", ui.current);
-    printf("Linux  : %s\n", ui.boot.folder[0] ? ui.boot.folder : "(not selected)");
-    printf("Boot on next launch: %s\n", ui.boot.autoboot ? "ON (cancel with B)" : "OFF");
-    puts("-------------------------------------------------------------");
+    puts("========================================================");
+    puts("                      X360LINUX");
+    puts("                 Xbox 360 Linux Preview");
+    puts("========================================================");
+    puts("");
+    printf("USB: %s\n", ui.device);
+    puts("");
     if (ui.count == 0) {
-        if (x360_linux_files_present(ui.current)) {
-            puts("LINUX FILES FOUND in this folder!");
-            puts("Press X to select this folder, then Y to try booting Linux.");
-        } else {
-            puts("No folders inside this directory. Press B to go back.");
-        }
+        puts("No more folders here. Press B to go back.");
+    } else {
+        puts("Select a folder:");
     }
     start = ui.selected > 8 ? ui.selected - 8 : 0;
-    end = start + 16;
+    end = start + 12;
     if (end > ui.count) end = ui.count;
     for (i = start; i < end; ++i) {
-        printf("%c [DIR] %s\n", i == ui.selected ? '>' : ' ', ui.names[i]);
+        printf("%c  %s%s\n", i == ui.selected ? '>' : ' ',
+               ui.names[i], !strcmp(ui.names[i], "X360Linux") ? "  - Linux" : "");
     }
-    puts("-------------------------------------------------------------");
-    puts("D-Pad : navigate  | A: enter directory | B: parent/cancel");
-    puts("X     : select Linux folder (memory only; NO USB writes)");
-    puts("Y     : START LINUX (experimental handoff)");
-    puts("START : disabled temporarily | LB/RB: next drive");
-    puts("-------------------------------------------------------------");
-    puts("Linux directory must contain vmlinux + xenon.dtb.");
-    puts("Optional: initramfs.cpio.gz. Config saving is disabled for safety.");
-    puts("Never flash NAND. Keep a working recovery method.");
+    puts("");
+    puts("A  Open folder / Start Linux");
+    puts("B  Back          D-Pad  Move          LB/RB  USB");
+    puts("");
+    puts("Linux starts automatically when its folder is opened.");
+    puts("This preview does not install or change the Xbox hard drive.");
+    if (ui.status[0]) {
+        puts("--------------------------------------------------------");
+        puts(ui.status);
+    }
 }
 static int pressed(const struct controller_data_s *p) {
-    return p->a || p->b || p->x || p->y || p->up || p->down ||
-           p->lb || p->rb || p->start || p->s1_y > STICK_TRIGGER ||
+    return p->a || p->b || p->up || p->down ||
+           p->lb || p->rb || p->s1_y > STICK_TRIGGER ||
            p->s1_y < -STICK_TRIGGER;
 }
 int main(void) {
@@ -173,22 +170,17 @@ int main(void) {
         } else if (pad.up || pad.s1_y > STICK_TRIGGER) {
             if (ui.selected > 0) --ui.selected;
         } else if (pad.a) {
-            enter_folder();
+            if (enter_folder()) {
+                int rc = x360_boot_linux(&ui.boot);
+                /* A loader error returns to the menu; a kernel panic cannot. */
+                parent_folder();
+                snprintf(ui.status, sizeof(ui.status),
+                         "Linux did not start (loader error %d). Press B to retry.", rc);
+            }
         } else if (pad.b) {
             parent_folder();
         } else if (pad.lb || pad.rb) {
             set_device(1);
-        } else if (pad.x) {
-            select_current();
-        } else if (pad.start) {
-            puts("Auto-boot and USB config saving are disabled for this test.");
-        } else if (pad.y) {
-            if (ui.boot.folder[0]) {
-                int r = x360_boot_linux(&ui.boot);
-                printf("Boot failed: %d. Press B to return to the menu.\n", r);
-            } else {
-                puts("Select the Linux directory with X first.");
-            }
         }
         dirty = 1;
     }
