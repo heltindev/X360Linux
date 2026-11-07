@@ -24,6 +24,11 @@ p=pathlib.Path(sys.argv[1])
 text=p.read_text()
 text=text.replace("# CONFIG_STATIC is not set", "CONFIG_STATIC=y")
 text=text.replace('CONFIG_EXTRA_CFLAGS=""', 'CONFIG_EXTRA_CFLAGS="-mcpu=970 -mno-altivec"')
+# BusyBox 1.37.0 has an upstream non-x86 SHA-NI compile regression:
+# https://lists.busybox.net/pipermail/busybox/2024-September/090946.html
+# The Xenon PPC64 CPU has no x86 SHA-NI; use portable SHA routines.
+text=text.replace("CONFIG_SHA1_HWACCEL=y", "# CONFIG_SHA1_HWACCEL is not set")
+text=text.replace("CONFIG_SHA256_HWACCEL=y", "# CONFIG_SHA256_HWACCEL is not set")
 p.write_text(text)
 PY
 make -C "$bb_src" ARCH=powerpc CROSS_COMPILE=powerpc64-linux-gnu- oldconfig </dev/null
