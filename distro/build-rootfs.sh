@@ -26,7 +26,7 @@ text=text.replace("# CONFIG_STATIC is not set", "CONFIG_STATIC=y")
 text=text.replace('CONFIG_EXTRA_CFLAGS=""', 'CONFIG_EXTRA_CFLAGS="-mcpu=970 -mno-altivec"')
 p.write_text(text)
 PY
-make -C "$bb_src" ARCH=powerpc CROSS_COMPILE=powerpc64-linux-gnu- olddefconfig
+make -C "$bb_src" ARCH=powerpc CROSS_COMPILE=powerpc64-linux-gnu- oldconfig </dev/null
 make -C "$bb_src" ARCH=powerpc CROSS_COMPILE=powerpc64-linux-gnu- -j "${JOBS:-2}"
 test -s "$bb_src/busybox"
 powerpc64-linux-gnu-readelf -h "$bb_src/busybox" | grep -q 'PowerPC64'

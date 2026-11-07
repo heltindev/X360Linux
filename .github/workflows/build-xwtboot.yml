@@ -59,7 +59,7 @@ jobs:
         run: |
           set -eu
           apt-get update -qq
-          apt-get install -y -qq xorriso
+          DEBIAN_FRONTEND=noninteractive apt-get install -y -qq xorriso python3
           python3 media/make_iso.py --boot-elf xwtboot/xwtboot.elf32 \
             --output dist/xwt/XWT-Boot-launcher-EXPERIMENTAL.iso
           sha256sum dist/xwt/XWT-Boot-launcher-EXPERIMENTAL.iso >> dist/xwt/SHA256SUMS
