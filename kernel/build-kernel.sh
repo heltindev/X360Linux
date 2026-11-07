@@ -56,8 +56,22 @@ jobs="${JOBS:-2}"
 [[ "$jobs" =~ ^[1-9][0-9]*$ ]] || { echo "JOBS must be positive integer." >&2; exit 2; }
 
 make -C "$kernel_dir" ARCH=powerpc CROSS_COMPILE=xenon- olddefconfig
-# First hardware milestone: build only the bootable kernel, not optional modules.
-# Graphics and other modular drivers will be developed after Linux reaches a shell.
+
+# The image workflow currently does NOT ship kernel modules. Make standard USB
+# gamepad/keyboard and Linux input interfaces built-in for early console tests.
+# This is not a claim that the Xbox 360's internal wireless receiver works.
+"$kernel_dir/scripts/config" --file "$kernel_dir/.config" \
+  -e INPUT_EVDEV -e INPUT_JOYDEV -e JOYSTICK_XPAD \
+  -e HID_GENERIC -e USB_HID
+make -C "$kernel_dir" ARCH=powerpc CROSS_COMPILE=xenon- olddefconfig
+for option in CONFIG_INPUT_EVDEV CONFIG_INPUT_JOYDEV CONFIG_JOYSTICK_XPAD; do
+  grep -qx "$option=y" "$kernel_dir/.config" || {
+    echo "Required builtin controller option unavailable: $option" >&2
+    exit 1
+  }
+done
+
+# Build only the bootable kernel; optional modules are not included in this ISO.
 make -C "$kernel_dir" ARCH=powerpc CROSS_COMPILE=xenon- -j "$jobs" zImage.xenon
 
 candidate="$kernel_dir/arch/powerpc/boot/zImage.xenon"

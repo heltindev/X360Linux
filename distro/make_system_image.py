@@ -21,7 +21,7 @@ XeLL: ISO9660 root contains vmlinux, initramfs.cpio.gz and
 kboot.conf. XeLL may load this via a compatible optical boot path.
 X360Boot: copy X360Linux/ to a FAT32 USB drive, then select the
 folder in X360Boot and save its configuration.
-The XWT ELF manager is a SEPARATE program, not the Linux OS.
+The X360Boot ELF launcher is a SEPARATE program, not the Linux OS.
 
 A compiled ELF and a correct device tree do not prove boot stability.
 The Linux image provides an early BusyBox shell, not a GUI desktop.

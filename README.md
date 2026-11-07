@@ -2,31 +2,31 @@
   <img src="assets/x360linux-banner.svg" alt="X360Linux" width="100%" />
   <h2>Linux for Xbox 360. Native hardware. Open source.</h2>
   <p>I'm building an Xbox 360 Linux distribution that runs directly on the console's original hardware.</p>
-  <p><a href="https://github.com/heltindev/X360Linux/releases/tag/v0.1.0-alpha">Download v0.1.0-alpha</a> · <a href="https://github.com/heltindev/X360Linux/actions">GitHub Actions</a> · <a href="docs/TESTING.md">Getting started</a></p>
+  <p><a href="https://github.com/heltindev/X360Linux/releases/tag/v0.2.0-alpha">Download experimental v0.2.0-alpha</a> · <a href="https://github.com/heltindev/X360Linux/releases/tag/v0.1.0-alpha">Menu-only v0.1.0-alpha</a> · <a href="docs/TESTING.md">Beginner guide</a></p>
 </div>
 
 ## 🧪 Project status
 
 | Component | Status |
 |---|---|
-| **X360Boot launcher** (native Xbox 360 ELF) | ✅ Compiles in GitHub Actions |
+| **X360Boot launcher** (native Xbox 360 ELF) | ✅ Compiles; menu confirmed on real Xbox 360 |
 | **Minimal Linux system** (PowerPC64 BusyBox) | ✅ Compiles in GitHub Actions |
 | **XeLL bootloader** | ✅ Reference builds compile |
-| **Xbox 360 Linux kernel** | 🟡 Build/integration in progress |
+| **Xbox 360 Linux kernel** | ✅ Compiles in Actions; console boot not yet verified |
 | **Linux booting on a real Xbox 360** | ⬜ Not verified |
 | **Graphics, sound, networking and storage** | ⬜ Not verified in this project |
-| **Complete ready-to-use Linux image** | ⬜ Not available yet |
+| **Experimental Linux ISO and USB image** | 🟡 v0.2 alpha available; boot not yet verified |
 
 **Goal:** Boot a minimal Linux shell on a real Xbox 360 first, then improve hardware support and build a full desktop distribution. This is an early alpha, **not a claim of 100% compatibility**.
 
 ## 🚀 Start here
 
-1. **[Download v0.1.0-alpha](https://github.com/heltindev/X360Linux/releases/tag/v0.1.0-alpha)** for the experimental launcher and Linux userspace.
-2. Read **[Getting started and Xbox 360 testing](docs/TESTING.md)** before placing files on a USB drive.
-3. Want to compile the project? Open **[GitHub Actions](https://github.com/heltindev/X360Linux/actions)** and run **Build Xbox 360**.
-4. A full Linux image will require a compatible Xenon kernel. The **Build Linux image** workflow is experimental.
+1. **[v0.1.0-alpha — menu test](https://github.com/heltindev/X360Linux/releases/tag/v0.1.0-alpha)**: choose the RGH or ABadAvatar/FreeMyXe ZIP. The X360Boot menu is confirmed.
+2. **[v0.2.0-alpha — experimental Linux test](https://github.com/heltindev/X360Linux/releases/tag/v0.2.0-alpha)**: USB packs now include the kernel, device tree and minimal shell; an untested ISO is also available.
+3. Read **[Getting started and Xbox 360 testing](docs/TESTING.md)**. Only extract the ZIP for USB; the ISO is for compatible XeLL optical boot methods.
+4. Want to compile? Use **[GitHub Actions](https://github.com/heltindev/X360Linux/actions)**. A green build does **not** prove Linux boots on console.
 
-> **Required:** An Xbox 360 already modified for homebrew (RGH/JTAG), with a known-working initial ELF loader such as XeLL. There is no stock-console boot method, XEX or NAND installer here. Never flash experimental boot files.
+> **Required:** An already-working XeLL method: RGH/JTAG, or a compatible software exploit with FreeMyXe. The ABadAvatar ZIP is an add-on to existing exploit files, not an unlocker. There is no `default.xex` or NAND installer here. Never flash experimental boot files.
 
 ## 📁 Project structure
 
@@ -55,7 +55,7 @@ X360Linux/
 
 ### Phase 2 — Reliable hardware and storage
 
-- [ ] Confirm USB storage, keyboard and controller input.
+- [ ] Confirm USB storage, keyboard and controller input **inside Linux** (the X360Boot menu already supports the Xbox controller).
 - [ ] Detect wired Ethernet and configure networking automatically with DHCP.
 - [ ] Keep personal files and system settings after reboot (USB persistence first).
 - [ ] Read and write supported Xbox 360 HDD storage safely, **without formatting existing Xbox partitions**.
@@ -68,6 +68,8 @@ X360Linux/
 - [ ] Make X360Boot detect a complete `X360Linux/` boot folder automatically.
 - [ ] Package a simple bootable USB image; investigate optional HDD installation after persistence works.
 - [ ] Add a lightweight desktop, mouse and keyboard support.
+- [ ] Implement lightweight picture viewing and video playback suitable for Xenon's framebuffer and 512 MB RAM.
+- [ ] Support controller navigation inside Linux and test wired and wireless controller compatibility separately.
 - [ ] Improve the Xbox 360-specific kernel drivers and automatic hardware configuration.
 - [ ] Add package management, practical updates and modern TLS/certificates.
 - [ ] Investigate an up-to-date web browser that can actually run on PowerPC64; compatibility and speed are not guaranteed.
