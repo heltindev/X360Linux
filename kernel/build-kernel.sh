@@ -56,7 +56,9 @@ jobs="${JOBS:-2}"
 [[ "$jobs" =~ ^[1-9][0-9]*$ ]] || { echo "JOBS must be positive integer." >&2; exit 2; }
 
 make -C "$kernel_dir" ARCH=powerpc CROSS_COMPILE=xenon- olddefconfig
-make -C "$kernel_dir" ARCH=powerpc CROSS_COMPILE=xenon- -j "$jobs" zImage.xenon modules
+# First hardware milestone: build only the bootable kernel, not optional modules.
+# Graphics and other modular drivers will be developed after Linux reaches a shell.
+make -C "$kernel_dir" ARCH=powerpc CROSS_COMPILE=xenon- -j "$jobs" zImage.xenon
 
 candidate="$kernel_dir/arch/powerpc/boot/zImage.xenon"
 if [[ ! -s "$candidate" ]]; then
