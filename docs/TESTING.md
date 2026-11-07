@@ -8,9 +8,9 @@
 
 ## Try the X360Boot launcher (experimental)
 
-1. Download `x360boot.elf32` from the newest supported release, or build it with **Build Xbox 360** in the GitHub Actions tab.
+1. Download **`xenon.elf`** from [v0.1.0-alpha](https://github.com/heltindev/X360Linux/releases/tag/v0.1.0-alpha), or extract it from **`X360Linux-development-kit.zip`**.
 2. Format a spare USB drive as FAT32.
-3. Copy the launcher to the **root** of the USB drive and rename that **copy** to `xenon.elf` for XeLL's usual USB ELF search. Do **not** rename any file to `updxell.bin` or `updflash.bin`.
+3. Copy **`xenon.elf`** directly to the **root** of the USB drive. Do **not** rename files to `updxell.bin` or `updflash.bin`.
 4. Start the console using its already-working XeLL method, with this USB inserted. XeLL should load `xenon.elf` if its version and configuration support USB ELF loading.
 5. If the X360Boot menu appears, record the console model and a picture or short log. This is a **launcher test, not a Linux boot test**.
 
