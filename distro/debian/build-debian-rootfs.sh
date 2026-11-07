@@ -24,7 +24,11 @@ fi
 mkdir -p "$root/usr/bin"
 cp "$(command -v qemu-ppc-static)" "$root/usr/bin/qemu-ppc-static"
 # Child processes need binfmt_misc enabled by the CI workflow.
-if ! chroot "$root" /usr/bin/qemu-ppc-static /debootstrap/debootstrap --second-stage; then
+echo "Checking Debian PPC32 shell with qemu-user-static..."
+chroot "$root" /usr/bin/qemu-ppc-static /bin/sh -c 'echo QEMU_POWERPC_SHELL_READY'
+# qemu executes a PowerPC ELF (the shell), which then interprets the
+# debootstrap shell script; passing the script directly to qemu is invalid.
+if ! chroot "$root" /usr/bin/qemu-ppc-static /bin/sh /debootstrap/debootstrap --second-stage; then
     echo "Debian second stage failed: incomplete rootfs MUST NOT ship." >&2
     exit 1
 fi

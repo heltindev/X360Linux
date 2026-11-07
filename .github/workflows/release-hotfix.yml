@@ -1,0 +1,109 @@
+name: Package X360Linux v0.3 TV hotfix
+
+on:
+  workflow_dispatch:
+    inputs:
+      debian_run_id:
+        description: "Successful Debian Ports base workflow run ID (optional)"
+        required: false
+        type: string
+        default: ""
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  package:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 50
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install native and PowerPC build tools
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y \
+            gcc-powerpc-linux-gnu libc6-dev-powerpc-cross \
+            binutils-powerpc-linux-gnu qemu-user \
+            xorriso unzip make bzip2 curl python3
+      - name: Fetch known RGH and ABadAvatar packages from v0.3
+        run: |
+          mkdir -p dist/old dist/boot
+          curl -fL --retry 4 \
+            -o dist/old/RGH.zip \
+            https://github.com/heltindev/X360Linux/releases/download/v0.3.0-alpha/X360Linux-v0.3.0-alpha-RGH-USB.zip
+          curl -fL --retry 4 \
+            -o dist/old/FreeMyXe.zip \
+            https://github.com/heltindev/X360Linux/releases/download/v0.3.0-alpha/X360Linux-v0.3.0-alpha-ABadAvatar-FreeMyXe-USB.zip
+          unzip -tqq dist/old/RGH.zip
+          unzip -tqq dist/old/FreeMyXe.zip
+          unzip -p dist/old/RGH.zip X360Linux/vmlinux > dist/boot/vmlinux
+          unzip -p dist/old/RGH.zip X360Linux/xenon.dtb > dist/boot/xenon.dtb
+          unzip -p dist/old/RGH.zip xenon.elf > dist/boot/xenon.elf
+          test -s dist/boot/vmlinux
+      - name: Build corrected X360Desk and initramfs
+        run: |
+          bash distro/build-rootfs.sh
+          qemu-ppc -cpu 750 distro/desktop/x360desk --render-test 1280 720 /tmp/x360desk-720p.ppm
+          qemu-ppc -cpu 750 distro/desktop/x360desk --render-test 1920 1080 /tmp/x360desk-1080p.ppm
+      - name: Fetch verified Debian Ports base artifact
+        if: ${{ inputs.debian_run_id != '' }}
+        uses: actions/download-artifact@v4
+        with:
+          name: X360Linux-Debian-Ports-powerpc-base-EXPERIMENTAL
+          run-id: ${{ inputs.debian_run_id }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          path: dist/debian
+      - name: Verify optional Debian artifact hash
+        if: ${{ inputs.debian_run_id != '' }}
+        run: |
+          (cd dist/debian && sha256sum -c SHA256SUMS)
+          tar -tzf dist/debian/debian-ports-powerpc-rootfs.tar.gz | grep -q 'usr/bin/bash'
+      - name: Build ISO and two complete USB ZIP packs
+        run: |
+          opts=(
+            --kernel dist/boot/vmlinux
+            --dtb dist/boot/xenon.dtb
+            --initramfs distro/out/initramfs.cpio.gz
+            --output-dir dist/image --iso
+          )
+          if test -s dist/debian/debian-ports-powerpc-rootfs.tar.gz; then
+            opts+=(--debian-rootfs dist/debian/debian-ports-powerpc-rootfs.tar.gz)
+          fi
+          python3 distro/make_system_image.py "${opts[@]}"
+          extra=()
+          if test -s dist/debian/debian-ports-powerpc-rootfs.tar.gz; then
+            extra+=(--debian-rootfs dist/debian/debian-ports-powerpc-rootfs.tar.gz)
+          fi
+          python3 release/build_usb_packs.py \
+            --base-rgh dist/old/RGH.zip \
+            --base-freemyxe dist/old/FreeMyXe.zip \
+            --launcher dist/boot/xenon.elf \
+            --kernel dist/boot/vmlinux \
+            --dtb dist/boot/xenon.dtb \
+            --initramfs distro/out/initramfs.cpio.gz \
+            --iso dist/image/X360Linux-ELF-Linux-UNVERIFIED.iso \
+            --output-dir dist/publish \
+            --tag v0.3.0-alpha "${extra[@]}"
+      - name: Verify final packages and ISO inside ZIPs
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          from zipfile import ZipFile
+          p=Path("dist/publish")
+          iso=(p/"X360Linux-v0.3.0-alpha-XeLL-UNTESTED.iso").read_bytes()
+          assert iso[32769:32774]==b"CD001"
+          for name in ["X360Linux-v0.3.0-alpha-RGH-USB.zip",
+                       "X360Linux-v0.3.0-alpha-ABadAvatar-FreeMyXe-USB.zip"]:
+              with ZipFile(p/name) as z:
+                  assert z.testzip() is None
+                  assert z.read("X360Linux-v0.3.0-alpha-XeLL-UNTESTED.iso")==iso
+                  assert "X360Linux/initramfs.cpio.gz" in z.namelist()
+                  print("ZIP_ISO_CONSISTENT",name)
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: X360Linux-v03-TV-fix-publish-ready
+          path: dist/publish/
+          retention-days: 14
+          if-no-files-found: error

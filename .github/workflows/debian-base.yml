@@ -34,7 +34,7 @@ jobs:
         run: |
           test -s distro/out/debian-ports/debian-ports-powerpc-rootfs.tar.gz
           (cd distro/out/debian-ports && sha256sum -c SHA256SUMS)
-          tar -tzf distro/out/debian-ports/debian-ports-powerpc-rootfs.tar.gz | grep -q 'usr/bin/bash'
+          tar -tzf distro/out/debian-ports/debian-ports-powerpc-rootfs.tar.gz | grep 'usr/bin/bash'
       - uses: actions/upload-artifact@v4
         with:
           name: X360Linux-Debian-Ports-powerpc-base-EXPERIMENTAL
