@@ -7,6 +7,7 @@
     <img alt="Status: experimental" src="https://img.shields.io/badge/status-experimental-60bd45?style=for-the-badge" />
     <img alt="Architecture: PowerPC64 big-endian" src="https://img.shields.io/badge/architecture-PowerPC64%20BE-202b25?style=for-the-badge" />
     <img alt="Original license: Apache 2.0" src="https://img.shields.io/badge/original%20code-Apache--2.0-315a34?style=for-the-badge" />
+    <a href="https://github.com/heltindev/X360Linux/actions/workflows/verify.yml"><img alt="Static checks" src="https://github.com/heltindev/X360Linux/actions/workflows/verify.yml/badge.svg" /></a>
   </p>
   <p>
     <a href="#-start-here">Start here</a> ·
