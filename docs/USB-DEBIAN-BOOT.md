@@ -4,7 +4,7 @@ This image is the **real, already-installed Debian Ports 32-bit big-endian Power
 
 **No Xbox 360 HDD or NAND is modified.** The XeLL/X360Boot chain continues to load `xenon.elf`, `vmlinux`, `xenon.dtb` and a tiny BusyBox initramfs. That initramfs auto-detects *only* a FAT32 partition containing the exact X360Linux USB marker, opens the ext4 system image through the Linux loop device and tries `switch_root` into Debian.
 
-This is not a desktop installer wizard. **Extracting the ZIP onto a FAT32 pendrive is the installation step.** On first boot it attempts the Debian shell immediately; the earlier Photos/Videos/System program is **not included or started**. Changes in the ext4 system image may survive a clean shutdown, but the Xenon USB/loop/EXT4 boot path has **not yet been proven on the real console**.
+This is not a desktop installer wizard. **Extracting the ZIP onto a FAT32 pendrive is the installation step.** Debian opens its shell automatically. USB ext4 boot and interactive shell input have been confirmed on a real Xbox 360. File persistence after a reboot still needs testing.
 
 ## How to test on a modified Xbox 360
 
@@ -12,7 +12,7 @@ This is not a desktop installer wizard. **Extracting the ZIP onto a FAT32 pendri
 2. Back up the drive, then download the correct v0.3 USB ZIP.
 3. Extract it **to the FAT32 root** of a pendrive with at least 2 GB available. Keep `xenon.elf` at the root, alongside `X360Linux/`. The folder contains `system.ext4`, `USB-ROOT.ID`, the kernel, the recovery initramfs and the optional ISO.
 4. Insert the pendrive and start XeLL as usual. X360Boot automatically loads the Xenon Linux kernel after a brief cancel window.
-5. Linux scans USB for the marker, mounts **only the marked pendrive** for writing, then attempts to switch to the Debian root. Use a USB keyboard to run `cat /etc/os-release`.
+5. Linux scans USB for the marker, mounts **only the marked pendrive** for writing, then attempts to switch to the Debian root. Debian automatically runs `cat /etc/os-release` and shows the shell prompt. A USB keyboard is only needed to type further commands.
 6. If the BusyBox recovery shell appears, photograph the `X360Linux USB:` error above it. The error indicates whether Linux detected the drive, mounted FAT32, found the installation or reached the Debian runtime.
 
 **Important**: Debian PowerPC + ext4 loop on Xbox 360 is experimental. No accelerated desktop, controller-as-mouse, native MP4 or audio is promised here. Initial priority is getting a real Debian filesystem to boot. Only after that will we add a low-memory graphical desktop.

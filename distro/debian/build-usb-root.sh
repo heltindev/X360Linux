@@ -30,7 +30,7 @@ mkdir -p "$root/sbin" "$root/etc" "$root/root" "$root/bootusb"
 install -D -m 0755 "$rescue_bin" "$root/usr/lib/x360linux/busybox"
 cat > "$root/sbin/init" <<'EOF'
 #!/bin/sh
-# First boot starts the actual Debian filesystem from the USB ext4 image.
+# Boot starts the actual Debian filesystem from the USB ext4 image.
 # The kernel already mounted /proc, /sys, /dev and the FAT32 USB boot drive.
 PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
 export PATH
@@ -42,8 +42,8 @@ echo "=================================================="
 echo " X360Linux | Debian Ports powerpc (USB installation)"
 echo " This Linux system lives on the USB drive, not Xbox HDD."
 echo "=================================================="
-echo "Debian USB console (terminal hotfix)."
-echo "Use a USB keyboard to test: cat /etc/os-release"
+echo "Debian release information"
+"$BB" cat /etc/os-release
 echo "To preserve files, shut down cleanly before unplugging the USB."
 echo
 # Linux PID 1 must never exit, or the kernel would panic.
@@ -70,6 +70,9 @@ EOF
 # Exercise the installed BusyBox under the name used by init.
 sh -n "$root/sbin/init"
 installed_busybox="$root$(sed -n 's/^BB=//p' "$root/sbin/init")"
+qemu-ppc -cpu 750 -L "$root" "$installed_busybox" cat /etc/os-release > "$work/os-release"
+grep -qx 'ID=debian' "$work/os-release"
+printf '%s\n' "X360LINUX_DEBIAN_AUTO_RELEASE_OK"
 qemu-ppc -cpu 750 "$installed_busybox" sleep 0
 qemu-ppc -cpu 750 "$installed_busybox" setsid /bin/true
 qemu-ppc -cpu 750 "$installed_busybox" cttyhack /bin/true
