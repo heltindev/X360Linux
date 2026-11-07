@@ -2,7 +2,7 @@
 
 **Choose your version:**
 
-- **[v0.3.0-alpha — graphical preview](https://github.com/heltindev/X360Linux/releases/tag/v0.3.0-alpha):** framebuffer GUI, image viewer and silent experimental videos, with tentative controller cursor. Not verified on physical console. [v0.3 guide](V03-GRAPHICAL-PREVIEW.md).
+- **[v0.3.0-alpha — Debian USB](https://github.com/heltindev/X360Linux/releases/tag/v0.3.0-alpha)**. See the [USB Debian guide](USB-DEBIAN-BOOT.md) for startup and recovery.
 
 - **[v0.1.0-alpha — X360Boot menu test](https://github.com/heltindev/X360Linux/releases/tag/v0.1.0-alpha):** the menu has appeared on a real Xbox 360. This version does not include Linux boot files.
 - **[v0.2.0-alpha — experimental Linux shell boot](https://github.com/heltindev/X360Linux/releases/tag/v0.2.0-alpha):** includes the Xenon kernel, device tree, BusyBox shell, and optional ISO. The Linux kernel and BusyBox `#` shell prompt have now **been confirmed on real RGH hardware**. Keyboard input and controlling TTY are still being tested.

@@ -25,15 +25,15 @@ The Xenon Linux kernel and early graphics have already run on actual hardware, b
 
 ## 🚀 Quick start
 
-1. Download the **v0.4 USB Debian alpha ZIP** for your RGH/JTAG or existing FreeMyXe/ABadAvatar XeLL setup once published.
-2. Back up your FAT32 USB and extract the entire ZIP to its **root**. At least **2 GB free** is recommended.
+1. Download the **[v0.3.0-alpha USB Debian ZIP](https://github.com/heltindev/X360Linux/releases/tag/v0.3.0-alpha)** for your RGH/JTAG or existing FreeMyXe/ABadAvatar XeLL setup.
+2. Back up your FAT32 USB and extract the ZIP directly to its **root**, with `xenon.elf` next to the `X360Linux/` folder. At least **2 GB free** is recommended.
 3. Check the presence of `xenon.elf`, `X360Linux/vmlinux`, `X360Linux/initramfs.cpio.gz`, `X360Linux/USB-ROOT.ID`, and `X360Linux/system.ext4`.
 4. Boot the Xbox with the same XeLL method you already use. X360Boot automatically starts the Linux kernel.
 5. Linux searches for **only the explicitly marked USB partition**, mounts the ext4 system image and attempts Debian; otherwise it uses a rescue shell. A USB keyboard remains necessary for initial diagnostics.
 
-**No partitioning wizard, NAND flashing, Xbox HDD installation or internal disk formatting.** The Debian system is preinstalled inside `system.ext4`; extracting the ZIP onto the USB is the installation step. The optional ISO is bundled for experimentation but is **not needed to boot from USB**.
+**No partitioning wizard, NAND flashing, Xbox HDD installation or internal disk formatting.** The Debian system is preinstalled inside `system.ext4`; extracting the ZIP onto the USB is the installation step. The optional ISO is inside `X360Linux/` for experimentation.
 
-See [USB Debian beginner guide](docs/USB-DEBIAN-BOOT.md) and [recovery steps](docs/TESTING.md). The [v0.3 graphical preview](https://github.com/heltindev/X360Linux/releases/tag/v0.3.0-alpha) is preserved as the last console-tested build.
+See [USB Debian beginner guide](docs/USB-DEBIAN-BOOT.md) and [recovery steps](docs/TESTING.md).
 
 ## 📁 Project layout
 

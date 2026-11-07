@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Create v0.4 XeLL USB packs with an already-installed Debian ext4 root.
+"""Create v0.3 XeLL USB packs with an already-installed Debian ext4 root.
 
 No Xbox partitions are written. The ZIP is extracted to a normal FAT32 USB
 drive by the user; Linux then boots the preinstalled X360Linux/system.ext4.
@@ -25,7 +25,7 @@ def main():
     for key in ("old-rgh","old-freemyxe","kernel","dtb","launcher",
                 "initramfs","system-ext4","iso","output-dir"):
         a.add_argument("--"+key,type=Path,required=True)
-    a.add_argument("--tag",default="v0.4.0-alpha")
+    a.add_argument("--tag",default="v0.3.0-alpha")
     args=a.parse_args()
     paths={key:getattr(args,key.replace("-","_")) for key in
            ("old-rgh","old-freemyxe","kernel","dtb","launcher",
@@ -50,6 +50,7 @@ def main():
         a.error("Initramfs contains the old GUI or lacks Debian USB boot marker")
     out=args.output_dir.resolve();out.mkdir(parents=True,exist_ok=True)
     iso_name=f"X360Linux-{args.tag}-XeLL-EXPERIMENTAL.iso"
+    iso_path=f"X360Linux/{iso_name}"
     # Copy ISO without holding the whole 768 MiB filesystem in RAM.
     import shutil
     shutil.copyfile(args.iso,out/iso_name)
@@ -62,15 +63,15 @@ def main():
     text=(
         f"X360Linux {args.tag} - USB Debian PowerPC alpha\n"
         "==============================================\n"
-        "No Photos/Videos/System menu. Debian starts from the USB drive.\n"
+        "Debian is preinstalled in X360Linux/system.ext4.\n"
         "1. Back up your USB drive. It needs at least 2 GB available, FAT32.\n"
-        "2. Extract this ENTIRE ZIP to the root of that drive.\n"
+        "2. Extract the ZIP directly to the USB root (no outer ZIP folder).\n"
+        "   Keep xenon.elf at the root and all system files in X360Linux/.\n"
         "3. Boot your existing XeLL. X360Boot starts the Xenon kernel.\n"
         "4. The kernel looks for X360Linux/USB-ROOT.ID, then starts the\n"
         "   installed Debian Ports OS stored in X360Linux/system.ext4.\n"
-        "5. For first tests, connect a USB keyboard; use 'uname -a'.\n"
-        "   The graphical desktop is not available yet. A recovery shell\n"
-        "   appears if the USB ext4 installation cannot start.\n"
+        "5. With a USB keyboard, run 'cat /etc/os-release' in Debian.\n"
+        "   If it opens recovery, photograph the X360Linux USB error.\n"
         "6. Shut down cleanly before removing the drive.\n\n"
         "IMPORTANT: The included ISO is OPTIONAL and is NOT executed by\n"
         "XeLL from the USB drive. The real Linux OS is system.ext4.\n"
@@ -86,7 +87,8 @@ def main():
             info=[x for x in old.infolist() if not x.is_dir() and
                   not x.filename.endswith(".iso") and
                   not x.filename.startswith("X360MEDIA/") and
-                  x.filename not in ("X360Linux/system.ext4","X360Linux/USB-ROOT.ID")]
+                  x.filename not in ("X360Linux/system.ext4","X360Linux/USB-ROOT.ID",
+                                     "READ-ME-FIRST.txt","X360Linux/READ-ME-FIRST.txt")]
             names={x.filename for x in info}
             if not {"xenon.elf","X360Linux/vmlinux","X360Linux/xenon.dtb",
                     "X360Linux/initramfs.cpio.gz"}.issubset(names):
@@ -98,24 +100,23 @@ def main():
                 for item in info:
                     name=item.filename
                     if name in changes: dst.write(changes[name],name)
-                    elif name=="READ-ME-FIRST.txt":
-                        prefix=(
-                          "FreeMyXe: keep your existing working exploit files.\n"
-                          "Back up your old xell-2f.bin; merge BadUpdatePayload.\n"
-                          "This ZIP cannot exploit or unlock a stock Xbox.\n\n"
-                        ) if flavour!="RGH-USB" else ""
-                        dst.writestr(name,prefix+text)
                     else:dst.writestr(item,old.read(name))
+                prefix=(
+                    "FreeMyXe: keep your existing working exploit files.\n"
+                    "Back up your old xell-2f.bin; merge BadUpdatePayload.\n"
+                    "This ZIP cannot exploit or unlock a stock Xbox.\n\n"
+                ) if xell is not None else ""
+                dst.writestr("X360Linux/READ-ME-FIRST.txt",prefix+text)
                 dst.writestr("X360Linux/USB-ROOT.ID",MARKER)
                 dst.write(args.system_ext4,"X360Linux/system.ext4")
-                dst.write(args.iso,iso_name)
+                dst.write(args.iso,iso_path)
         with ZipFile(result) as verify:
             assert verify.testzip() is None
             assert verify.read("X360Linux/USB-ROOT.ID")==MARKER
             if xell is not None:
                 assert verify.read("BadUpdatePayload/xell-2f.bin")==xell
             assert "X360Linux/system.ext4" in verify.namelist()
-            assert iso_name in verify.namelist()
+            assert iso_path in verify.namelist()
             for name,p in changes.items():
                 assert hashlib.sha256(verify.read(name)).hexdigest()==digest(p)
         print("VALIDATED_USB_PACK",result.name,result.stat().st_size,digest(result),flush=True)

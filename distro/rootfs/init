@@ -1,65 +1,81 @@
 #!/bin/sh
-# X360Linux: boot the Debian Ports PowerPC system from its USB ext4 image.
-# Safety: never mount the Xbox 360 internal HDD for writing or flash NAND.
+# SPDX-License-Identifier: Apache-2.0
 PATH=/bin:/sbin:/usr/bin:/usr/sbin
 export PATH
 BB=/bin/busybox
-$BB mount -t proc proc /proc
-$BB mount -t sysfs sysfs /sys
-$BB mount -t devtmpfs devtmpfs /dev
-$BB mkdir -p /dev/pts /run /media/usb /newroot
+usb=/media/usb
+root=/newroot
+
+recover() {
+  $BB echo "X360Linux USB: $*"
+  $BB cat /proc/partitions
+  $BB dmesg | $BB grep -iE 'usb|ehci|ohci|scsi|FAT-fs|EXT4-fs|loop' | $BB tail -n 10
+  $BB echo "Recovery shell. Photograph the X360Linux USB error above."
+  exec $BB cttyhack /bin/sh -i </dev/console >/dev/console 2>&1
+}
+
+$BB mount -t proc proc /proc || recover "cannot mount proc"
+$BB mount -t sysfs sysfs /sys || recover "cannot mount sysfs"
+$BB mount -t devtmpfs devtmpfs /dev || recover "cannot mount devtmpfs"
+$BB mkdir -p /dev/pts
 $BB mount -t devpts devpts /dev/pts
 $BB hostname x360linux
-$BB echo "X360Linux | booting the Debian Ports system from USB..."
-$BB echo "The internal Xbox 360 drive is not used."
+$BB echo "X360Linux v0.3 USB | Looking for Debian (up to 30 seconds)..."
 
-# USB mass-storage detection can take several seconds after Xenon starts.
-found=0
+device=
+saw_usb=0
+saw_fat=0
+mount_error=
 attempt=0
-while [ "$attempt" -lt 12 ] && [ "$found" -eq 0 ]; do
+while [ "$attempt" -lt 30 ] && [ -z "$device" ]; do
   attempt=$((attempt + 1))
-  for part in /dev/sd[a-d][1-4]; do
+  for entry in /sys/class/block/*; do
+    # Use the kernel's USB ancestry rather than guessing sdX names.
+    path=$($BB readlink -f "$entry") || continue
+    case "$path" in */usb[0-9]*/*) ;; *) continue ;; esac
+    part=/dev/${entry##*/}
     [ -b "$part" ] || continue
-    $BB mount -t vfat -o ro "$part" /media/usb 2>/dev/null || continue
-    id=""
-    [ -f /media/usb/X360Linux/USB-ROOT.ID ] && \
-      id="$($BB cat /media/usb/X360Linux/USB-ROOT.ID)"
-    if [ "$id" = "X360LINUX-USB-ROOT-V1" ] && \
-       [ -f /media/usb/X360Linux/system.ext4 ]; then
-      found=1
-      device="$part"
-      $BB umount /media/usb
+    saw_usb=1
+    if ! error=$($BB mount -t vfat -o ro "$part" "$usb" 2>&1); then
+      mount_error="$part: $error"
+      continue
+    fi
+    saw_fat=1
+    if [ "$($BB cat "$usb/X360Linux/USB-ROOT.ID" 2>/dev/null)" = X360LINUX-USB-ROOT-V1 ] &&
+       [ -s "$usb/X360Linux/system.ext4" ]; then
+      device=$part
       break
     fi
-    $BB umount /media/usb
+    $BB umount "$usb" || recover "cannot unmount $part"
   done
-  [ "$found" -eq 1 ] || $BB sleep 1
+  [ -n "$device" ] || $BB sleep 1
 done
 
-if [ "$found" -eq 1 ]; then
-  $BB echo "X360Linux USB installation located on $device"
-  # Reopen *only* the explicitly marked volume in RW mode. All other
-  # partitions remain untouched and are never mounted RW.
-  # devtmpfs normally creates loop0; make the standard node if missing.
-  [ -b /dev/loop0 ] || $BB mknod /dev/loop0 b 7 0
-  if $BB mount -t vfat -o rw,umask=0077 "$device" /media/usb &&
-     $BB losetup /dev/loop0 /media/usb/X360Linux/system.ext4 &&
-     $BB mount -t ext4 -o rw,noatime /dev/loop0 /newroot; then
-    $BB mkdir -p /newroot/dev /newroot/proc /newroot/sys /newroot/bootusb
-    # Keep the FAT32 backing volume mounted *inside* the new root.
-    # Without this, loop-backed writes may fail after switch_root.
-    if $BB mount -o bind /media/usb /newroot/bootusb &&
-       $BB mount -o move /proc /newroot/proc &&
-       $BB mount -o move /sys /newroot/sys &&
-       $BB mount -o move /dev /newroot/dev; then
-      $BB echo "Starting Debian Ports PowerPC from USB..."
-      exec $BB switch_root -c /dev/console /newroot /sbin/init
-    fi
-  fi
-  $BB echo "USB root could not be mounted: check ext4/loop support."
-else
-  $BB echo "No X360Linux USB installation found (marker/system.ext4)."
+if [ -z "$device" ]; then
+  [ "$saw_usb" -eq 1 ] || recover "USB mass storage did not appear in Linux"
+  [ "$saw_fat" -eq 1 ] || recover "USB detected, FAT32 mount failed ($mount_error)"
+  recover "FAT32 mounted, but X360Linux/USB-ROOT.ID or system.ext4 is missing"
 fi
 
-$BB echo "Entering recovery shell. No changes to Xbox internal storage."
-exec $BB cttyhack /bin/sh -i </dev/console >/dev/console 2>&1
+$BB echo "X360Linux USB: Debian image found on $device"
+$BB mount -t vfat -o remount,rw,umask=0077 "$device" "$usb" ||
+  recover "cannot reopen $device for writes"
+# The Xenon kernel can allocate loop devices on demand. BusyBox uses loop-control.
+if ! $BB mount -t ext4 -o loop,rw,noatime "$usb/X360Linux/system.ext4" "$root"; then
+  $BB umount "$usb"
+  recover "cannot mount Debian system.ext4 (loop/ext4)"
+fi
+if ! $BB chroot "$root" /bin/sh -c ':' || [ ! -x "$root/sbin/init" ]; then
+  recover "Debian files mounted, but its PowerPC shell or init cannot run"
+fi
+
+# Keep the backing FAT mount and the live device nodes visible in Debian.
+$BB mkdir -p "$root/dev" "$root/proc" "$root/sys" "$root/bootusb"
+$BB mount -o bind "$usb" "$root/bootusb" &&
+  $BB mount -o bind /proc "$root/proc" &&
+  $BB mount -o bind /sys "$root/sys" &&
+  $BB mount -o rbind /dev "$root/dev" ||
+  recover "cannot prepare mounts for Debian"
+
+$BB echo "X360Linux USB: starting Debian Ports PowerPC..."
+exec $BB switch_root -c /dev/console "$root" /sbin/init

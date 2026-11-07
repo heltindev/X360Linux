@@ -1,10 +1,10 @@
-name: Package X360Linux v0.4 Debian USB
+name: Package X360Linux v0.3 Debian USB
 
 on:
   workflow_dispatch:
     inputs:
       linux_run_id:
-        description: "Successful Xenon kernel + recovery initramfs workflow run"
+        description: "Successful Xenon kernel + static PowerPC BusyBox workflow run"
         required: true
         type: string
       debian_run_id:
@@ -53,14 +53,16 @@ jobs:
           test -s dist/kernel/vmlinux
           test -s dist/recovery/busybox-static-ppc32
           test -s dist/debian/debian-ports-powerpc-rootfs.tar.gz
-          python3 - <<'PY'
-          import gzip
-          from pathlib import Path
-          raw=gzip.decompress(Path("dist/recovery/initramfs.cpio.gz").read_bytes())
-          assert b"X360LINUX-USB-ROOT-V1" in raw
-          assert b"bin/x360desk" not in raw
-          print("VERIFIED: Old Photos/Videos/System menu is absent")
-          PY
+      - name: Build the current USB boot initramfs
+        run: |
+          sh -n distro/rootfs/init
+          busybox=dist/recovery/busybox-static-ppc32
+          qemu-ppc -cpu 750 "$busybox" --list > dist/recovery/applets.txt
+          for applet in mount umount readlink chroot switch_root cttyhack dmesg grep tail; do
+            grep -qx "$applet" dist/recovery/applets.txt
+          done
+          python3 distro/pack_initramfs.py --busybox "$busybox" \
+            --init distro/rootfs/init --output dist/recovery/initramfs.cpio.gz
       - name: Create preinstalled Debian PowerPC ext4 root
         run: |
           sudo bash distro/debian/build-usb-root.sh \
@@ -101,32 +103,42 @@ jobs:
             --system-ext4 dist/install/system.ext4 \
             --iso dist/image/X360Linux-ELF-Linux-UNVERIFIED.iso \
             --output-dir dist/publish \
-            --tag v0.4.0-alpha
+            --tag v0.3.0-alpha
       - name: Check final USB ZIPs and optional ISO
         run: |
           python3 - <<'PY'
           from pathlib import Path
           from zipfile import ZipFile
-          from hashlib import sha256
+          from hashlib import file_digest
+          import gzip
           base=Path("dist/publish")
-          iso=base/"X360Linux-v0.4.0-alpha-XeLL-EXPERIMENTAL.iso"
+          iso=base/"X360Linux-v0.3.0-alpha-XeLL-EXPERIMENTAL.iso"
           with iso.open("rb") as f:
               f.seek(32769)
               assert f.read(5)==b"CD001"
-          expected=sha256(iso.read_bytes()).digest()
+          with iso.open("rb") as source:
+              expected=file_digest(source, "sha256").digest()
           for flavor in ("RGH-USB","ABadAvatar-FreeMyXe-USB"):
-              path=base/f"X360Linux-v0.4.0-alpha-{flavor}.zip"
+              path=base/f"X360Linux-v0.3.0-alpha-{flavor}.zip"
               with ZipFile(path) as z:
                   assert z.testzip() is None
                   assert z.read("X360Linux/USB-ROOT.ID")==b"X360LINUX-USB-ROOT-V1\n"
                   assert "X360Linux/system.ext4" in z.namelist()
-                  assert sha256(z.read(iso.name)).digest()==expected
+                  with z.open(f"X360Linux/{iso.name}") as source:
+                      assert file_digest(source, "sha256").digest()==expected
+                  with open("distro/rootfs/init", "rb") as source:
+                      assert source.read() in gzip.decompress(z.read("X360Linux/initramfs.cpio.gz"))
+                  roots = {name.split("/")[0] for name in z.namelist()}
+                  expected_roots = {"xenon.elf", "X360Linux"}
+                  if flavor.startswith("ABadAvatar"):
+                      expected_roots.add("BadUpdatePayload")
+                  assert roots == expected_roots, roots
                   assert "X360Linux/vmlinux" in z.namelist()
                   print("READY",path.name)
           PY
       - uses: actions/upload-artifact@v4
         with:
-          name: X360Linux-v0.4.0-alpha-USB-Debian-release
+          name: X360Linux-v0.3.0-alpha-USB-Debian-release
           path: dist/publish/
           retention-days: 14
           if-no-files-found: error
