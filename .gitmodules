@@ -1,0 +1,9 @@
+[submodule "external/xenos-linux-gpu"]
+	path = external/xenos-linux-gpu
+	url = https://github.com/arelyx/xenos-linux-gpu.git
+[submodule "external/free60-kernel-patches"]
+	path = external/free60-kernel-patches
+	url = https://github.com/Free60Project/linux-kernel-xbox360.git
+[submodule "external/xell-reloaded"]
+	path = external/xell-reloaded
+	url = https://github.com/Free60Project/xell-reloaded.git

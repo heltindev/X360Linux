@@ -1,0 +1,18 @@
+name: Validate documentation and scripts
+on:
+  push:
+  pull_request:
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check Bash script syntax
+        run: bash -n scripts/*.sh
+      - name: Check project files
+        run: python3 scripts/validate.py
+      - name: Check repository metadata
+        run: |
+          test -s README.md
+          test -s .gitmodules
+          test -s assets/x360linux-banner.svg

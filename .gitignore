@@ -1,0 +1,27 @@
+# Local build artifacts and downloaded source
+build/
+out/
+work/
+downloads/
+linux-*/
+mesa-src/
+xorg-src/
+*.o
+*.ko
+*.elf
+*.bin
+*.img
+*.iso
+*.tar
+*.tar.*
+*.log
+*.pyc
+__pycache__/
+.vscode/
+.idea/
+# Never commit console identity, NAND dumps or firmware
+*cpukey*
+*dvdkey*
+*nanddump*
+*updflash*
+*updxell*

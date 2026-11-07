@@ -1,0 +1,11 @@
+#KBOOTCONFIG
+; Experimental template for XeLL-Reloaded.
+; Replace EXAMPLE_HOST_IP with your TFTP/NFS host address before use.
+; Requires a known-good XeLL installation. This project does NOT flash NAND.
+; No release image is distributed by X360Linux.
+tftp_server=EXAMPLE_HOST_IP
+timeout=20
+default=linux_nfs
+
+; vmlinux must be a XeLL-compatible payload prepared for your kernel.
+linux_nfs="vmlinux root=/dev/nfs nfsroot=EXAMPLE_HOST_IP:/srv/nfs/xenon,vers=3,tcp,nolock ip=dhcp rw console=tty0 panic=30 maxcpus=6 coherent_pool=6M video=xenosfb"
