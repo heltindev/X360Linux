@@ -1,5 +1,31 @@
 # Architecture
 
+## XWT Boot: separated execution environments
+
+The preferred future boot architecture is:
+
+```text
+Hardware power-on -> existing RGH/JTAG/boot entry -> initial ELF loader
+                                                 |
+                                                 v
+                           XWT Boot ELF (LibXenon, own screen + settings)
+                                                 |
+                   +-----------------------------+
+                   |  Load Linux ELF + FDT + initramfs
+                   v
+                              Free60-patched Xenon Linux
+                                                 |
+                                   X360Linux minimal userspace
+```
+
+**An ELF cannot start itself on powered-off Xbox 360 hardware.** Some earlier loader or boot exploit is required for the first jump. Once XWT Boot is executing, it uses LibXenon's own Linux ELF functions, not a live XeLL menu/session. It is therefore a **separate ELF application**, not an additional operating system.
+
+XWT Boot persists the selected Linux folder, command-line parameters and optional autoboot in a FAT volume configuration file. It uses `elf_runWithDeviceTree` for direct handoff, but hardware validation has not yet been performed.
+
+The native **ISO9660 launcher** optionally carries the XWT ELF for a compatible XeLL initial CD/DVD boot. A **Linux operating system ISO** requires an independently working kernel plus rootfs and is not available yet.
+
+
+
 X360Linux is an integration workspace that ties together existing Xbox 360 Linux research. It does not replace XeLL, the Linux kernel or Mesa.
 
 ## Boot path

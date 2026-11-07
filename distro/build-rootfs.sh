@@ -1,0 +1,45 @@
+#!/usr/bin/env bash
+# SPDX-License-Identifier: Apache-2.0
+# Build static PowerPC64 big-endian BusyBox and minimal X360Linux initramfs.
+set -euo pipefail
+repo="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+out="${OUT_DIR:-$repo/distro/out}"
+work="${WORK_DIR:-$repo/distro/work}"
+bb_version="1.37.0"
+bb_src="$work/busybox-$bb_version"
+
+for cmd in curl tar make python3 powerpc64-linux-gnu-gcc powerpc64-linux-gnu-readelf; do
+    command -v "$cmd" >/dev/null || { echo "Install $cmd" >&2; exit 1; }
+done
+mkdir -p "$work" "$out"
+if [[ ! -f "$bb_src/Makefile" ]]; then
+    curl -fL --retry 3 -o "$work/busybox-$bb_version.tar.bz2" \
+        "https://busybox.net/downloads/busybox-$bb_version.tar.bz2"
+    tar -xjf "$work/busybox-$bb_version.tar.bz2" -C "$work"
+fi
+make -C "$bb_src" ARCH=powerpc CROSS_COMPILE=powerpc64-linux-gnu- defconfig
+python3 - "$bb_src/.config" <<'PY'
+import pathlib, sys
+p=pathlib.Path(sys.argv[1])
+text=p.read_text()
+text=text.replace("# CONFIG_STATIC is not set", "CONFIG_STATIC=y")
+text=text.replace('CONFIG_EXTRA_CFLAGS=""', 'CONFIG_EXTRA_CFLAGS="-mcpu=970 -mno-altivec"')
+p.write_text(text)
+PY
+make -C "$bb_src" ARCH=powerpc CROSS_COMPILE=powerpc64-linux-gnu- olddefconfig
+make -C "$bb_src" ARCH=powerpc CROSS_COMPILE=powerpc64-linux-gnu- -j "${JOBS:-2}"
+test -s "$bb_src/busybox"
+powerpc64-linux-gnu-readelf -h "$bb_src/busybox" | grep -q 'PowerPC64'
+if powerpc64-linux-gnu-readelf -l "$bb_src/busybox" | grep -q 'INTERP'; then
+    echo "BusyBox is dynamic; refusing to package without shared libraries" >&2
+    exit 1
+fi
+python3 "$repo/distro/pack_initramfs.py" \
+    --busybox "$bb_src/busybox" --init "$repo/distro/rootfs/init" \
+    --output "$out/initramfs.cpio.gz"
+(cd "$out" && sha256sum initramfs.cpio.gz > SHA256SUMS)
+printf '%s\n' "Experimental X360Linux PowerPC64 big-endian userspace." \
+    "Requires a separate, compatible Free60-patched Linux ELF32 kernel." \
+    "The initramfs is a BusyBox shell, NOT a full Linux desktop." \
+    "BusyBox copyright and license: https://busybox.net/license.html (GPL-2.0)." \
+    > "$out/READ-ME-FIRST.txt"

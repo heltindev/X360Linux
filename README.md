@@ -31,6 +31,19 @@ A separate, **unverified preservation archive** is available for the early XeLLL
 
 Only use with a compatible previously modified console and recovery method; never flash an unknown XeLL image. The 2011 system may be insecure for modern internet use.
 
+## 🧩 XWT Boot — native ELF boot manager
+
+**XWT Boot is a separate bare-metal application** with its own framebuffer menu, controller navigation, folder selection, and persistent boot configuration. It is not the Linux operating system, and it does not need XeLL's menu after its own ELF has been launched.
+
+- **[Explore XWT Boot source and instructions](xwtboot/README.md)** — `xwtboot.elf32` compiled with LibXenon; direct Linux ELF + device-tree handoff is experimental.
+- **[Build our own minimal Linux userspace](distro/README.md)** — static PowerPC64 big-endian BusyBox initramfs, separate from XWT Boot.
+- **[Compile upstream XeLL automatically](.github/workflows/build-xell.yml)** — RGH/JTAG reference build artifacts; never flash unverified binaries.
+- **[Build XWT Boot ELF and launcher ISO](.github/workflows/build-xwtboot.yml)** — XeLL-loadable ELF32 and optional CD/DVD launcher ISO9660.
+- **[X360Linux rootfs Action](.github/workflows/build-linux-rootfs.yml)** — own minimalist initramfs without bundling an unverified kernel.
+
+> [!WARNING]
+> CI-compilable does not mean console-bootable. No XWT Boot/Linux boot has been verified on physical hardware. The XWT ISO only starts the ELF manager; it is **not** yet a complete Linux distribution.
+
 ## 🌱 What is X360Linux?
 
 X360Linux connects existing Xbox 360 Linux research into one **reproducible, inspectable development workspace**. Instead of promising a magical one-click operating system, it prioritizes reliable boot, GPU bring-up, a minimal usable desktop, hardware testing and practical documentation.

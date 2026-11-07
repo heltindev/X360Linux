@@ -1,0 +1,20 @@
+#!/bin/sh
+# X360Linux minimal initramfs (PowerPC64 BE) — not a full distribution.
+PATH=/bin:/sbin:/usr/bin:/usr/sbin
+export PATH
+/bin/busybox mount -t proc proc /proc
+/bin/busybox mount -t sysfs sysfs /sys
+/bin/busybox mount -t devtmpfs devtmpfs /dev
+/bin/busybox mkdir -p /dev/pts /run
+/bin/busybox mount -t devpts devpts /dev/pts
+/bin/busybox hostname x360linux
+/bin/busybox echo ""
+/bin/busybox echo "=================================================="
+/bin/busybox echo " X360Linux - early experimental initramfs shell"
+/bin/busybox echo " PowerPC64 big-endian / Free60 Xenon kernel"
+/bin/busybox echo "=================================================="
+/bin/busybox echo "No desktop is installed. This is a minimal shell."
+/bin/busybox echo "Type: uname -a, dmesg, cat /proc/meminfo"
+/bin/busybox echo "To reboot: reboot -f"
+/bin/busybox echo ""
+exec /bin/sh -i </dev/console >/dev/console 2>&1

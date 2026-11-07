@@ -1,0 +1,60 @@
+name: Build upstream XeLL (reference)
+on:
+  push:
+    paths:
+      - ".github/workflows/build-xell.yml"
+      - ".gitmodules"
+      - "external/xell-reloaded"
+  pull_request:
+    paths:
+      - ".github/workflows/build-xell.yml"
+      - ".gitmodules"
+      - "external/xell-reloaded"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  xell:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    container:
+      image: free60/libxenon:latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+          fetch-depth: 0
+      - name: Setup Free60 cross-toolchain
+        run: |
+          echo "DEVKITXENON=/usr/local/xenon" >> "$GITHUB_ENV"
+          echo "/usr/local/xenon/bin" >> "$GITHUB_PATH"
+          echo "/usr/local/xenon/usr/bin" >> "$GITHUB_PATH"
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          git config --global --add safe.directory "$GITHUB_WORKSPACE/external/xell-reloaded"
+      - name: Compile XeLL for RGH (upstream source)
+        run: |
+          set -eu
+          cd external/xell-reloaded
+          make xell-gggggg.bin
+          test -s xell-gggggg.bin
+          mkdir -p "$GITHUB_WORKSPACE/dist/xell"
+          cp xell-gggggg.bin "$GITHUB_WORKSPACE/dist/xell/xell-rgh-reference.bin"
+          make clean
+      - name: Compile XeLL for JTAG (upstream source)
+        run: |
+          set -eu
+          cd external/xell-reloaded
+          make xell-2f.bin
+          test -s xell-2f.bin
+          cp xell-2f.bin "$GITHUB_WORKSPACE/dist/xell/xell-jtag-reference.bin"
+          cd "$GITHUB_WORKSPACE/dist/xell"
+          sha256sum *.bin > SHA256SUMS
+          printf '%s\n' "EXPERIMENTAL upstream XeLL reference builds."             "DO NOT rename to updxell.bin or updflash.bin."             "Do not flash NAND. Boot/recovery compatibility is untested."             > READ-ME-FIRST.txt
+      - uses: actions/upload-artifact@v4
+        with:
+          name: XeLL-upstream-reference-DO-NOT-FLASH
+          path: dist/xell/
+          if-no-files-found: error
+          retention-days: 14

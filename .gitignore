@@ -1,4 +1,16 @@
 # Local build artifacts and downloaded source
+distro/work/
+distro/out/
+xwtboot/build/
+xwtboot/*.elf
+xwtboot/*.elf32
+xwtboot/*.map
+dist/
+*.iso
+*.cpio
+*.cpio.gz
+*.bak
+
 build/
 out/
 work/
