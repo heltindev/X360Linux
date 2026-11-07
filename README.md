@@ -10,7 +10,7 @@
 | Component | Status |
 |---|---|
 | **X360Boot launcher** (native Xbox 360 ELF) | ✅ Compiles; menu confirmed on real Xbox 360 |
-| **Minimal Linux system** (PowerPC32 BusyBox) | 🟡 Rebuilding for Xenon after a real-hardware CPU instruction fault |
+| **Minimal Linux system** (PowerPC32 BusyBox) | ✅ Compiles and passes PowerPC QEMU smoke tests; console shell unverified |
 | **XeLL bootloader** | ✅ Reference builds compile |
 | **Xbox 360 Linux kernel** | ✅ Booted on a real RGH Xbox 360; reached PID 1 |
 | **Linux booting on a real Xbox 360** | 🟡 Kernel started; old PPC64 BusyBox failed with SIGILL before shell |
