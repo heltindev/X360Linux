@@ -30,6 +30,12 @@ int x360_path_is_safe(const char *path) {
     }
     return 1;
 }
+int x360_settings_select_folder(struct x360_settings *settings, const char *folder) {
+    if (!settings || !x360_path_is_safe(folder)) return -1;
+    /* x360_path_is_safe() enforces X360_PATH_MAX and slash termination. */
+    strcpy(settings->folder, folder);
+    return 0;
+}
 static void trim(char *text) {
     size_t n = strlen(text);
     while (n && (text[n - 1] == '\r' || text[n - 1] == '\n' ||

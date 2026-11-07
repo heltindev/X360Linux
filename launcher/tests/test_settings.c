@@ -17,7 +17,12 @@ int main(void) {
     assert(!x360_path_is_safe("../"));
     assert(!x360_path_is_safe("uda0:/A\nB/"));
     assert(!x360_path_is_safe("uda0:/Linux"));
-    strcpy(a.folder, "uda0:/X360Linux/");
+    assert(x360_settings_select_folder(&a, "uda0:/X360Linux/") == 0);
+    assert(!strcmp(a.folder, "uda0:/X360Linux/"));
+    assert(x360_settings_select_folder(&a, "uda0:/../bad/") == -1);
+    assert(!strcmp(a.folder, "uda0:/X360Linux/"));
+    assert(x360_settings_select_folder(NULL, "uda0:/X360Linux/") == -1);
+    assert(x360_settings_select_folder(&a, NULL) == -1);
     a.autoboot = 1;
     assert(x360_settings_save(path, &a) == 0);
     assert(x360_settings_load(path, &b) == 0);

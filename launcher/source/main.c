@@ -61,17 +61,14 @@ static void refresh_folders(void) {
 static int set_device(int next) {
     const char *name = NULL;
     int handle = bdev_enum(next ? ui.handle : -1, &name);
-    char conf[X360_PATH_MAX];
     if (handle < 0 && next) handle = bdev_enum(-1, &name);
     if (handle < 0 || !name || strlen(name) >= sizeof(ui.device)) return -1;
     ui.handle = handle;
     strcpy(ui.device, name);
     if (snprintf(ui.current, sizeof(ui.current), "%s:/", name) >= (int)sizeof(ui.current)) return -1;
     x360_settings_default(&ui.boot);
-    if (snprintf(conf, sizeof(conf), "%s:/x360boot.cfg", name) < (int)sizeof(conf)) {
-        if (x360_settings_load(conf, &ui.boot) == 0)
-            printf("Loaded saved configuration from %s\n", conf);
-    }
+    /* Loading/saving configuration on this libfat build is suspended.
+       Selecting a folder must never write to the USB drive. */
     refresh_folders();
     return 0;
 }
@@ -91,15 +88,16 @@ static void enter_folder(void) {
     strcpy(ui.current, path);
     refresh_folders();
 }
-static int save_current(void) {
-    char config_file[X360_PATH_MAX];
-    if (snprintf(config_file, sizeof(config_file), "%s:/x360boot.cfg", ui.device) >=
-        (int)sizeof(config_file)) return -1;
-    strcpy(ui.boot.folder, ui.current);
-    if (x360_settings_save(config_file, &ui.boot) != 0) {
-        puts("Could not save to this drive. Check FAT filesystem write access.");
+static int select_current(void) {
+    if (!x360_linux_files_present(ui.current)) {
+        puts("This folder needs vmlinux and xenon.dtb. Press B to go back.");
         return -1;
     }
+    if (x360_settings_select_folder(&ui.boot, ui.current) != 0) {
+        puts("Invalid Linux directory. Press B to go back.");
+        return -1;
+    }
+    puts("Linux folder selected IN MEMORY. Press Y to try Linux.");
     return 0;
 }
 static void render(void) {
@@ -130,12 +128,12 @@ static void render(void) {
     }
     puts("-------------------------------------------------------------");
     puts("D-Pad : navigate  | A: enter directory | B: parent/cancel");
-    puts("X     : select Linux folder + save configuration");
+    puts("X     : select Linux folder (memory only; NO USB writes)");
     puts("Y     : START LINUX (experimental handoff)");
-    puts("START : toggle autoboot and save | LB/RB: next drive");
+    puts("START : disabled temporarily | LB/RB: next drive");
     puts("-------------------------------------------------------------");
     puts("Linux directory must contain vmlinux + xenon.dtb.");
-    puts("Optional: initramfs.cpio.gz; boot arguments are in x360boot.cfg.");
+    puts("Optional: initramfs.cpio.gz. Config saving is disabled for safety.");
     puts("Never flash NAND. Keep a working recovery method.");
 }
 static int pressed(const struct controller_data_s *p) {
@@ -161,17 +159,7 @@ int main(void) {
         puts("Insert a FAT32 drive and reboot using the known-good loader.");
         for (;;) { usb_do_poll(); udelay(100000); }
     }
-    if (ui.boot.autoboot && x360_linux_files_present(ui.boot.folder)) {
-        int cancel = 0, t;
-        puts("Saved auto-boot in 4 seconds. Press B to cancel.");
-        for (t = 0; t < 40; ++t) {
-            usb_do_poll();
-            memset(&pad, 0, sizeof(pad));
-            if (get_controller_data(&pad, 0) && pad.b) { cancel = 1; break; }
-            udelay(100000);
-        }
-        if (!cancel) x360_boot_linux(&ui.boot);
-    }
+    /* Never auto-boot or load any saved configuration in the test build. */
     for (;;) {
         if (dirty) { render(); dirty = 0; }
         usb_do_poll();
@@ -191,11 +179,9 @@ int main(void) {
         } else if (pad.lb || pad.rb) {
             set_device(1);
         } else if (pad.x) {
-            if (save_current() == 0)
-                puts("Saved Linux directory to x360boot.cfg");
+            select_current();
         } else if (pad.start) {
-            ui.boot.autoboot = !ui.boot.autoboot;
-            if (ui.boot.folder[0]) save_current();
+            puts("Auto-boot and USB config saving are disabled for this test.");
         } else if (pad.y) {
             if (ui.boot.folder[0]) {
                 int r = x360_boot_linux(&ui.boot);

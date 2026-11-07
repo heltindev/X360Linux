@@ -12,6 +12,8 @@ struct x360_settings {
 };
 void x360_settings_default(struct x360_settings *out);
 int x360_path_is_safe(const char *path);
+/* Session-only selection: never writes to a FAT filesystem. */
+int x360_settings_select_folder(struct x360_settings *settings, const char *folder);
 int x360_settings_load(const char *filename, struct x360_settings *out);
 int x360_settings_save(const char *filename, const struct x360_settings *settings);
 #endif
