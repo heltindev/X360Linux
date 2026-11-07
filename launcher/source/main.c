@@ -114,7 +114,14 @@ static void render(void) {
     printf("Linux  : %s\n", ui.boot.folder[0] ? ui.boot.folder : "(not selected)");
     printf("Boot on next launch: %s\n", ui.boot.autoboot ? "ON (cancel with B)" : "OFF");
     puts("-------------------------------------------------------------");
-    if (ui.count == 0) puts("No subfolders found on this drive.");
+    if (ui.count == 0) {
+        if (x360_linux_files_present(ui.current)) {
+            puts("LINUX FILES FOUND in this folder!");
+            puts("Press X to select this folder, then Y to try booting Linux.");
+        } else {
+            puts("No folders inside this directory. Press B to go back.");
+        }
+    }
     start = ui.selected > 8 ? ui.selected - 8 : 0;
     end = start + 16;
     if (end > ui.count) end = ui.count;
