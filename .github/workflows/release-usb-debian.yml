@@ -57,9 +57,10 @@ jobs:
         run: |
           sh -n distro/rootfs/init
           busybox=dist/recovery/busybox-static-ppc32
+          chmod +x "$busybox"
           qemu-ppc -cpu 750 "$busybox" --list > dist/recovery/applets.txt
           for applet in mount umount readlink chroot switch_root cttyhack dmesg grep tail; do
-            grep -qx "$applet" dist/recovery/applets.txt
+            grep -qx "$applet" dist/recovery/applets.txt || { echo "Missing BusyBox applet $applet"; exit 1; }
           done
           python3 distro/pack_initramfs.py --busybox "$busybox" \
             --init distro/rootfs/init --output dist/recovery/initramfs.cpio.gz
