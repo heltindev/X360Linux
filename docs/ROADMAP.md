@@ -1,6 +1,6 @@
 # X360Linux development roadmap
 
-**Current goal:** Start an interactive Linux shell on a real Xbox 360 through XeLL. Only verified console behavior is marked as working.
+**Current goal:** Make the BusyBox shell fully interactive with a USB keyboard, then work toward an actual graphical distribution. The kernel and `#` shell prompt have already been verified on a real Xbox 360; console input and TTY behavior still need testing.
 
 ## 1. First Linux boot (current milestone)
 
@@ -10,8 +10,9 @@
 - [x] Start the Linux kernel on real Xbox 360 hardware; it reached the initramfs at `/init`.
 - [x] Identify the original BusyBox PowerPC64 illegal-instruction failure.
 - [x] Build a conservative static PowerPC32 BusyBox and smoke-test it under PowerPC emulation.
-- [x] Simplify X360Boot: highlight the X360Linux folder, press A once, attempt Linux boot.
-- [ ] **Prove that the new PowerPC32 BusyBox reaches a usable interactive shell on a real Xbox 360.**
+- [x] Simplify X360Boot: detect the X360Linux folder and autostart after a short, B-to-cancel delay.
+- [x] **Reach the PowerPC32 BusyBox `#` shell prompt on a real RGH Xbox 360** (photo verified).
+- [ ] **Verify USB keyboard interaction and controlling TTY**, with BusyBox `cttyhack`.
 - [ ] Confirm reliable reboot, logs and failure recovery.
 
 ## 2. Reliability and storage

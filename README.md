@@ -10,21 +10,21 @@
 | Component | Status |
 |---|---|
 | **X360Boot launcher** (native Xbox 360 ELF) | ✅ Compiles; menu confirmed on real Xbox 360 |
-| **Minimal Linux system** (PowerPC32 BusyBox) | ✅ Compiles and passes PowerPC QEMU smoke tests; console shell unverified |
+| **Minimal Linux system** (PowerPC32 BusyBox) | ✅ Reached the BusyBox shell prompt on a real RGH Xbox 360 |
 | **XeLL bootloader** | ✅ Reference builds compile |
 | **Xbox 360 Linux kernel** | ✅ Booted on a real RGH Xbox 360; reached PID 1 |
-| **Linux booting on a real Xbox 360** | 🟡 Kernel started; old PPC64 BusyBox failed with SIGILL before shell |
+| **Linux booting on a real Xbox 360** | ✅ Kernel and BusyBox shell started; interactive keyboard/TTY still under test |
 | **Graphics, sound, networking and storage** | ⬜ Not verified in this project |
 | **Experimental Linux ISO and USB image** | 🟡 v0.2 alpha available; boot not yet verified |
 
-**Goal:** Reach an interactive Linux shell on real Xbox 360 hardware, then improve drivers and a lightweight desktop. The Xenon kernel has already reached `/init` on an RGH console, but the old BusyBox hit an illegal instruction. The next test uses conservative 32-bit PowerPC BusyBox. This is experimental, **not a claim of full compatibility**.
+**Milestone achieved:** the Xenon kernel and PowerPC32 BusyBox reached the `#` shell prompt on a real RGH Xbox 360. The latest change uses BusyBox `cttyhack` to address the controlling-terminal warning and starts Linux automatically if the USB folder is complete. **Keyboard interaction, TTY control and a full desktop are not yet verified.** This is experimental, not a finished distribution.
 
 ## 🚀 Start here
 
 1. **[v0.1.0-alpha — menu test](https://github.com/heltindev/X360Linux/releases/tag/v0.1.0-alpha)**: choose the RGH or ABadAvatar/FreeMyXe ZIP. The X360Boot menu is confirmed.
 2. **[v0.2.0-alpha — experimental Linux test](https://github.com/heltindev/X360Linux/releases/tag/v0.2.0-alpha)**: USB packs now include the kernel, device tree and minimal shell; an untested ISO is also available.
 3. Read **[Getting started and Xbox 360 testing](docs/TESTING.md)**. Only extract the ZIP for USB; the ISO is for compatible XeLL optical boot methods.
-4. In the simplified X360Boot, move to **X360Linux** and press **A** to attempt boot. The progress bar covers preparation, not guaranteed boot success. A kernel panic may still show diagnostics. GitHub Actions passing does **not** prove the shell works on console.
+4. **Autostart:** launch your working XeLL with the USB drive inserted. X360Boot detects the `X360Linux/` folder and starts it automatically after a 3-second window. **Press B to cancel** and keep the menu. The terminal is still minimal BusyBox, not Debian or a graphical desktop.
 
 > **Required:** An already-working XeLL method: RGH/JTAG, or a compatible software exploit with FreeMyXe. The ABadAvatar ZIP is an add-on to existing exploit files, not an unlocker. There is no `default.xex` or NAND installer here. Never flash experimental boot files.
 
@@ -51,7 +51,8 @@ X360Linux/
 - [x] Compile experimental Xbox 360 Linux kernel candidates in GitHub Actions.
 - [x] Verify the Xenon kernel reaches the initramfs on the real console (old BusyBox then failed with SIGILL).
 - [x] Boot the Xenon kernel through XeLL on a **real Xbox 360** (reached `/init`).
-- [ ] Reach an interactive Linux shell and document hardware test results.
+- [x] Reach a BusyBox `#` shell prompt on a real Xbox 360 (photo confirmed).
+- [ ] Confirm interactive USB keyboard commands and controlling TTY (BusyBox `cttyhack` update still to be tested).
 
 ### Phase 2 — Reliable hardware and storage
 
@@ -65,7 +66,7 @@ X360Linux/
 
 - [ ] Evaluate minimal Debian PPC64 **big-endian** packages against the current BusyBox base.
 - [ ] Build a reproducible X360Linux distribution optimized for the Xbox 360's 512 MB RAM.
-- [x] Make X360Boot detect a complete `X360Linux/` boot folder and start loading when A is pressed.
+- [x] Make X360Boot detect a complete `X360Linux/` folder and start automatically after a 3-second, B-to-cancel window.
 - [ ] Package a simple bootable USB image; investigate optional HDD installation after persistence works.
 - [ ] Add a lightweight desktop, mouse and keyboard support.
 - [ ] Implement lightweight picture viewing and video playback suitable for Xenon's framebuffer and 512 MB RAM.

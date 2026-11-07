@@ -63,6 +63,8 @@ jobs:
           bash distro/build-rootfs.sh
           qemu-ppc -cpu 750 distro/work/busybox-1.37.0/busybox true
           qemu-ppc -cpu 750 distro/work/busybox-1.37.0/busybox sh -c 'echo X360LINUX_PPC32_SMOKE_OK'
+          qemu-ppc -cpu 750 distro/work/busybox-1.37.0/busybox --list | grep -qx cttyhack
+          grep -q 'exec /bin/busybox cttyhack /bin/sh -i' distro/rootfs/init
           powerpc-linux-gnu-readelf -h distro/work/busybox-1.37.0/busybox
           echo "QEMU smoke test does NOT replace real Xbox 360 testing."
       - uses: actions/upload-artifact@v4

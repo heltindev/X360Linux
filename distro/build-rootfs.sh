@@ -24,6 +24,9 @@ import pathlib, sys
 p=pathlib.Path(sys.argv[1])
 text=p.read_text()
 text=text.replace("# CONFIG_STATIC is not set", "CONFIG_STATIC=y")
+# cttyhack gives the interactive shell a real controlling terminal instead of
+# /dev/console (BusyBox upstream documentation explicitly recommends this).
+text=text.replace("# CONFIG_CTTYHACK is not set", "CONFIG_CTTYHACK=y")
 # Xenon can run 32-bit userspace; baseline PPC avoids requiring 64-bit or
 # AltiVec/VSX instructions that may not exist or be usable on this console.
 text=text.replace('CONFIG_EXTRA_CFLAGS=""', 'CONFIG_EXTRA_CFLAGS="-mcpu=powerpc -mno-altivec -mno-vsx"')
@@ -38,6 +41,10 @@ text=text.replace("CONFIG_TC=y", "# CONFIG_TC is not set")
 p.write_text(text)
 PY
 make -C "$bb_src" ARCH=powerpc CROSS_COMPILE=powerpc-linux-gnu- oldconfig </dev/null
+grep -qx 'CONFIG_CTTYHACK=y' "$bb_src/.config" || {
+    echo "BusyBox must include cttyhack for the Xenon shell console" >&2
+    exit 1
+}
 make -C "$bb_src" ARCH=powerpc CROSS_COMPILE=powerpc-linux-gnu- -j "${JOBS:-2}"
 test -s "$bb_src/busybox"
 powerpc-linux-gnu-readelf -h "$bb_src/busybox" | grep -q 'Machine:.*PowerPC'

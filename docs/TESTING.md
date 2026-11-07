@@ -3,7 +3,7 @@
 **Choose your version:**
 
 - **[v0.1.0-alpha — X360Boot menu test](https://github.com/heltindev/X360Linux/releases/tag/v0.1.0-alpha):** the menu has appeared on a real Xbox 360. This version does not include Linux boot files.
-- **[v0.2.0-alpha — experimental Linux shell boot](https://github.com/heltindev/X360Linux/releases/tag/v0.2.0-alpha):** includes the Xenon kernel, device tree, BusyBox shell, and optional ISO. The Linux shell has **not yet been verified on real Xbox 360 hardware**.
+- **[v0.2.0-alpha — experimental Linux shell boot](https://github.com/heltindev/X360Linux/releases/tag/v0.2.0-alpha):** includes the Xenon kernel, device tree, BusyBox shell, and optional ISO. The Linux kernel and BusyBox `#` shell prompt have now **been confirmed on real RGH hardware**. Keyboard input and controlling TTY are still being tested.
 
 ## Which ZIP do I need?
 
@@ -16,16 +16,16 @@
 1. Prepare a USB drive with **FAT32**. Formatting erases files: make a backup first.
 2. **Extract your ZIP directly onto the USB drive.** You should see `xenon.elf` at the top of the drive.
 3. Plug it into your Xbox 360 and start your existing **XeLL** (often with **Eject**).
-4. When **X360Boot** opens, you are ready to test the menu.
+4. If the standard `X360Linux/` folder is present, **X360Boot automatically starts Linux after about three seconds**. No button is required. Press **B** during the countdown only if you need to return to the menu.
 
-**For the updated v0.2.0-alpha:** use the D-pad to highlight `X360Linux`, then press **A once** to try starting Linux. No X, Y or configuration save is needed. You will see a preparation progress bar, followed by the kernel's own startup. A kernel failure may still display technical messages.
+**For the updated v0.2.0-alpha:** the standard USB folder is detected automatically. X360Boot starts Linux without pressing A. **B cancels during the 3-second window**; if you cancel, press **A** on `X360Linux` to start manually. The bar shows preparation steps, not guaranteed boot success.
 
 ## ABadAvatar/BadUpdate + FreeMyXe — 4 steps
 
 1. **Keep your existing exploit/FreeMyXe files** on the FAT32 USB drive. Do not delete them.
 2. Extract your **ABadAvatar-FreeMyXe** ZIP onto that same USB drive. **Merge** the `BadUpdatePayload` folder instead of replacing it. Back up an existing `xell-2f.bin` before replacing it.
 3. Run your normal exploit and choose **Launch XeLL** in FreeMyXe.
-4. When **X360Boot** opens, highlight **X360Linux** and press **A once**. The boot attempt will begin automatically.
+4. After XeLL launches X360Boot, it should detect `X360Linux/` and begin the Linux boot automatically. **B during the 3-second countdown** keeps the menu available.
 
 These steps are specifically for **FreeMyXe**. Other software exploit setups may require their own XeLL configuration.
 
@@ -51,8 +51,8 @@ The optional `.iso` on v0.2 is an **experimental ISO9660 image** containing Linu
 
 ## Controller and Linux status
 
-- The **X360Boot menu already supports the Xbox 360 controller**: D-pad to move, A to open a folder or boot Linux, B to go back, LB/RB to switch drives. No settings are written to USB. **Kernel startup is not measurable by the launcher; the progress bar only reports real preparation stages.**
-- **Inside Linux**, Xbox 360 controller support, graphics, audio, network and HDD persistence are still unverified. The first goal is to reach a command-line shell.
+- **Autostart:** if the standard Linux files are present, X360Boot waits three seconds and begins booting automatically. Press **B** to cancel. The menu still supports D-pad, A, B and LB/RB. No settings or Xbox HDD contents are written. The progress bar only shows preparation stages, not Linux execution.
+- **Inside Linux**, the PowerPC32 BusyBox `#` shell prompt has been reached on real RGH hardware. Connect a **USB keyboard** to test commands. The earlier `can't access tty` message comes from `/dev/console`; the updated `cttyhack` shell may fix job control, but this needs hardware verification. Controller input, graphics acceleration, audio, network and storage persistence remain unverified.
 - **Debian PPC64**, a desktop, browser and image/video players are future work. This alpha tests a minimal **PowerPC32 BusyBox** userspace with a **64-bit Xenon kernel**, after a CPU illegal instruction in the older PowerPC64 build.
 
 ## How to report a test

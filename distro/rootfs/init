@@ -20,8 +20,14 @@ fi
 /bin/busybox echo " X360Linux - early experimental initramfs shell"
 /bin/busybox echo " PowerPC32 big-endian userspace / 64-bit Xenon kernel"
 /bin/busybox echo "=================================================="
-/bin/busybox echo "No desktop is installed. This is a minimal shell."
+/bin/busybox echo "Linux started successfully on this Xbox 360!"
+/bin/busybox echo "No desktop is installed yet. This is a command-line shell."
+/bin/busybox echo "Connect a USB keyboard to enter commands."
 /bin/busybox echo "Type: uname -a, dmesg, cat /proc/meminfo"
 /bin/busybox echo "To reboot: reboot -f"
 /bin/busybox echo ""
-exec /bin/sh -i </dev/console >/dev/console 2>&1
+# /dev/console cannot be a controlling terminal. Use the BusyBox-supported
+# cttyhack applet (for PID 1: "exec cttyhack sh"), which detects an active
+# real tty on Xenon's framebuffer console before launching the shell.
+# Source: https://busybox.net/FAQ.html (job control / can't access tty).
+exec /bin/busybox cttyhack /bin/sh -i </dev/console >/dev/console 2>&1

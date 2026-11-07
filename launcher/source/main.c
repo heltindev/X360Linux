@@ -126,8 +126,9 @@ static void render(void) {
     puts("A  Open folder / Start Linux");
     puts("B  Back          D-Pad  Move          LB/RB  USB");
     puts("");
-    puts("Linux starts automatically when its folder is opened.");
-    puts("This preview does not install or change the Xbox hard drive.");
+    puts("X360Linux normally starts by itself when it finds Linux files.");
+    puts("At startup, press B during the countdown to keep this menu.");
+    puts("This preview does not change the Xbox hard drive.");
     if (ui.status[0]) {
         puts("--------------------------------------------------------");
         puts(ui.status);
@@ -138,6 +139,44 @@ static int pressed(const struct controller_data_s *p) {
            p->lb || p->rb || p->s1_y > STICK_TRIGGER ||
            p->s1_y < -STICK_TRIGGER;
 }
+/* If the standard USB Linux folder exists, boot it without user input.
+   Keep a short B-to-cancel window so a broken kernel is never a boot trap.
+   No files or NAND/HDD partitions are written by this function. */
+static void auto_start_linux(void) {
+    char folder[X360_PATH_MAX];
+    struct controller_data_s pad;
+    int i, rc;
+
+    if (snprintf(folder, sizeof(folder), "%s:/X360Linux/", ui.device) >=
+        (int)sizeof(folder)) return;
+    if (!x360_linux_files_present(folder)) return;
+    if (x360_settings_select_folder(&ui.boot, folder) != 0) return;
+
+    console_clrscr();
+    puts("========================================================");
+    puts("                      X360LINUX");
+    puts("========================================================");
+    puts("");
+    puts("Linux files found on the USB drive.");
+    puts("Starting automatically in 3 seconds...");
+    puts("Press B to cancel and open the boot menu.");
+    puts("");
+    for (i = 0; i < 30; ++i) {
+        usb_do_poll();
+        memset(&pad, 0, sizeof(pad));
+        if (get_controller_data(&pad, 0) && pad.b) {
+            snprintf(ui.status, sizeof(ui.status),
+                     "Automatic boot cancelled. Press A to start Linux.");
+            return;
+        }
+        udelay(100000);
+    }
+
+    rc = x360_boot_linux(&ui.boot);
+    snprintf(ui.status, sizeof(ui.status),
+             "Linux loader returned error %d. Press A to try again.", rc);
+}
+
 int main(void) {
     struct controller_data_s pad;
     int was_pressed = 0, dirty = 1;
@@ -156,7 +195,9 @@ int main(void) {
         puts("Insert a FAT32 drive and reboot using the known-good loader.");
         for (;;) { usb_do_poll(); udelay(100000); }
     }
-    /* Never auto-boot or load any saved configuration in the test build. */
+    /* Autostart only a validated FAT32 X360Linux/ folder; B cancels.
+       No settings are loaded or saved and no NAND writes take place. */
+    auto_start_linux();
     for (;;) {
         if (dirty) { render(); dirty = 0; }
         usb_do_poll();
