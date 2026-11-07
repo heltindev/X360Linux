@@ -2,7 +2,7 @@
 set -euo pipefail
 
 if (( $# != 1 )); then
-  echo "Usage: bash scripts/build-kernel.sh /path/to/clean/linux-6.18.58" >&2
+  echo "Usage: bash kernel/build-kernel.sh /path/to/clean/linux-6.18.58" >&2
   exit 2
 fi
 

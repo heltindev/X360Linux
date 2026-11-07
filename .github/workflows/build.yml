@@ -1,0 +1,152 @@
+name: Build Xbox 360
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    name: Check source code
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate source
+        run: |
+          bash -n kernel/build-kernel.sh distro/build-rootfs.sh
+          python3 -m py_compile launcher/make_iso.py distro/pack_initramfs.py distro/make_system_image.py
+          gcc -std=c11 -Wall -Wextra -Werror -pedantic \
+            -Ilauncher/source launcher/source/settings.c \
+            launcher/tests/test_settings.c -o /tmp/x360boot-test
+          /tmp/x360boot-test
+
+  launcher:
+    name: Compile X360Boot ELF and launcher ISO
+    needs: test
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    container:
+      image: free60/libxenon:latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Xbox 360 compiler
+        run: |
+          echo "DEVKITXENON=/usr/local/xenon" >> "$GITHUB_ENV"
+          echo "/usr/local/xenon/bin" >> "$GITHUB_PATH"
+          echo "/usr/local/xenon/usr/bin" >> "$GITHUB_PATH"
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+      - name: Compile native ELF and launcher ISO
+        run: |
+          set -eu
+          make -C launcher
+          test -s launcher/x360boot.elf32
+          mkdir -p dist/launcher
+          cp launcher/x360boot.elf32 dist/launcher/x360boot.elf32
+          cp launcher/x360boot.elf32 dist/launcher/xenon.elf
+          apt-get update -qq
+          DEBIAN_FRONTEND=noninteractive apt-get install -y -qq xorriso python3
+          python3 launcher/make_iso.py --boot-elf launcher/x360boot.elf32 \
+            --output dist/launcher/X360Boot-launcher.iso
+          file dist/launcher/xenon.elf
+          (cd dist/launcher && sha256sum xenon.elf x360boot.elf32 X360Boot-launcher.iso > SHA256SUMS)
+      - uses: actions/upload-artifact@v4
+        with:
+          name: X360Boot-launcher
+          path: dist/launcher/
+          if-no-files-found: error
+          retention-days: 14
+
+  distro:
+    name: Compile Xbox 360 Linux userspace
+    needs: test
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install PowerPC64 Linux compiler
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y gcc-powerpc64-linux-gnu libc6-dev-ppc64-cross \
+            binutils-powerpc64-linux-gnu make bzip2 curl python3
+      - name: Create Linux initramfs
+        run: |
+          bash distro/build-rootfs.sh
+          test -s distro/out/initramfs.cpio.gz
+          file distro/out/initramfs.cpio.gz
+      - uses: actions/upload-artifact@v4
+        with:
+          name: X360Linux-userspace
+          path: distro/out/
+          if-no-files-found: error
+          retention-days: 14
+
+  xell:
+    name: Compile XeLL initial bootloader
+    needs: test
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    container:
+      image: free60/libxenon:latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+      - name: Set up XeLL compiler
+        run: |
+          echo "DEVKITXENON=/usr/local/xenon" >> "$GITHUB_ENV"
+          echo "/usr/local/xenon/bin" >> "$GITHUB_PATH"
+          echo "/usr/local/xenon/usr/bin" >> "$GITHUB_PATH"
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          git config --global --add safe.directory "$GITHUB_WORKSPACE/external/xell-reloaded"
+      - name: Verify both loader builds (NAND binaries are not published)
+        run: |
+          set -eu
+          cd external/xell-reloaded
+          make xell-gggggg.bin
+          test -s xell-gggggg.bin
+          make clean
+          make xell-2f.bin
+          test -s xell-2f.bin
+          echo "XeLL compiler check passed. Never flash experimental NAND files."
+
+  package:
+    name: Make easy-to-download developer kit
+    needs: [launcher, distro, xell]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: X360Boot-launcher
+          path: dist/launcher
+      - uses: actions/download-artifact@v4
+        with:
+          name: X360Linux-userspace
+          path: dist/linux
+      - name: Pack one development ZIP
+        run: |
+          set -eu
+          mkdir -p kit/X360Linux dist/release
+          cp dist/launcher/xenon.elf kit/xenon.elf
+          cp dist/launcher/x360boot.elf32 kit/x360boot.elf32
+          cp dist/launcher/X360Boot-launcher.iso kit/X360Boot-launcher.iso
+          cp dist/linux/initramfs.cpio.gz kit/X360Linux/initramfs.cpio.gz
+          printf '%s\n' \
+            "X360Linux alpha developer kit" \
+            "1. Requires an Xbox 360 with RGH/JTAG and a working XeLL loader." \
+            "2. FAT32 USB root: xenon.elf boots the experimental X360Boot menu." \
+            "3. The Linux kernel vmlinux and xenon.dtb are NOT included yet." \
+            "4. The Linux initramfs cannot boot without a matching Xenon kernel." \
+            "5. NEVER flash NAND or use updxell.bin/updflash.bin names." \
+            > kit/START-HERE.txt
+          (cd kit && sha256sum xenon.elf x360boot.elf32 X360Boot-launcher.iso X360Linux/initramfs.cpio.gz > SHA256SUMS)
+          python3 -c 'import shutil; shutil.make_archive("dist/release/X360Linux-development-kit", "zip", "kit")'
+          test -s dist/release/X360Linux-development-kit.zip
+      - uses: actions/upload-artifact@v4
+        with:
+          name: X360Linux-development-kit
+          path: dist/release/X360Linux-development-kit.zip
+          if-no-files-found: error
+          retention-days: 30

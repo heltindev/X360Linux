@@ -6,7 +6,7 @@ endif
 
 include $(DEVKITXENON)/rules
 
-TARGET := xwtboot
+TARGET := x360boot
 BUILD := build
 SOURCES := source
 DATA :=

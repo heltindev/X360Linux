@@ -1,54 +1,31 @@
-# X360Linux minimal PowerPC64 Linux userspace
+# X360Linux distribution
 
-**Experimental root filesystem, not a finished or independently bootable OS image.**
+I'm building a Linux distribution for the **original Xbox 360 hardware**.
 
-This project contains an original `/init` script, an initramfs packer and an optional build workflow producing **static BusyBox for PowerPC64 big-endian**. The root filesystem is **a real Linux shell**, not an Android or Windows executable and not a graphical desktop.
+The current distribution is deliberately small: a **PowerPC64 big-endian BusyBox shell** in an `initramfs.cpio.gz` archive. It is the first part of a future full desktop OS.
 
-To reproduce the build on Ubuntu:
+## Current build
 
-```bash
+**[GitHub Actions → Build Xbox 360](https://github.com/heltindev/X360Linux/actions/workflows/build.yml)** compiles the userspace automatically and includes it in the developer ZIP.
+
+To compile the Linux shell on Ubuntu:
+
+```sh
 sudo apt install gcc-powerpc64-linux-gnu libc6-dev-ppc64-cross \
   binutils-powerpc64-linux-gnu make bzip2 curl python3
 bash distro/build-rootfs.sh
 ```
 
-Output: `distro/out/initramfs.cpio.gz` (compressed `newc` cpio archive).
+The output is `distro/out/initramfs.cpio.gz`.
 
-## Launch via XWT Boot
+## Booting on Xbox 360
 
-Place these files in a FAT32 folder (for example, `X360Linux/` on USB):
+The minimal Linux shell alone **cannot boot** the console. You also need a compatible Xbox 360 Linux ELF32 PowerPC kernel (`vmlinux`) and matching `xenon.dtb`. Both are being integrated using the manual **Build Linux image** GitHub Action.
 
-```text
-X360Linux/
-├── vmlinux                 # Your compatible Xenon Linux ELF32 kernel
-├── xenon.dtb               # Free60 XeLL source device tree
-└── initramfs.cpio.gz       # Our static BusyBox PowerPC64 root filesystem
-```
+When those files are available, put them in the same `X360Linux/` folder on a FAT32 drive. Choose the folder in X360Boot and try the boot. See [Getting started](../docs/TESTING.md).
 
-Choose that folder in XWT Boot. `xwtboot.cfg` stores the location and Linux kernel parameters. An independently built/tested Free60 kernel is **required**. The ISO9660 image in the XWT Actions workflow contains only the launcher, **not the kernel or Linux OS**.
+The `Build Linux image` workflow also tries to create a USB ZIP and ISO9660 image. It is experimental and will **not** upload a full-system image unless the kernel and userspace builds succeed.
 
-## Why not just an ISO?
+The goal is an entirely native Linux installation: CPU, memory, storage, networking, graphics, sound and a desktop running on the Xbox 360 itself, not streamed from another device.
 
-The original XeLL project supports booting ELF files from FAT USB, TFTP and ISO9660 CD/DVD. A conventional PC ISO with GRUB cannot boot an Xbox 360. A matching ELF kernel + device tree + initramfs is the actual Linux boot set. We can bundle that into an ISO only **after** the kernel and loader are verified.
-
-## Optional full-system Linux ISO from GitHub Actions
-
-The [manual "Build EXPERIMENTAL Xenon Linux system image" workflow](../.github/workflows/build-linux-system.yml) has separate kernel and userspace builds. If **both** cross-build successfully and the Xenon kernel has a valid ELF32 PowerPC header, the workflow packages an experimental Linux boot folder and ISO9660 CD image.
-
-This pipeline is **manually triggered** because downloading, patching and compiling the kernel takes substantial runner resources. Its output is an **untested boot candidate**, not a ready-to-install desktop distro. The builder deliberately rejects unexpected kernel formats rather than silently shipping a broken ISO.
-
-From a Linux host with the verified kernel, DTB and initramfs already present:
-
-```bash
-python3 distro/make_system_image.py \
-  --kernel /path/to/bootable-vmlinux \
-  --dtb external/xell-reloaded/source/lv2/linux/xenon.dtb \
-  --initramfs distro/out/initramfs.cpio.gz \
-  --output-dir distro/out/system --iso
-```
-
-## Licensing
-
-- Original packaging code and shell scripts follow the root Apache-2.0 license.
-- **BusyBox is GPL-2.0** and downloaded from its official project. Binary distribution must retain source/build information and GPL notices. A generated initramfs is **not** Apache-2.0 only.
-- Linux kernel and XeLL files retain their own upstream licenses. Never distribute the original 2011 blobs as part of the modern build.
+Third-party source licenses (especially BusyBox GPL-2.0 and the Linux kernel GPL-2.0) are documented in [Credits & licenses](../docs/CREDITS.md).

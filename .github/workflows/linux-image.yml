@@ -1,4 +1,5 @@
-name: Build EXPERIMENTAL Xenon Linux system image
+name: Build Linux image
+
 on:
   workflow_dispatch:
 
@@ -7,6 +8,7 @@ permissions:
 
 jobs:
   kernel:
+    name: Compile Xbox 360 Linux kernel
     runs-on: ubuntu-latest
     timeout-minutes: 110
     container:
@@ -15,8 +17,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           submodules: recursive
-          fetch-depth: 0
-      - name: Install kernel build dependencies
+      - name: Install kernel dependencies
         run: |
           echo "DEVKITXENON=/usr/local/xenon" >> "$GITHUB_ENV"
           echo "/usr/local/xenon/bin" >> "$GITHUB_PATH"
@@ -24,73 +25,74 @@ jobs:
           git config --global --add safe.directory "$GITHUB_WORKSPACE"
           apt-get update -qq
           DEBIAN_FRONTEND=noninteractive apt-get install -y -qq \
-            curl xz-utils bc bison flex libssl-dev libelf-dev python3 file
-      - name: Download and compile Free60 Xenon Linux 6.18.58
+            curl xz-utils bc bison flex libssl-dev libelf-dev python3 file patch
+      - name: Download and compile Linux for Xbox 360
         run: |
           set -eu
           curl -fL --retry 3 \
             "https://cdn.kernel.org/pub/linux/kernel/v6.x/linux-6.18.58.tar.xz" \
             -o /tmp/linux-6.18.58.tar.xz
           tar -xf /tmp/linux-6.18.58.tar.xz -C /tmp
-          JOBS=3 bash scripts/build-kernel.sh /tmp/linux-6.18.58
+          JOBS=3 bash kernel/build-kernel.sh /tmp/linux-6.18.58
           test -s /tmp/linux-6.18.58/arch/powerpc/boot/zImage.xenon
           mkdir -p dist/kernel
           cp /tmp/linux-6.18.58/arch/powerpc/boot/zImage.xenon dist/kernel/vmlinux
           cp external/xell-reloaded/source/lv2/linux/xenon.dtb dist/kernel/xenon.dtb
           file dist/kernel/vmlinux
-          sha256sum dist/kernel/* > dist/kernel/SHA256SUMS
+          sha256sum dist/kernel/vmlinux dist/kernel/xenon.dtb > dist/kernel/SHA256SUMS
       - uses: actions/upload-artifact@v4
         with:
-          name: Xenon-kernel-and-FDT-EXPERIMENTAL
+          name: X360Linux-kernel-EXPERIMENTAL
           path: dist/kernel/
           retention-days: 7
           if-no-files-found: error
 
-  rootfs:
+  distro:
+    name: Compile minimal Linux userspace
     runs-on: ubuntu-latest
     timeout-minutes: 40
     steps:
       - uses: actions/checkout@v4
-      - name: Install PowerPC64 Linux cross-compiler
+      - name: Install PowerPC64 compiler
         run: |
           sudo apt-get update -qq
           sudo apt-get install -y gcc-powerpc64-linux-gnu libc6-dev-ppc64-cross \
             binutils-powerpc64-linux-gnu make bzip2 curl python3
-      - name: Build X360Linux minimal initramfs
-        run: bash distro/build-rootfs.sh
+      - run: bash distro/build-rootfs.sh
       - uses: actions/upload-artifact@v4
         with:
-          name: Xenon-initramfs-EXPERIMENTAL
+          name: X360Linux-rootfs-EXPERIMENTAL
           path: distro/out/
           retention-days: 7
           if-no-files-found: error
 
-  package:
-    needs: [kernel, rootfs]
+  image:
+    name: Create Linux boot files and ISO
+    needs: [kernel, distro]
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
       - uses: actions/download-artifact@v4
         with:
-          name: Xenon-kernel-and-FDT-EXPERIMENTAL
+          name: X360Linux-kernel-EXPERIMENTAL
           path: dist/kernel
       - uses: actions/download-artifact@v4
         with:
-          name: Xenon-initramfs-EXPERIMENTAL
-          path: dist/initramfs
-      - name: Create Linux boot-files ZIP and ISO9660 image
+          name: X360Linux-rootfs-EXPERIMENTAL
+          path: dist/rootfs
+      - name: Package experimental image only after valid builds
         run: |
           sudo apt-get update -qq
           sudo apt-get install -y xorriso
           python3 distro/make_system_image.py \
             --kernel dist/kernel/vmlinux \
             --dtb dist/kernel/xenon.dtb \
-            --initramfs dist/initramfs/initramfs.cpio.gz \
+            --initramfs dist/rootfs/initramfs.cpio.gz \
             --output-dir dist/system --iso
       - uses: actions/upload-artifact@v4
         with:
-          name: X360Linux-Xenon-system-ISO-UNVERIFIED
+          name: X360Linux-system-image-UNTESTED
           path: dist/system/
           retention-days: 14
           if-no-files-found: error

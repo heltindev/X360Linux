@@ -1,37 +1,35 @@
-# Local build artifacts and downloaded source
-distro/work/
-distro/out/
-xwtboot/build/
-xwtboot/*.elf
-xwtboot/*.elf32
-xwtboot/*.map
-dist/
-*.iso
-*.cpio
-*.cpio.gz
-*.bak
-
+# Build outputs
 build/
+dist/
 out/
 work/
-downloads/
-linux-*/
-mesa-src/
-xorg-src/
+distro/out/
+distro/work/
+launcher/build/
+launcher/*.elf
+launcher/*.elf32
+launcher/*.map
 *.o
 *.ko
 *.elf
+*.elf32
 *.bin
 *.img
 *.iso
+*.cpio
+*.cpio.gz
 *.tar
 *.tar.*
 *.log
-*.pyc
+*.bak
+
+# Local developer files
 __pycache__/
+*.pyc
 .vscode/
 .idea/
-# Never commit console identity, NAND dumps or firmware
+
+# Never commit console keys, NAND dumps or firmware update images
 *cpukey*
 *dvdkey*
 *nanddump*

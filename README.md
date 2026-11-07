@@ -1,146 +1,49 @@
 <div align="center">
-  <img src="assets/x360linux-banner.svg" alt="X360Linux — Bringing Linux to the Xbox 360" width="100%" />
-  <br />
-  <h3>Give the Xbox 360 a second life. 🐧</h3>
-  <p><b>Experimental PowerPC Linux integration, XeLL boot research and Xenos GPU acceleration for modded Xbox 360 consoles.</b></p>
-  <p>
-    <img alt="Status: experimental" src="https://img.shields.io/badge/status-experimental-60bd45?style=for-the-badge" />
-    <img alt="Architecture: PowerPC64 big-endian" src="https://img.shields.io/badge/architecture-PowerPC64%20BE-202b25?style=for-the-badge" />
-    <img alt="Original license: Apache 2.0" src="https://img.shields.io/badge/original%20code-Apache--2.0-315a34?style=for-the-badge" />
-    <a href="https://github.com/heltindev/X360Linux/actions/workflows/verify.yml"><img alt="Static checks" src="https://github.com/heltindev/X360Linux/actions/workflows/verify.yml/badge.svg" /></a>
-  </p>
-  <p>
-    <a href="#-start-here">Start here</a> ·
-    <a href="#-upstream-technology">Technology</a> ·
-    <a href="#-project-status">Status</a> ·
-    <a href="docs/ROADMAP.md">Roadmap</a> ·
-    <a href="docs/GPU-INTEGRATION.md">GPU guide</a>
-  </p>
-</div>
-
----
-
-> [!IMPORTANT]
-> **This repository is a development integration, not a finished Linux distribution.** No X360Linux build has been verified on physical Xbox 360 hardware yet. The graphics results shown below are **credited to the upstream xenos-linux-gpu project**, not to this repository. Never flash NAND as part of this project.
-
-### 📦 Historical Linux archive (2011)
-
-A separate, **unverified preservation archive** is available for the early XeLLLaunch / PowerPC Linux boot pack. It contains legacy binaries, **not editable source code**, and must not be confused with the modern X360Linux kernel/GPU work.
-
-**[Browse the historical release](https://github.com/heltindev/X360Linux/releases/tag/legacy-2011-archive)** · **[Provenance, SHA-256 and warnings](legacy/README.md)**
-
-Only use with a compatible previously modified console and recovery method; never flash an unknown XeLL image. The 2011 system may be insecure for modern internet use.
-
-### 📥 X360Linux v0.1.0-alpha — development preview
-
-**[Download the latest XWT Boot developer pre-release](https://github.com/heltindev/X360Linux/releases/tag/v0.1.0-alpha)**: verified Actions build artifacts for the native ELF manager, optional launcher ISO9660, and separate PowerPC64 BusyBox initramfs. **No full Linux kernel image is bundled; no console hardware boot has been verified.** This release is distinct from the preserved 2011 legacy archive.
-
-## 🧩 XWT Boot — native ELF boot manager
-
-**XWT Boot is a separate bare-metal application** with its own framebuffer menu, controller navigation, folder selection, and persistent boot configuration. It is not the Linux operating system, and it does not need XeLL's menu after its own ELF has been launched.
-
-- **[Explore XWT Boot source and instructions](xwtboot/README.md)** — `xwtboot.elf32` compiled with LibXenon; direct Linux ELF + device-tree handoff is experimental.
-- **[Build our own minimal Linux userspace](distro/README.md)** — static PowerPC64 big-endian BusyBox initramfs, separate from XWT Boot.
-- **[Compile upstream XeLL automatically](.github/workflows/build-xell.yml)** — RGH/JTAG reference build artifacts; never flash unverified binaries.
-- **[Build XWT Boot ELF and launcher ISO](.github/workflows/build-xwtboot.yml)** — XeLL-loadable ELF32 and optional CD/DVD launcher ISO9660.
-- **[X360Linux rootfs Action](.github/workflows/build-linux-rootfs.yml)** — own minimalist initramfs without bundling an unverified kernel.
-- **[Build an experimental Linux system ISO (manual)](.github/workflows/build-linux-system.yml)** — compiles kernel and rootfs separately, then packages a *candidate* boot ISO if both succeed.
-
-> [!WARNING]
-> CI-compilable does not mean console-bootable. No XWT Boot/Linux boot has been verified on physical hardware. The XWT ISO only starts the ELF manager; it is **not** yet a complete Linux distribution.
-
-## 🌱 What is X360Linux?
-
-X360Linux connects existing Xbox 360 Linux research into one **reproducible, inspectable development workspace**. Instead of promising a magical one-click operating system, it prioritizes reliable boot, GPU bring-up, a minimal usable desktop, hardware testing and practical documentation.
-
-| 🟢 Boot & hardware | 🧠 Linux & userspace | 🎮 Xenos graphics |
-|:---|:---|:---|
-| XeLL-Reloaded | Free60 Xenon kernel patches | arelyx's xegpu DRM kernel module |
-| RGH/JTAG research | Linux 6.18.x starting point | Mesa freedreno Xenos variant |
-| External media / TFTP | Debian ppc64 experimental rootfs | Xorg + glamor + IceWM |
-
-### 🧩 The boot chain
-
-```mermaid
-flowchart LR
-    A["Modded Xbox 360"] --> B["XeLL-Reloaded"]
-    B --> C["Xenon Linux kernel"]
-    C --> D["Root filesystem"]
-    D --> E["xegpu + Mesa"]
-    E --> F["Xorg / IceWM"]
-```
-
-This is an **architecture goal**, not a claim that this repository currently produces a bootable image.
-
-## ⚡ Upstream technology
-
-The independent project [**arelyx/xenos-linux-gpu**](https://github.com/arelyx/xenos-linux-gpu) reported the following on a **Trinity Xbox 360 Slim** in October 2026:
-
-- Hardware-accelerated **OpenGL ES 2.0** and **desktop OpenGL 2.0** using Mesa freedreno with Xenos-specific patches.
-- Accelerated **Xorg / glamor** and a practical **IceWM** desktop.
-- **17,063 / 17,075** executed GLES2 conformance tests passed in its README's reported run.
-- Demonstrations of Linux applications and some games on real hardware.
-
-**Not yet universal or fully functional:** GPU reset after some hangs, alternative display modes, reliable 4 KB-page kernel, hardware-audited audio output, modern browser compatibility, OpenGL 2.1+ and Vulkan. See [upstream limitations](docs/GPU-INTEGRATION.md).
-
-<div align="center">
-  <a href="https://github.com/arelyx/xenos-linux-gpu/blob/main/docs/images/glamor-scanout-2026-10-26.png">
-    <img alt="Upstream screenshot of accelerated Xorg on Xbox 360 Xenos GPU — credit arelyx/xenos-linux-gpu" src="https://raw.githubusercontent.com/arelyx/xenos-linux-gpu/main/docs/images/glamor-scanout-2026-10-26.png" width="76%"/>
-  </a>
-  <p><sub><b>Upstream demonstration:</b> Xorg/glamor scanout captured by arelyx/xenos-linux-gpu. Not an X360Linux test screenshot.</sub></p>
+  <img src="assets/x360linux-banner.svg" alt="X360Linux" width="100%" />
+  <h2>Linux for Xbox 360. Native hardware. Open source.</h2>
+  <p>I'm building an Xbox 360 Linux distribution that runs directly on the console's original hardware.</p>
+  <p><a href="https://github.com/heltindev/X360Linux/releases/tag/v0.1.0-alpha">Download v0.1.0-alpha</a> · <a href="https://github.com/heltindev/X360Linux/actions">GitHub Actions</a> · <a href="docs/TESTING.md">Getting started</a></p>
 </div>
 
 ## 🧪 Project status
 
-| Workstream | Upstream evidence | X360Linux status |
-|:---|:---|:---|
-| XeLL boot chain | Documented by Free60 | 🟡 Reference linked |
-| Xenon Linux kernel 6.18 | Free60 patch series available | 🟡 Build tooling drafted |
-| xegpu kernel module | Tested on upstream Trinity | 🟡 Source linked, build not verified |
-| Mesa + glamor | Upstream accelerated tests | 🟡 Instructions documented |
-| Xorg + IceWM | Upstream demo | ⬜ No local hardware verification |
-| Audio, network, USB, storage | Partial upstream results | ⬜ Validation pending |
-| Installer / release image | — | ⬜ Not available |
+| Component | Status |
+|---|---|
+| **X360Boot launcher** (native Xbox 360 ELF) | ✅ Compiles in GitHub Actions |
+| **Minimal Linux system** (PowerPC64 BusyBox) | ✅ Compiles in GitHub Actions |
+| **XeLL bootloader** | ✅ Reference builds compile |
+| **Xbox 360 Linux kernel** | 🟡 Build/integration in progress |
+| **Linux booting on a real Xbox 360** | ⬜ Not verified |
+| **Graphics, sound, networking and storage** | ⬜ Not verified in this project |
+| **Complete ready-to-use Linux image** | ⬜ Not available yet |
 
-Legend: 🟡 **integration preparation**, ⬜ **not verified here**. Nothing in this table means 100% compatibility.
+**Goal:** Boot a minimal Linux shell on a real Xbox 360 first, then improve hardware support and build a full desktop distribution. This is an early alpha, **not a claim of 100% compatibility**.
 
 ## 🚀 Start here
 
-**Host:** use a Linux development environment (native Linux preferred; WSL2 may help with tooling). **Console:** only an already modified Xbox 360 with a working XeLL boot/recovery method.
+1. **[Download v0.1.0-alpha](https://github.com/heltindev/X360Linux/releases/tag/v0.1.0-alpha)** for the experimental launcher and Linux userspace.
+2. Read **[Getting started and Xbox 360 testing](docs/TESTING.md)** before placing files on a USB drive.
+3. Want to compile the project? Open **[GitHub Actions](https://github.com/heltindev/X360Linux/actions)** and run **Build Xbox 360**.
+4. A full Linux image will require a compatible Xenon kernel. The **Build Linux image** workflow is experimental.
 
-```bash
-git clone --recurse-submodules https://github.com/heltindev/X360Linux.git
-cd X360Linux
-bash scripts/doctor.sh
+> **Required:** An Xbox 360 already modified for homebrew (RGH/JTAG), with a known-working initial ELF loader such as XeLL. There is no stock-console boot method, XEX or NAND installer here. Never flash experimental boot files.
+
+## 📁 Project structure
+
+```text
+X360Linux/
+├── .github/workflows/    # Automatic builds
+├── launcher/             # X360Boot: menu, file selection and Linux boot
+├── distro/               # Our Linux userspace and image packaging
+├── kernel/               # Xbox 360 Linux kernel build
+├── external/             # Third-party source dependencies
+└── docs/                 # Testing, roadmap and licenses
 ```
 
-Then read the [build guide](docs/BUILD.md), [GPU integration](docs/GPU-INTEGRATION.md), and the [boot-safety checklist](docs/BOOT-SAFETY.md). No script in this repository flashes NAND or installs firmware.
+## 🎯 Roadmap
 
-For GPU build experiments, have a clean **Linux 6.18.58** source tree and the Free60 `xenon-` cross-toolchain. The build scripts operate only on your disposable source tree:
+**First:** Linux shell on Xbox 360. **Next:** Better Xbox 360 hardware support. **Later:** Our own native desktop distribution and an optional XEX launcher.
 
-```bash
-bash scripts/build-kernel.sh /path/to/linux-6.18.58
-bash scripts/build-xegpu.sh /path/to/linux-6.18.58
-```
+See [Roadmap](docs/ROADMAP.md). Contributions are welcome; see [Contributing](CONTRIBUTING.md). Licensing and source acknowledgements are maintained in [Credits & licenses](docs/CREDITS.md).
 
-These are **experimental build instructions**, not a tested image pipeline. Mesa and Xorg require additional pinned dependencies and cross-compilation as described in [GPU-INTEGRATION.md](docs/GPU-INTEGRATION.md).
-
-## 🗂 Documentation
-
-| Document | Purpose |
-|:---|:---|
-| [Architecture](docs/ARCHITECTURE.md) | Console, bootloader, kernel, userspace and GPU stack |
-| [Build guide](docs/BUILD.md) | Host requirements and guarded kernel/module builds |
-| [GPU integration](docs/GPU-INTEGRATION.md) | Reusing xegpu, Mesa and Xorg without claiming universal support |
-| [Hardware compatibility](docs/COMPATIBILITY.md) | Verified upstream results vs. our test matrix |
-| [Roadmap](docs/ROADMAP.md) | Milestones required before a public release |
-| [Boot safety](docs/BOOT-SAFETY.md) | Non-flashing workflow, recovery and evidence |
-| [Contributing](CONTRIBUTING.md) | How to submit reproducible fixes |
-
-## 🤝 Standing on the shoulders of Free60
-
-This integration is made possible by [**Free60**](https://github.com/Free60Project), [**arelyx/xenos-linux-gpu**](https://github.com/arelyx/xenos-linux-gpu), the **Mesa/freedreno** and **Xorg** communities, and the original Xbox 360 homebrew researchers. Sources are integrated as **pinned Git submodules** rather than copied or relicensed. See [credits and license boundaries](docs/UPSTREAM-AND-LICENSES.md).
-
-<div align="center">
-  <sub><b>X360Linux</b> · Homebrew research for the Xbox 360 · Built in the open, tested with evidence.</sub>
-</div>
+**X360Linux is free and open source.**

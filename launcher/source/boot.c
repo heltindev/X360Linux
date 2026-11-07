@@ -17,7 +17,7 @@ static int file_path(char *out, size_t max, const char *folder, const char *name
     return n > 0 && (size_t)n < max;
 }
 static int exists(const char *folder, const char *name) {
-    char path[XWT_PATH_MAX + 40];
+    char path[X360_PATH_MAX + 40];
     FILE *file;
     if (!file_path(path, sizeof(path), folder, name)) return 0;
     file = fopen(path, "rb");
@@ -25,14 +25,14 @@ static int exists(const char *folder, const char *name) {
     fclose(file);
     return 1;
 }
-int xwt_linux_files_present(const char *folder) {
-    return xwt_path_is_safe(folder) &&
+int x360_linux_files_present(const char *folder) {
+    return x360_path_is_safe(folder) &&
            exists(folder, "vmlinux") &&
            exists(folder, "xenon.dtb");
 }
 static int read_limited(const char *folder, const char *name,
                         size_t max, void **out, int *len) {
-    char path[XWT_PATH_MAX + 40];
+    char path[X360_PATH_MAX + 40];
     FILE *file;
     long size;
     void *buf;
@@ -56,11 +56,11 @@ static int read_limited(const char *folder, const char *name,
     *len = (int)size;
     return 0;
 }
-int xwt_boot_linux(const struct xwt_settings *settings) {
+int x360_boot_linux(const struct x360_settings *settings) {
     void *elf = NULL, *dtb = NULL, *initrd = NULL;
     int elf_len = 0, dtb_len = 0, initrd_len = 0, rc = -1;
     const unsigned char *h, *d;
-    if (!settings || !xwt_linux_files_present(settings->folder)) {
+    if (!settings || !x360_linux_files_present(settings->folder)) {
         printf("No valid Linux directory selected (requires vmlinux + xenon.dtb).\n");
         return -1;
     }

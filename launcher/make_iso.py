@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Build an ISO9660 *launcher* for XeLL -> XWT Boot on Xbox 360.
+"""Build an ISO9660 *launcher* for XeLL -> X360Boot on Xbox 360.
 
 This is NOT an x86 bootable ISO, Linux distribution or NAND installer.
 """
@@ -24,9 +24,9 @@ def main():
         root = Path(work)
         shutil.copyfile(args.boot_elf, root / "xenon.elf")
         (root / "README.TXT").write_text(
-            "XWT BOOT (EXPERIMENTAL)\n"
+            "X360BOOT (EXPERIMENTAL)\n"
             "For Xbox 360 with existing XeLL loader.\n"
-            "XeLL reads xenon.elf from the disc and starts the XWT Boot manager.\n"
+            "XeLL reads xenon.elf from the disc and starts the X360Boot manager.\n"
             "The Linux kernel/root filesystem are separate and must be placed\n"
             "in a folder on a supported FAT32 USB/HDD device.\n"
             "This disc is NOT a Linux ISO, NAND flasher or recovery image.\n",
@@ -34,7 +34,7 @@ def main():
         )
         subprocess.run(
             ["xorriso", "-as", "mkisofs", "-J", "-R",
-             "-V", "XWT_BOOT", "-o", str(output), str(root)],
+             "-V", "X360_BOOT", "-o", str(output), str(root)],
             check=True,
         )
     print(f"Launcher ISO created: {output}")

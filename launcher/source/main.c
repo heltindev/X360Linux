@@ -1,5 +1,5 @@
 /* SPDX-License-Identifier: GPL-2.0-only */
-/* XWT Boot - independent user-facing ELF boot manager (not Linux, not XeLL).
+/* X360Boot - independent user-facing ELF boot manager (not Linux, not XeLL).
    A compatible loader must execute this ELF once before it takes control. */
 #include "boot.h"
 #include "settings.h"
@@ -26,15 +26,15 @@ static struct {
     char names[MAX_FOLDERS][120];
     int count;
     int selected;
-    char current[XWT_PATH_MAX];
+    char current[X360_PATH_MAX];
     char device[24];
     int handle;
-    struct xwt_settings boot;
+    struct x360_settings boot;
 } ui;
 
 static int append_folder(char *out, size_t capacity, const char *name) {
     int n = snprintf(out, capacity, "%s%s/", ui.current, name);
-    return n > 0 && (size_t)n < capacity && xwt_path_is_safe(out);
+    return n > 0 && (size_t)n < capacity && x360_path_is_safe(out);
 }
 static void refresh_folders(void) {
     struct dirent *entry;
@@ -44,7 +44,7 @@ static void refresh_folders(void) {
     dir = opendir(ui.current);
     if (!dir) return;
     while ((entry = readdir(dir)) && ui.count < MAX_FOLDERS) {
-        char absolute[XWT_PATH_MAX], shortname[120];
+        char absolute[X360_PATH_MAX], shortname[120];
         struct stat info;
         size_t n = strlen(entry->d_name);
         if (n < 1 || n >= sizeof(shortname) ||
@@ -61,15 +61,15 @@ static void refresh_folders(void) {
 static int set_device(int next) {
     const char *name = NULL;
     int handle = bdev_enum(next ? ui.handle : -1, &name);
-    char conf[XWT_PATH_MAX];
+    char conf[X360_PATH_MAX];
     if (handle < 0 && next) handle = bdev_enum(-1, &name);
     if (handle < 0 || !name || strlen(name) >= sizeof(ui.device)) return -1;
     ui.handle = handle;
     strcpy(ui.device, name);
     if (snprintf(ui.current, sizeof(ui.current), "%s:/", name) >= (int)sizeof(ui.current)) return -1;
-    xwt_settings_default(&ui.boot);
-    if (snprintf(conf, sizeof(conf), "%s:/xwtboot.cfg", name) < (int)sizeof(conf)) {
-        if (xwt_settings_load(conf, &ui.boot) == 0)
+    x360_settings_default(&ui.boot);
+    if (snprintf(conf, sizeof(conf), "%s:/x360boot.cfg", name) < (int)sizeof(conf)) {
+        if (x360_settings_load(conf, &ui.boot) == 0)
             printf("Loaded saved configuration from %s\n", conf);
     }
     refresh_folders();
@@ -85,18 +85,18 @@ static void parent_folder(void) {
     refresh_folders();
 }
 static void enter_folder(void) {
-    char path[XWT_PATH_MAX];
+    char path[X360_PATH_MAX];
     if (ui.count == 0 || ui.selected >= ui.count) return;
     if (!append_folder(path, sizeof(path), ui.names[ui.selected])) return;
     strcpy(ui.current, path);
     refresh_folders();
 }
 static int save_current(void) {
-    char config_file[XWT_PATH_MAX];
-    if (snprintf(config_file, sizeof(config_file), "%s:/xwtboot.cfg", ui.device) >=
+    char config_file[X360_PATH_MAX];
+    if (snprintf(config_file, sizeof(config_file), "%s:/x360boot.cfg", ui.device) >=
         (int)sizeof(config_file)) return -1;
     strcpy(ui.boot.folder, ui.current);
-    if (xwt_settings_save(config_file, &ui.boot) != 0) {
+    if (x360_settings_save(config_file, &ui.boot) != 0) {
         puts("Could not save to this drive. Check FAT filesystem write access.");
         return -1;
     }
@@ -106,7 +106,7 @@ static void render(void) {
     int start, end, i;
     console_clrscr();
     puts("=============================================================");
-    puts("    XWT BOOT                                 EXPERIMENTAL");
+    puts("    X360BOOT                                 EXPERIMENTAL");
     puts("    Xbox 360 native Linux boot manager | libxenon / PowerPC");
     puts("=============================================================");
     printf("Device : %s\n", ui.device);
@@ -128,7 +128,7 @@ static void render(void) {
     puts("START : toggle autoboot and save | LB/RB: next drive");
     puts("-------------------------------------------------------------");
     puts("Linux directory must contain vmlinux + xenon.dtb.");
-    puts("Optional: initramfs.cpio.gz; boot arguments are in xwtboot.cfg.");
+    puts("Optional: initramfs.cpio.gz; boot arguments are in x360boot.cfg.");
     puts("Never flash NAND. Keep a working recovery method.");
 }
 static int pressed(const struct controller_data_s *p) {
@@ -150,11 +150,11 @@ int main(void) {
     xenon_atapi_init();
     fatInitDefault();
     if (set_device(0) != 0) {
-        puts("XWT Boot requires a readable FAT USB/HDD device.");
+        puts("X360Boot requires a readable FAT USB/HDD device.");
         puts("Insert a FAT32 drive and reboot using the known-good loader.");
         for (;;) { usb_do_poll(); udelay(100000); }
     }
-    if (ui.boot.autoboot && xwt_linux_files_present(ui.boot.folder)) {
+    if (ui.boot.autoboot && x360_linux_files_present(ui.boot.folder)) {
         int cancel = 0, t;
         puts("Saved auto-boot in 4 seconds. Press B to cancel.");
         for (t = 0; t < 40; ++t) {
@@ -163,7 +163,7 @@ int main(void) {
             if (get_controller_data(&pad, 0) && pad.b) { cancel = 1; break; }
             udelay(100000);
         }
-        if (!cancel) xwt_boot_linux(&ui.boot);
+        if (!cancel) x360_boot_linux(&ui.boot);
     }
     for (;;) {
         if (dirty) { render(); dirty = 0; }
@@ -185,13 +185,13 @@ int main(void) {
             set_device(1);
         } else if (pad.x) {
             if (save_current() == 0)
-                puts("Saved Linux directory to xwtboot.cfg");
+                puts("Saved Linux directory to x360boot.cfg");
         } else if (pad.start) {
             ui.boot.autoboot = !ui.boot.autoboot;
             if (ui.boot.folder[0]) save_current();
         } else if (pad.y) {
             if (ui.boot.folder[0]) {
-                int r = xwt_boot_linux(&ui.boot);
+                int r = x360_boot_linux(&ui.boot);
                 printf("Boot failed: %d. Press B to return to the menu.\n", r);
             } else {
                 puts("Select the Linux directory with X first.");
