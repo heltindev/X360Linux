@@ -2,6 +2,18 @@
 
 The goal is **progressively verified, reliable function**, not a premature claim of 100% compatibility.
 
+## XWT Boot & native Linux pipeline (experimental)
+
+- [x] Create source for an independent LibXenon `xwtboot.elf32` app with a controller menu, FAT folder selection and saved boot parameters.
+- [x] Add Actions that cross-compile a reference XeLL and the XWT Boot ELF.
+- [x] Add an ISO9660 XWT Boot launcher image generator (not Linux).
+- [x] Add a PowerPC64 big-endian BusyBox initramfs source/build workflow.
+- [x] Add a manual workflow for combined Xenon Linux kernel + userspace + candidate ISO.
+- [ ] Obtain passing **all** rootfs and complete kernel cross-builds.
+- [ ] Test XWT Boot interface, FAT settings and Linux ELF/FDT handoff on real hardware.
+- [ ] Confirm custom X360Linux boot media reaches an interactive Linux shell.
+- [ ] Validate Ethernet, video, audio and multiple Xbox 360 motherboard revisions.
+
 ## Milestone 0 · Foundation
 
 - [x] Create attractive GitHub project landing page with transparent status.

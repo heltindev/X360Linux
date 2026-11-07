@@ -29,6 +29,9 @@ text=text.replace('CONFIG_EXTRA_CFLAGS=""', 'CONFIG_EXTRA_CFLAGS="-mcpu=970 -mno
 # The Xenon PPC64 CPU has no x86 SHA-NI; use portable SHA routines.
 text=text.replace("CONFIG_SHA1_HWACCEL=y", "# CONFIG_SHA1_HWACCEL is not set")
 text=text.replace("CONFIG_SHA256_HWACCEL=y", "# CONFIG_SHA256_HWACCEL is not set")
+# Minimal initramfs does not need the legacy 'tc' networking applet.
+# Its old CBQ API is absent from newer kernel headers.
+text=text.replace("CONFIG_TC=y", "# CONFIG_TC is not set")
 p.write_text(text)
 PY
 make -C "$bb_src" ARCH=powerpc CROSS_COMPILE=powerpc64-linux-gnu- oldconfig </dev/null

@@ -40,6 +40,7 @@ Only use with a compatible previously modified console and recovery method; neve
 - **[Compile upstream XeLL automatically](.github/workflows/build-xell.yml)** — RGH/JTAG reference build artifacts; never flash unverified binaries.
 - **[Build XWT Boot ELF and launcher ISO](.github/workflows/build-xwtboot.yml)** — XeLL-loadable ELF32 and optional CD/DVD launcher ISO9660.
 - **[X360Linux rootfs Action](.github/workflows/build-linux-rootfs.yml)** — own minimalist initramfs without bundling an unverified kernel.
+- **[Build an experimental Linux system ISO (manual)](.github/workflows/build-linux-system.yml)** — compiles kernel and rootfs separately, then packages a *candidate* boot ISO if both succeed.
 
 > [!WARNING]
 > CI-compilable does not mean console-bootable. No XWT Boot/Linux boot has been verified on physical hardware. The XWT ISO only starts the ELF manager; it is **not** yet a complete Linux distribution.
