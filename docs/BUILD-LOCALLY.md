@@ -4,7 +4,7 @@ Linux kernel and Debian compilation can happen on the computer; GitHub Actions o
 
 ## First-time setup
 
-The connected Windows PC has an Intel Xeon E5-2667 v4 (8 cores, 16 threads) and approximately 16 GB RAM. At the latest inspection, Ubuntu WSL had **no installed distribution**, and CPU virtualization was reported as disabled/unavailable to Windows.
+The connected Windows PC has an Intel Xeon E5-2667 v4 (8 cores, 16 threads) and approximately 16 GB RAM. Ubuntu 24.04 LTS has now been installed and booted successfully as WSL2 on the connected Windows computer (2026-11-08). The Windows firmware virtualization flag was misleading: the WSL2 Linux kernel did start. The build launcher selects `Ubuntu-24.04` and runs within this dedicated WSL environment; it does not change the PC BIOS.
 
 Ubuntu **WSL2** is required because the Debian PowerPC build needs Linux mount namespaces, chroot, QEMU and Unix filesystem permissions. Git Bash alone is insufficient. If the PC's firmware virtualization is disabled, enable Intel VT-x in BIOS/UEFI. On a PC running inside a VM, nested virtualization may be necessary.
 

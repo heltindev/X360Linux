@@ -1,8 +1,9 @@
 # Double-click BUILD-LOCAL.cmd after Ubuntu WSL2 is installed.
 $ErrorActionPreference = 'Stop'
 Write-Host "X360Linux | Build Linux on this PC (Ubuntu WSL2)" -ForegroundColor Cyan
+$distro = 'Ubuntu-24.04'
 $distros = (& wsl.exe --list --quiet 2>&1 | Out-String)
-if ($LASTEXITCODE -ne 0 -or $distros -notmatch '(?m)Ubuntu') {
+if ($LASTEXITCODE -ne 0 -or $distros -notmatch 'Ubuntu-24.04') {
     Write-Host "Ubuntu WSL2 is not installed on this PC." -ForegroundColor Yellow
     Write-Host "Enable CPU virtualization in BIOS/UEFI if required."
     Write-Host "Then install Ubuntu WSL2 from elevated PowerShell and reboot if prompted."
@@ -10,7 +11,7 @@ if ($LASTEXITCODE -ne 0 -or $distros -notmatch '(?m)Ubuntu') {
     exit 2
 }
 $download = Join-Path $env:USERPROFILE 'Downloads'
-$linuxDownload = (& wsl.exe -d Ubuntu -- wslpath -u $download | Out-String).Trim()
+$linuxDownload = (& wsl.exe -d $distro -u root -- wslpath -u $download | Out-String).Trim()
 if ($LASTEXITCODE -ne 0 -or !$linuxDownload) { throw "Cannot locate Windows Downloads inside WSL." }
 $linux = @'
 set -euo pipefail
@@ -25,7 +26,7 @@ bash scripts/build-local-inputs.sh
 cp dist/X360Linux-local-inputs-*.tar.gz "$LINUX_DOWNLOADS/"
 '@
 Write-Host "Compiling on this PC. The first build can take a long time."
-& wsl.exe -d Ubuntu -- env "LINUX_DOWNLOADS=$linuxDownload" bash -lc $linux
+& wsl.exe -d $distro -u root -- env "LINUX_DOWNLOADS=$linuxDownload" bash -lc $linux
 if ($LASTEXITCODE -ne 0) { throw "Local Linux compilation failed. No release was modified." }
 $archive = Get-ChildItem -Path $download -Filter 'X360Linux-local-inputs-*.tar.gz' |
   Sort-Object LastWriteTime -Descending | Select-Object -First 1

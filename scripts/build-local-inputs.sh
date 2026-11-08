@@ -5,7 +5,10 @@ repo="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$repo"
 [[ "$(uname -s)" == Linux ]] || { echo "Ubuntu Linux/WSL2 required"; exit 1; }
 case "$repo" in /mnt/*) echo "Use a Linux filesystem under ~/X360Linux-local, not /mnt/c"; exit 1;; esac
-[[ "$EUID" -ne 0 ]] || { echo "Run as normal Linux user, not root"; exit 1; }
+# WSL installed with --no-launch starts with root until user setup.
+# A dedicated build-only WSL distribution can run this as root.
+# No host Windows disks or Xbox partitions are written.
+echo "Linux build user: $(id -un)"
 for cmd in sudo git curl python3 sha256sum; do
   command -v "$cmd" >/dev/null || { echo "Missing tool: $cmd"; exit 1; }
 done

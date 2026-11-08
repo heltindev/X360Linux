@@ -48,7 +48,7 @@ Then open [Package precompiled Linux with XeLL and ISO](https://github.com/helti
 
 The older [Full Linux rebuild](https://github.com/heltindev/X360Linux/actions/workflows/build.yml) remains available **manually** for diagnostics. Fast [source checks](https://github.com/heltindev/X360Linux/actions/workflows/checks.yml) run automatically.
 
-**Current local PC limitation:** at last inspection, Ubuntu WSL was not installed and hardware virtualization was not available to Windows. The one-time Windows/BIOS setup must be completed before a local Linux compilation can start. No successful local Debian build is claimed yet.
+**Local PC status:** Ubuntu 24.04 WSL2 was installed and successfully started on Windows (2026-11-08), with no BIOS changes required. The local Xenon/Debian build and new ISO still require validation before release.
 
 ## 📁 Project layout
 
