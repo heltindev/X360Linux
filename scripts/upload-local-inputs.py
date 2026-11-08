@@ -86,16 +86,25 @@ def main():
         if old.get("digest") != digest or old.get("size") != args.archive.stat().st_size:
             raise RuntimeError("An archive with this commit name already exists with different bytes.")
         print("LOCAL_INPUT_ALREADY_UPLOADED", args.archive.name)
-        return
-    url = f"https://uploads.github.com/repos/{REPO}/releases/{release['id']}/assets?"
-    url += urllib.parse.urlencode({"name": args.archive.name})
-    with args.archive.open("rb") as file:
-        uploaded = api(url, token, method="POST", body=file.read(),
-                       content_type="application/gzip")
-    assert uploaded["state"] == "uploaded"
-    assert uploaded["digest"] == digest
-    print("STAGED_TO_GITHUB", uploaded["browser_download_url"], flush=True)
-    print("Now run: GitHub Actions -> Package precompiled Linux with XeLL and ISO")
+    else:
+        url = f"https://uploads.github.com/repos/{REPO}/releases/{release['id']}/assets?"
+        url += urllib.parse.urlencode({"name": args.archive.name})
+        with args.archive.open("rb") as file:
+            uploaded = api(url, token, method="POST", body=file.read(),
+                           content_type="application/gzip")
+        assert uploaded["state"] == "uploaded"
+        assert uploaded["digest"] == digest
+        print("STAGED_TO_GITHUB", uploaded["browser_download_url"], flush=True)
+    # Start the lightweight XeLL+ISO Action automatically. Never publish a
+    # public Xbox release until the resulting ZIP has passed user testing.
+    run = {"ref": "main", "inputs": {
+        "source_sha": commit, "publish_release": "false",
+        "only_xell": "false"}}
+    api(base + "/actions/workflows/package-prebuilt.yml/dispatches", token,
+        method="POST", body=json.dumps(run).encode())
+    print("PACKAGING_ACTION_DISPATCHED",
+          f"https://github.com/{REPO}/actions/workflows/package-prebuilt.yml",
+          flush=True)
 
 if __name__ == "__main__":
     main()

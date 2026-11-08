@@ -44,7 +44,7 @@ The slow Debian build is **no longer triggered automatically on each GitHub push
 
 **Windows / WSL2:** see the [one-time preparation and one-click local build guide](docs/BUILD-LOCALLY.md). After Ubuntu WSL2 is ready, double-click `scripts/BUILD-LOCAL.cmd`. The PC compiles the Xenon kernel, BusyBox and Debian Ports and uploads verified components to a GitHub build cache.
 
-Then open [Package precompiled Linux with XeLL and ISO](https://github.com/heltindev/X360Linux/actions/workflows/package-prebuilt.yml). This **shorter workflow** compiles XeLL/X360Boot, assembles the ISO and both beginner USB ZIPs, without recompiling the Linux kernel or installing Debian again. First run with **publish_release = false** to inspect the artifacts; publishing the experimental v0.5 alpha is optional.
+The Windows helper automatically starts [Package precompiled Linux with XeLL and ISO](https://github.com/heltindev/X360Linux/actions/workflows/package-prebuilt.yml) after uploading verified local files. This **shorter workflow** compiles XeLL/X360Boot and creates the ISO and both beginner USB ZIPs without rebuilding the kernel or Debian. It runs with **publish_release = false** initially; publishing an experimental v0.5 alpha remains a separate decision after testing.
 
 The older [Full Linux rebuild](https://github.com/heltindev/X360Linux/actions/workflows/build.yml) remains available **manually** for diagnostics. Fast [source checks](https://github.com/heltindev/X360Linux/actions/workflows/checks.yml) run automatically.
 

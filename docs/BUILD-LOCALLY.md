@@ -24,7 +24,7 @@ The local build output includes kernel/vmlinux, xenon.dtb, xenon.elf, recovery i
 
 ## Fast GitHub packaging
 
-Open [Package precompiled Linux with XeLL and ISO](https://github.com/heltindev/X360Linux/actions/workflows/package-prebuilt.yml), click **Run workflow** and keep **publish_release = false** the first time. It downloads the already-built Linux files, compiles XeLL and X360Boot, builds the Debian ISO plus the RGH/FreeMyXe ZIPs, validates their contents and makes the downloadable packages available as workflow artifacts.
+Once compilation finishes, the Windows helper uploads the precompiled archive **and automatically starts** [Package precompiled Linux with XeLL and ISO](https://github.com/heltindev/X360Linux/actions/workflows/package-prebuilt.yml) with `publish_release = false`. This workflow downloads the Linux files, compiles XeLL and X360Boot, builds the Debian ISO and RGH/FreeMyXe ZIPs, verifies contents, and provides the downloads as workflow artifacts. It does not publish a public release before the Xbox testing.
 
 Only after testing those packages on real Xbox 360 hardware should you use **publish_release = true**, which publishes them to a separate **v0.5.0-alpha**, leaving previous tested releases unchanged.
 

@@ -39,4 +39,4 @@ if (!$archive) { throw "Precompiled Linux archive not found in Downloads." }
 Write-Host "Built: $($archive.FullName)" -ForegroundColor Green
 python.exe (Join-Path $PSScriptRoot 'upload-local-inputs.py') $archive.FullName
 if ($LASTEXITCODE -ne 0) { throw "GitHub cache upload failed; file remains in Downloads." }
-Write-Host "Open GitHub Actions -> Package precompiled Linux with XeLL and ISO." -ForegroundColor Green
+Write-Host "GitHub Actions packaging has been started automatically (no public release yet)." -ForegroundColor Green
