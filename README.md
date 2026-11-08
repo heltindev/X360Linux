@@ -19,7 +19,7 @@
 | Keyboard, mouse, controller, audio, Ethernet | ⬜ Individual hardware tests pending |
 | Separate X360Boot / Debian Ports shell experiments | ✅ Previous v0.2-era boot and shell testing; independent from the legacy XEX archive |
 
-## v0.3.0-alpha — two experimental boot paths
+## v0.3.0-alpha — XEX is the primary boot path
 
 **[Download release v0.3.0-alpha](https://github.com/heltindev/X360Linux/releases/tag/v0.3.0-alpha)**
 
@@ -35,6 +35,8 @@
 5. **The Ubuntu installer/startup flow may appear. Do not install to internal Xbox storage.** Direct graphical live boot is not yet provided.
 
 No Rufus, ISO extraction or build step is needed for that boot attempt. For precise checksums, warnings and known limitations, see **[v0.3 legacy USB instructions](docs/V03-LEGACY-XEX.md)**.
+
+**Retired:** the old x360linux-local-cache release and tag have been deleted. The automatic cache upload and ISO packing workflow is disabled. Neither is needed for the tested XEX boot path.
 
 ## v0.4 — develop a real USB-native Linux distribution
 
