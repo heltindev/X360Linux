@@ -59,3 +59,11 @@ unchanged. This is not proof that GDM or a graphical desktop boots.
 - [ ] Validate two-pendrive ABadAvatar startup.
 
 This experimental 2011 Ubuntu live image is not a persistent Debian installation.
+
+## v0.4 offline DHCP and 0-100% splash - TODO
+
+- [ ] Fix no-cable DHCP delay at the XeLL stage; see issue #1.
+- [ ] Prototype graphical 0-100% Linux Plymouth progress after framebuffer initialization; see issue #2.
+- [ ] Keep logs visible in a diagnostic mode, and measure boot on real hardware before updating binaries.
+
+See [engineering notes](V04-DHCP-SPLASH.md). Current alpha ZIP is NOT modified.
