@@ -43,6 +43,8 @@ if ($LASTEXITCODE -ne 0 -or $sourceShort -notmatch '^[a-f0-9]{8}$') {
 $archive = Get-Item -LiteralPath (Join-Path $download "X360Linux-local-inputs-$sourceShort.tar.gz") -ErrorAction Stop
 if (!$archive -or $archive.Length -lt 1024) { throw "The exact source archive is missing or empty." }
 Write-Host "Built: $($archive.FullName)" -ForegroundColor Green
-python.exe (Join-Path $PSScriptRoot 'upload-local-inputs.py') $archive.FullName
-if ($LASTEXITCODE -ne 0) { throw "GitHub cache upload failed; file remains in Downloads." }
-Write-Host "GitHub Actions packaging has been started automatically (no public release yet)." -ForegroundColor Green
+# The GitHub cache and its packaging Action have been retired.
+# Retain this old Linux compilation workflow locally only.
+Write-Host "Local build complete; no GitHub cache upload or Actions were started." -ForegroundColor Yellow
+Write-Host "Active Xbox boot path: Aurora -> default.xex -> XeLL -> Linux." -ForegroundColor Cyan
+Write-Host "For XEX workflow see docs/V03-LEGACY-XEX.md."
