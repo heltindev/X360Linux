@@ -60,6 +60,8 @@ The existing `scripts/v041-ext4/init` is **Ubuntu-specific**: `REL=distros/ubunt
 
 For Debian the recommendation is to start with a **Free60-compatible Debian `powerpc` 32-bit root filesystem**, validate kernel/initrd/console startup, then attempt a lightweight graphical session. The Free60 community also documents newer `ppc64` kernels and Debian Sid; that is a more substantial kernel migration rather than a trivial rename.
 
+**Important kernel compatibility warning:** the existing `vmlinux` is Linux **2.6.36.2 from 2011**. A modern Debian `powerpc` userspace can require newer Linux kernel interfaces (for example from its libc or init system) even though both are PowerPC 32-bit. Therefore the present vmlinux should **not** be assumed to boot current Debian. The Free60 2025 Debian Sid guide builds a Xenon-patched Linux **6.16.x** kernel and uses Debian **ppc64**; adopting that newer kernel/bootloader stack is a separate, hardware-risk-sensitive development effort, not part of the current v0.4.1 USB. Avoid XeLL/NAND flashing in an automatic workflow.
+
 ## 5. Real hardware status and safety
 
 - Console: Xbox 360 Corona Phison RGH. Physical **Eject** enters the installed XeLL. Aurora `default.xex` from the 2011 archive results in a **black screen**.
