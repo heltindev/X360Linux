@@ -2,8 +2,10 @@
 $ErrorActionPreference = 'Stop'
 Write-Host "X360Linux | Build Linux on this PC (Ubuntu WSL2)" -ForegroundColor Cyan
 $distro = 'Ubuntu-24.04'
-$distros = (& wsl.exe --list --quiet 2>&1 | Out-String)
-if ($LASTEXITCODE -ne 0 -or $distros -notmatch 'Ubuntu-24.04') {
+# wsl --list --quiet can return UTF-16 output with embedded NUL characters
+# in Windows PowerShell. Check bootability rather than parsing the listing.
+& wsl.exe -d $distro -u root -- true 2>&1 | Out-Null
+if ($LASTEXITCODE -ne 0) {
     Write-Host "Ubuntu WSL2 is not installed on this PC." -ForegroundColor Yellow
     Write-Host "Enable CPU virtualization in BIOS/UEFI if required."
     Write-Host "Then install Ubuntu WSL2 from elevated PowerShell and reboot if prompted."
@@ -11,8 +13,11 @@ if ($LASTEXITCODE -ne 0 -or $distros -notmatch 'Ubuntu-24.04') {
     exit 2
 }
 $download = Join-Path $env:USERPROFILE 'Downloads'
-$linuxDownload = (& wsl.exe -d $distro -u root -- wslpath -u $download | Out-String).Trim()
-if ($LASTEXITCODE -ne 0 -or !$linuxDownload) { throw "Cannot locate Windows Downloads inside WSL." }
+# Build a /mnt/<drive>/... path locally. Sending Windows backslashes
+# through WSL's command-line parser strips them before wslpath receives them.
+$drive = $download.Substring(0, 1).ToLowerInvariant()
+$relative = $download.Substring(3).Replace('\', '/')
+$linuxDownload = "/mnt/$drive/$relative"
 $linux = @'
 set -euo pipefail
 cd "$HOME"
