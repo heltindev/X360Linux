@@ -33,6 +33,16 @@ There are **no alternative Debian/FreeMyXe assets** in the current v0.3 release.
 
 **Retired:** the old x360linux-local-cache release and tag have been deleted. The automatic cache upload and ISO packing workflow is disabled. Neither is needed for the tested XEX boot path.
 
+## v0.4.0-alpha - preloaded XEX live USB (experimental)
+
+[Download the v0.4.0-alpha XEX USB preview](https://github.com/heltindev/X360Linux/releases/tag/v0.4.0-alpha) - marked UNTESTED.
+
+The existing Ubuntu 10.10 Xenon GNOME desktop comes PRELOADED in the USB SquashFS. The original XEX, XeLL and PowerPC kernel were preserved. The installer auto-start was disabled, GDM was configured for direct live-user login, and optional background services were trimmed to try improving boot speed.
+
+The patch and ZIP passed local static verification, but actual desktop boot on Xbox, startup speed improvement, writable USB persistence and ABadAvatar are NOT yet verified. This is not modern Debian. For RGH launch default.xex from Aurora on one FAT32 USB; ABadAvatar requires a separate exploit pendrive and an XEX-capable loader for the second Linux USB.
+
+See [v0.4 detailed guide](docs/V04-XEX-LIVE.md) and [source build script](scripts/build-v04-xex-live.sh).
+
 ## v0.4 — develop a real USB-native Linux distribution
 
 Use the hardware-confirmed XEX launch route as the starting point. The planned boot sequence is **Aurora XEX → XeLL → Xenon kernel → initramfs → USB root filesystem → lightweight Linux desktop**, without a manual installer or console commands.
