@@ -18,7 +18,7 @@ permissions:
 
 jobs:
   usb-debian:
-    name: Assemble preinstalled Debian USB image and ISO
+    name: Assemble and verify the Debian ISO USB pack
     runs-on: ubuntu-24.04
     timeout-minutes: 60
     steps:
@@ -26,7 +26,7 @@ jobs:
       - name: Install ext4 tools and PowerPC emulator
         run: |
           sudo apt-get update -qq
-          sudo apt-get install -y e2fsprogs qemu-user binutils xorriso unzip curl python3
+          sudo apt-get install -y e2fsprogs qemu-user binutils busybox xorriso unzip curl python3
       - uses: actions/download-artifact@v4
         with:
           name: X360Linux-kernel-EXPERIMENTAL
@@ -56,6 +56,7 @@ jobs:
       - name: Build the current USB boot initramfs
         run: |
           sh -n distro/rootfs/init
+          sh -n distro/rootfs/iso-root.sh
           busybox=dist/recovery/busybox-static-ppc32
           chmod +x "$busybox"
           qemu-ppc -cpu 750 "$busybox" --list > dist/recovery/applets.txt
@@ -81,6 +82,29 @@ jobs:
             --usb-root dist/install/system.ext4 \
             --output-dir dist/image --iso
           (cd dist/image && sha256sum -c SHA256SUMS)
+      - name: Test the ISO root and persistence across remounts
+        run: |
+          truncate -s 512M dist/install/USB-DATA.ext4
+          mkfs.ext4 -q -F -L X360DATA dist/install/USB-DATA.ext4
+          e2fsck -fn dist/install/USB-DATA.ext4
+          sudo unshare --mount --propagation private bash -e <<'SH'
+          state=$(mktemp -d)
+          trap 'umount "$state/root" "$state/mounts/data" "$state/mounts/base" "$state/mounts/iso" 2>/dev/null || true; rm -rf "$state"' EXIT
+          cp --sparse=always dist/install/USB-DATA.ext4 "$state/data.ext4"
+          mkdir "$state/root"
+          BB=busybox
+          . distro/rootfs/iso-root.sh
+          image=dist/image/X360Linux-ELF-Linux-UNVERIFIED.iso
+          mount_iso_root "$image" "$state/data.ext4" "$state/mounts" "$state/root"
+          test -x "$state/root/usr/bin/bash"
+          grep -qx ID=debian "$state/root/etc/os-release"
+          echo ISO_USB_PERSISTENCE_OK > "$state/root/root/iso-test"
+          test ! -e "$state/mounts/base/root/iso-test"
+          umount "$state/root" "$state/mounts/data" "$state/mounts/base" "$state/mounts/iso"
+          mount_iso_root "$image" "$state/data.ext4" "$state/mounts" "$state/root"
+          grep -qx ISO_USB_PERSISTENCE_OK "$state/root/root/iso-test"
+          echo X360LINUX_ISO_OVERLAY_PERSISTENCE_OK
+          SH
       - name: Download known XeLL launcher and exploit base
         run: |
           mkdir -p dist/old dist/launcher
@@ -101,11 +125,11 @@ jobs:
             --kernel dist/kernel/vmlinux \
             --dtb dist/kernel/xenon.dtb \
             --initramfs dist/recovery/initramfs.cpio.gz \
-            --system-ext4 dist/install/system.ext4 \
+            --userdata dist/install/USB-DATA.ext4 \
             --iso dist/image/X360Linux-ELF-Linux-UNVERIFIED.iso \
             --output-dir dist/publish \
             --tag v0.3.0-alpha
-      - name: Check final USB ZIPs and optional ISO
+      - name: Check final USB ZIPs and embedded ISO
         run: |
           python3 - <<'PY'
           from pathlib import Path
@@ -113,7 +137,7 @@ jobs:
           from hashlib import file_digest
           import gzip
           base=Path("dist/publish")
-          iso=base/"X360Linux-v0.3.0-alpha-XeLL-EXPERIMENTAL.iso"
+          iso=base/"X360Linux.iso"
           with iso.open("rb") as f:
               f.seek(32769)
               assert f.read(5)==b"CD001"
@@ -124,11 +148,13 @@ jobs:
               with ZipFile(path) as z:
                   assert z.testzip() is None
                   assert z.read("X360Linux/USB-ROOT.ID")==b"X360LINUX-USB-ROOT-V1\n"
-                  assert "X360Linux/system.ext4" in z.namelist()
+                  assert "X360Linux/system.ext4" not in z.namelist()
+                  assert z.getinfo("X360Linux/USB-DATA.ext4").file_size == 512 * 1024 * 1024
                   with z.open(f"X360Linux/{iso.name}") as source:
                       assert file_digest(source, "sha256").digest()==expected
                   with open("distro/rootfs/init", "rb") as source:
                       assert source.read() in gzip.decompress(z.read("X360Linux/initramfs.cpio.gz"))
+                  assert b"iso-root.sh" in gzip.decompress(z.read("X360Linux/initramfs.cpio.gz"))
                   roots = {name.split("/")[0] for name in z.namelist()}
                   expected_roots = {"xenon.elf", "X360Linux"}
                   if flavor.startswith("ABadAvatar"):

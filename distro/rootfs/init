@@ -5,11 +5,12 @@ export PATH
 BB=/bin/busybox
 usb=/media/usb
 root=/newroot
+. /iso-root.sh
 
 recover() {
   $BB echo "X360Linux USB: $*"
   $BB cat /proc/partitions
-  $BB dmesg | $BB grep -iE 'usb|ehci|ohci|scsi|FAT-fs|EXT4-fs|loop' | $BB tail -n 10
+  $BB dmesg | $BB grep -iE 'usb|ehci|ohci|scsi|FAT-fs|EXT4-fs|ISOFS|overlay|loop' | $BB tail -n 10
   $BB echo "Recovery shell. Photograph the X360Linux USB error above."
   exec $BB cttyhack /bin/sh -i </dev/console >/dev/console 2>&1
 }
@@ -42,7 +43,7 @@ while [ "$attempt" -lt 30 ] && [ -z "$device" ]; do
     fi
     saw_fat=1
     if [ "$($BB cat "$usb/X360Linux/USB-ROOT.ID" 2>/dev/null)" = X360LINUX-USB-ROOT-V1 ] &&
-       [ -s "$usb/X360Linux/system.ext4" ]; then
+       { [ -s "$usb/X360Linux/X360Linux.iso" ] || [ -s "$usb/X360Linux/system.ext4" ]; }; then
       device=$part
       break
     fi
@@ -54,23 +55,29 @@ done
 if [ -z "$device" ]; then
   [ "$saw_usb" -eq 1 ] || recover "USB mass storage did not appear in Linux"
   [ "$saw_fat" -eq 1 ] || recover "USB detected, FAT32 mount failed ($mount_error)"
-  recover "FAT32 mounted, but X360Linux/USB-ROOT.ID or system.ext4 is missing"
+  recover "FAT32 mounted, but the USB marker or Linux image is missing"
 fi
 
 $BB echo "X360Linux USB: Debian image found on $device"
 $BB mount -t vfat -o remount,rw,umask=0077 "$device" "$usb" ||
   recover "cannot reopen $device for writes"
-# The Xenon kernel can allocate loop devices on demand. BusyBox uses loop-control.
-if ! $BB mount -t ext4 -o loop,rw,noatime "$usb/X360Linux/system.ext4" "$root"; then
-  $BB umount "$usb"
-  recover "cannot mount Debian system.ext4 (loop/ext4)"
+if [ -s "$usb/X360Linux/X360Linux.iso" ]; then
+  $BB echo "X360Linux USB: starting from X360Linux.iso"
+  $BB mount -t tmpfs -o mode=0755 tmpfs /run || recover "cannot prepare /run"
+  mount_iso_root "$usb/X360Linux/X360Linux.iso" "$usb/X360Linux/USB-DATA.ext4" /run/x360linux "$root" ||
+    recover "cannot start the ISO or USB data image"
+elif ! $BB mount -t ext4 -o loop,rw,noatime "$usb/X360Linux/system.ext4" "$root"; then
+  recover "cannot mount the legacy Debian system.ext4"
 fi
 if ! $BB chroot "$root" /bin/sh -c ':' || [ ! -x "$root/sbin/init" ]; then
   recover "Debian files mounted, but its PowerPC shell or init cannot run"
 fi
 
 # Keep the backing FAT mount and the live device nodes visible in Debian.
-$BB mkdir -p "$root/dev" "$root/proc" "$root/sys" "$root/bootusb"
+$BB mkdir -p "$root/dev" "$root/proc" "$root/sys" "$root/run" "$root/bootusb"
+if [ -s "$usb/X360Linux/X360Linux.iso" ]; then
+  $BB mount -o move /run "$root/run" || recover "cannot move the ISO backing mounts into Debian"
+fi
 $BB mount -o bind "$usb" "$root/bootusb" &&
   $BB mount -o bind /proc "$root/proc" &&
   $BB mount -o bind /sys "$root/sys" &&

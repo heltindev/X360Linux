@@ -10,6 +10,7 @@ if [[ $# -ne 3 ]]; then
 fi
 source_tar="$(realpath "$1")"
 rescue_bin="$(realpath "$2")"
+script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 output="$(realpath -m "$3")"
 for tool in mkfs.ext4 e2fsck tar readelf qemu-ppc; do
     command -v "$tool" >/dev/null || { echo "Missing $tool" >&2; exit 1; }
@@ -28,6 +29,9 @@ mkdir -p "$root"
 tar -xzpf "$source_tar" -C "$root" --no-same-owner
 mkdir -p "$root/sbin" "$root/etc" "$root/root" "$root/bootusb"
 install -D -m 0755 "$rescue_bin" "$root/usr/lib/x360linux/busybox"
+install -m 0755 "$script_dir/ethernet" "$script_dir/dhcp-event" "$root/usr/lib/x360linux/"
+rm -f "$root/etc/resolv.conf"
+printf '%s\n' "# Configured by Ethernet DHCP." > "$root/etc/resolv.conf"
 cat > "$root/sbin/init" <<'EOF'
 #!/bin/sh
 # Boot starts the actual Debian filesystem from the USB ext4 image.
@@ -37,6 +41,7 @@ export PATH
 export HOME=/root
 BB=/usr/lib/x360linux/busybox
 hostname x360linux
+/usr/lib/x360linux/ethernet > /run/x360linux-network.log 2>&1 &
 echo
 echo "=================================================="
 echo " X360Linux | Debian Ports powerpc (USB installation)"
@@ -73,6 +78,12 @@ installed_busybox="$root$(sed -n 's/^BB=//p' "$root/sbin/init")"
 qemu-ppc -cpu 750 -L "$root" "$installed_busybox" cat /etc/os-release > "$work/os-release"
 grep -qx 'ID=debian' "$work/os-release"
 printf '%s\n' "X360LINUX_DEBIAN_AUTO_RELEASE_OK"
+qemu-ppc -cpu 750 "$installed_busybox" --list > "$work/applets"
+for applet in udhcpc ip ifconfig; do
+    grep -qx "$applet" "$work/applets"
+done
+sh -n "$root/usr/lib/x360linux/ethernet"
+sh -n "$root/usr/lib/x360linux/dhcp-event"
 qemu-ppc -cpu 750 "$installed_busybox" sleep 0
 qemu-ppc -cpu 750 "$installed_busybox" setsid /bin/true
 qemu-ppc -cpu 750 "$installed_busybox" cttyhack /bin/true

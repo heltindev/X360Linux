@@ -19,19 +19,21 @@
 | Desktop, audio, browser, mouse and controller inside Debian | ⬜ Future milestones |
 | Xbox 360 XEX launcher | ⬜ Last milestone, after stable USB Linux |
 
-**Current direction:** X360Linux boots the actual Debian Ports **32-bit big-endian PowerPC** filesystem from a preinstalled ext4 file on a FAT32 pendrive. The previous Photos/Videos/System demo is not started and is not included in the new boot initramfs.
+**Current direction:** X360Linux boots the actual Debian Ports **32-bit big-endian PowerPC** filesystem from an ISO file on a FAT32 pendrive. A separate ext4 data image keeps changes. The previous Photos/Videos/System demo is not started and is not included in the new boot initramfs.
 
-A real Xbox 360 mounted the USB ext4 image, opened the Debian shell and returned Debian GNU/Linux forky/sid from `cat /etc/os-release`. The USB image now runs that check automatically on every boot.
+A real Xbox 360 mounted the USB ext4 image, opened the Debian shell and returned Debian GNU/Linux forky/sid from `cat /etc/os-release`. That direct ext4 build is available under [v0.2.0-alpha](https://github.com/heltindev/X360Linux/releases/tag/v0.2.0-alpha). The ISO revision runs that check automatically and needs a console test.
 
 ## 🚀 Quick start
 
 1. Download the **[v0.3.0-alpha USB Debian ZIP](https://github.com/heltindev/X360Linux/releases/tag/v0.3.0-alpha)** for your RGH/JTAG or existing FreeMyXe/ABadAvatar XeLL setup.
 2. Back up your FAT32 USB and extract the ZIP directly to its **root**, with `xenon.elf` next to the `X360Linux/` folder. At least **2 GB free** is recommended.
-3. Check the presence of `xenon.elf`, `X360Linux/vmlinux`, `X360Linux/initramfs.cpio.gz`, `X360Linux/USB-ROOT.ID`, and `X360Linux/system.ext4`.
+3. Check the presence of `xenon.elf`, `X360Linux/vmlinux`, `X360Linux/initramfs.cpio.gz`, `X360Linux/USB-ROOT.ID`, and `X360Linux/X360Linux.iso` and `X360Linux/USB-DATA.ext4`.
 4. Boot the Xbox with the same XeLL method you already use. X360Boot automatically starts the Linux kernel.
-5. Linux searches for **only the explicitly marked USB partition**, mounts the ext4 system image and attempts Debian; otherwise it uses a rescue shell. Debian shows its release information and opens the shell automatically. A USB keyboard is only needed for typing commands.
+5. Linux searches for **only the explicitly marked USB partition**, mounts the ISO and its writable data image, then starts Debian; otherwise it uses a rescue shell. Debian shows its release information and opens the shell automatically. A USB keyboard is only needed for typing commands.
 
-**No partitioning wizard, NAND flashing, Xbox HDD installation or internal disk formatting.** The Debian system is preinstalled inside `system.ext4`; extracting the ZIP onto the USB is the installation step. The optional ISO is inside `X360Linux/` for experimentation.
+**No partitioning wizard, NAND flashing, Xbox HDD installation or internal disk formatting.** Extracting the ZIP onto the USB is the installation step. The ISO is read-only, and the data image stores your changes.
+
+If XeLL stops at `Requesting DHCP`, disconnect Ethernet, restart XeLL and reconnect it after Debian starts. Debian attempts wired DHCP in the background.
 
 See [USB Debian beginner guide](docs/USB-DEBIAN-BOOT.md) and [recovery steps](docs/TESTING.md).
 

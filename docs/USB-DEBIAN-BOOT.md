@@ -1,20 +1,18 @@
-# X360Linux v0.3 USB-first Debian installation
+# X360Linux v0.3 USB boot
 
-This image is the **real, already-installed Debian Ports 32-bit big-endian PowerPC root filesystem**. It is stored in `X360Linux/system.ext4` inside the **FAT32 USB boot drive**, with an explicit `X360Linux/USB-ROOT.ID` marker.
+The ZIP contains a Debian Ports PowerPC ISO and a writable data image. The Xbox 360 runs Debian from the ISO on the USB drive. The XeLL installation you already use starts the process.
 
-**No Xbox 360 HDD or NAND is modified.** The XeLL/X360Boot chain continues to load `xenon.elf`, `vmlinux`, `xenon.dtb` and a tiny BusyBox initramfs. That initramfs auto-detects *only* a FAT32 partition containing the exact X360Linux USB marker, opens the ext4 system image through the Linux loop device and tries `switch_root` into Debian.
+1. Use a FAT32 USB drive with at least 2 GB free.
+2. Extract the correct ZIP directly to the USB root. Keep `xenon.elf` next to the `X360Linux/` folder.
+3. Connect the USB drive and start XeLL. Wait for the Debian version and prompt to appear.
+4. Shut down cleanly before unplugging. `X360Linux/USB-DATA.ext4` holds the changes made inside Debian, so back it up before updating.
 
-This is not a desktop installer wizard. **Extracting the ZIP onto a FAT32 pendrive is the installation step.** Debian opens its shell automatically. USB ext4 boot and interactive shell input have been confirmed on a real Xbox 360. File persistence after a reboot still needs testing.
+The launcher loads the Xenon kernel and initramfs. Linux mounts `X360Linux/X360Linux.iso` read-only and uses `USB-DATA.ext4` as its writable layer. The direct ext4 build tested on Xbox hardware is available under [v0.2.0-alpha](https://github.com/heltindev/X360Linux/releases/tag/v0.2.0-alpha).
 
-## How to test on a modified Xbox 360
+## Ethernet and DHCP
 
-1. Use an already-working XeLL installation, on RGH/JTAG or with your existing FreeMyXe/ABadAvatar exploit.
-2. Back up the drive, then download the correct v0.3 USB ZIP.
-3. Extract it **to the FAT32 root** of a pendrive with at least 2 GB available. Keep `xenon.elf` at the root, alongside `X360Linux/`. The folder contains `system.ext4`, `USB-ROOT.ID`, the kernel, the recovery initramfs and the optional ISO.
-4. Insert the pendrive and start XeLL as usual. X360Boot automatically loads the Xenon Linux kernel after a brief cancel window.
-5. Linux scans USB for the marker, mounts **only the marked pendrive** for writing, then attempts to switch to the Debian root. Debian automatically runs `cat /etc/os-release` and shows the shell prompt. A USB keyboard is only needed to type further commands.
-6. If the BusyBox recovery shell appears, photograph the `X360Linux USB:` error above it. The error indicates whether Linux detected the drive, mounted FAT32, found the installation or reached the Debian runtime.
+If XeLL hangs at `Requesting DHCP`, unplug the Ethernet cable and start XeLL again. Reconnect it after the Debian prompt appears. Debian runs Ethernet DHCP in the background and retries if the cable is disconnected. To check its status, run `cat /run/x360linux-network.log`.
 
-**Important**: Debian PowerPC + ext4 loop on Xbox 360 is experimental. No accelerated desktop, controller-as-mouse, native MP4 or audio is promised here. Initial priority is getting a real Debian filesystem to boot. Only after that will we add a low-memory graphical desktop.
+The [Xbox 360 Wi-Fi 11g project](https://github.com/sergiolimasks/xbox360-wifi-11g) changes the stock Xbox kernel Wi-Fi driver. Free60 publishes a [separate experimental Linux driver](https://github.com/Free60Project/linux-xbox360-wifi) for the Marvell adapter in some Xbox 360 S units.
 
-The included ISO is **not** executed from USB. It is an optional experimental optical image. The actual Debian installation is the `system.ext4` file in the USB ZIP.
+If a BusyBox recovery shell appears, photograph the last `X360Linux USB:` error. The ISO and wired DHCP need confirmation on Xbox hardware.

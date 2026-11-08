@@ -46,6 +46,7 @@ def main():
                    "ls","ps","free","reboot","poweroff","sleep"):
         add("bin/" + applet, b"busybox", stat.S_IFLNK | 0o777)
     add("init", init, stat.S_IFREG | 0o755)
+    add("iso-root.sh", args.init.with_name("iso-root.sh").read_bytes())
     add("dev/console", b"", stat.S_IFCHR | 0o600, 5, 1)
     add("dev/null", b"", stat.S_IFCHR | 0o666, 1, 3)
     add("dev/loop0", b"", stat.S_IFBLK | 0o660, 7, 0)

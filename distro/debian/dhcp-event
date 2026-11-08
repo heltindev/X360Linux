@@ -1,0 +1,29 @@
+#!/bin/sh
+# SPDX-License-Identifier: Apache-2.0
+BB=/usr/lib/x360linux/busybox
+
+case "$1" in
+  deconfig)
+    "$BB" ip -4 addr flush dev "$interface"
+    ;;
+  bound|renew)
+    [ -n "$ip" ] && [ -n "$interface" ] || exit 1
+    if [ -n "$subnet" ]; then
+      "$BB" ifconfig "$interface" "$ip" netmask "$subnet" up || exit 1
+    else
+      "$BB" ifconfig "$interface" "$ip" up || exit 1
+    fi
+    for gateway in $router; do
+      "$BB" ip route replace default via "$gateway" dev "$interface"
+      break
+    done
+    if [ -n "$dns" ]; then
+      {
+        for server in $dns; do
+          case "$server" in *[!0-9.]*|'') continue ;; esac
+          printf 'nameserver %s\n' "$server"
+        done
+      } > /etc/resolv.conf
+    fi
+    ;;
+esac

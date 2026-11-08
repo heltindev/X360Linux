@@ -13,18 +13,15 @@ import tempfile
 import tarfile
 import zipfile
 
-README = """X360LINUX USB-ONLY DEBIAN POWERPC ALPHA
------------------------------------------
-No Photos/Videos/System graphical launcher is started by Linux.
-XeLL/X360Boot loads the Xenon Linux kernel and a tiny BusyBox initramfs.
-The initramfs attempts to mount X360Linux/system.ext4 from a FAT32 USB
-partition with the correct X360Linux/USB-ROOT.ID marker.
-The ext4 image is a PREINSTALLED Debian Ports PowerPC filesystem.
-It is not necessary to run an installer wizard or format any Xbox HDD.
-A keyboard is still needed for the first Debian shell tests.
-The image is NOT a PC installer and the ISO is NOT opened from USB.
-USB ext4 loop boot/persistence have NOT yet been verified on real Xbox.
-Never flash NAND; do not rename to updflash.bin or updxell.bin.
+README = """X360LINUX DEBIAN POWERPC USB IMAGE
+---------------------------------
+Extract the complete RGH or FreeMyXe ZIP to a FAT32 USB drive.
+XeLL starts xenon.elf and the Xenon Linux kernel from the USB drive.
+Linux mounts X360Linux.iso from the USB drive and runs the Debian
+system stored in the ISO. X360Linux/USB-DATA.ext4 stores changes.
+The USB boot does not require an optical drive or a network connection.
+Wait for the Debian version and the prompt. A USB keyboard is optional.
+Never flash NAND or format the Xbox HDD.
 """
 
 def check_elf(path):

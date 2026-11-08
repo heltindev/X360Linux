@@ -1,0 +1,12 @@
+#!/bin/sh
+# SPDX-License-Identifier: Apache-2.0
+BB=/usr/lib/x360linux/busybox
+"$BB" ip link set lo up
+for netdev in /sys/class/net/*; do
+  driver=$("$BB" readlink -f "$netdev/device/driver") || continue
+  [ "${driver##*/}" = sis190 ] || continue
+  iface=${netdev##*/}
+  "$BB" ip link set dev "$iface" up || exit 1
+  exec "$BB" udhcpc -f -i "$iface" -t 4 -T 3 -A 10 -s /usr/lib/x360linux/dhcp-event
+done
+echo "Xenon Ethernet device (sis190) not found."
