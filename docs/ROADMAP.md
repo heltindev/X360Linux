@@ -32,3 +32,16 @@
 **Safety:** No NAND flashes, no Xbox HDD installation, no unverified claims of modern software compatibility.
 
 See [v0.3 legacy XEX guide](V03-LEGACY-XEX.md), [credits](CREDITS.md) and [release page](https://github.com/heltindev/X360Linux/releases/tag/v0.3.0-alpha).
+
+
+## Technical investigation - v0.4 experiment 01 (2026-11-08)
+
+Inspection of the historical Ubuntu 10.10 SquashFS found
+etc/init/ubiquity.conf. Its Upstart installer job is enabled when
+kernel command-line flags include only-ubiquity, maybe-ubiquity or
+automatic-ubiquity. The actual Xbox kernel command line has NOT yet been
+observed in a physical test.
+
+A local experimental COPY of the filesystem disables only the automatic
+start condition for that installer job. The XEX, XeLL and kernel stay
+unchanged. This is not proof that GDM or a graphical desktop boots.
