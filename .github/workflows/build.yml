@@ -63,7 +63,7 @@ jobs:
         run: |
           sudo apt-get update -qq
           sudo apt-get install -y gcc-powerpc-linux-gnu libc6-dev-powerpc-cross \
-            binutils-powerpc-linux-gnu qemu-user make bzip2 curl python3
+            binutils-powerpc-linux-gnu qemu-user make bzip2 curl python3 dnsmasq-base iproute2
       - name: Check launcher settings and boot scripts
         run: |
           gcc -std=c11 -Wall -Wextra -Werror -pedantic \
@@ -80,6 +80,10 @@ jobs:
           for applet in mount umount readlink chroot switch_root cttyhack dmesg grep tail; do
             grep -qx "$applet" distro/out/applets.txt
           done
+      - name: Verify PowerPC DHCP client and lease hook
+        run: |
+          sudo unshare --mount --net --propagation private \
+            bash release/test_ethernet_dhcp.sh distro/out/busybox-static-ppc32
       - uses: actions/upload-artifact@v4
         with:
           name: x360-userspace
@@ -133,7 +137,7 @@ jobs:
       - name: Install ext4 tools and PowerPC emulator
         run: |
           sudo apt-get update -qq
-          sudo apt-get install -y e2fsprogs qemu-user binutils busybox xorriso unzip curl python3
+          sudo apt-get install -y e2fsprogs qemu-user binutils busybox xorriso unzip curl python3 dosfstools fdisk
       - uses: actions/download-artifact@v4
         with:
           name: x360-kernel
@@ -179,51 +183,22 @@ jobs:
             --usb-root dist/install/system.ext4 \
             --output-dir dist/image --iso
           (cd dist/image && sha256sum -c SHA256SUMS)
-      - name: Test the ISO root and persistence across remounts
+      - name: Create the persistent USB data image
         run: |
           truncate -s 512M dist/USB-DATA.ext4
           mkfs.ext4 -q -F -L X360DATA dist/USB-DATA.ext4
           e2fsck -fn dist/USB-DATA.ext4
-          sudo unshare --mount --propagation private bash -e <<'SH'
-          state=$(mktemp -d)
-          trap 'umount -R "$state/root" 2>/dev/null || true; umount -R "$state/mounts" 2>/dev/null || true; rm -rf "$state"' EXIT
-          cp --sparse=always dist/USB-DATA.ext4 "$state/data.ext4"
-          mkdir "$state/root" "$state/mounts"
-          mount -t tmpfs tmpfs "$state/mounts"
-          BB=busybox
-          . distro/rootfs/iso-root.sh
-          image=dist/image/X360Linux-ELF-Linux-UNVERIFIED.iso
-          mount_iso_root "$image" "$state/data.ext4" "$state/mounts" "$state/root"
-          test -x "$state/root/usr/bin/bash"
-          grep -qx ID=debian "$state/root/etc/os-release"
-          echo ISO_USB_PERSISTENCE_OK > "$state/root/root/iso-test"
-          test ! -e "$state/mounts/base/root/iso-test"
-          mkdir -p "$state/root/run"
-          busybox mount -o move "$state/mounts" "$state/root/run"
-          test -s "$state/root/run/iso/X360Linux/system.ext4"
-          busybox mount -o move "$state/root/run" "$state/mounts"
-          umount "$state/root" "$state/mounts/data" "$state/mounts/base" "$state/mounts/iso"
-          mount_iso_root "$image" "$state/data.ext4" "$state/mounts" "$state/root"
-          grep -qx ISO_USB_PERSISTENCE_OK "$state/root/root/iso-test"
-          echo X360LINUX_ISO_OVERLAY_PERSISTENCE_OK
-          SH
-      - name: Fetch verified USB pack templates
+      - name: Fetch the verified FreeMyXe compatibility payload
         run: |
-          mkdir -p dist/old
-          recovery=https://github.com/heltindev/X360Linux/releases/download/v0.2.0-alpha
-          curl -fL --retry 3 -o dist/old/RGH.zip \
-            "$recovery/X360Linux-v0.2.0-alpha-RGH-USB.zip"
-          curl -fL --retry 3 -o dist/old/FreeMyXe.zip \
-            "$recovery/X360Linux-v0.2.0-alpha-ABadAvatar-FreeMyXe-USB.zip"
-          printf '%s\n' \
-            'fe180993330361cba518c40732279eb894ea4db93194a541febd960d81377df2  dist/old/RGH.zip' \
-            'a197a441dae601f1f67aff0b1cdc677e35c15264a1adca8e99852413d1456232  dist/old/FreeMyXe.zip' \
-            | sha256sum -c -
+          curl -fL --retry 3 -o dist/xell-reloaded.tar.gz \
+            https://github.com/Free60Project/xell-reloaded/releases/download/v0.993/XeLL_Reloaded-2stages-v0.993.tar.gz
+          echo '5613fede849cb2f0f84ab5092768706050ee553d7094ebf4916adefbe737cb22  dist/xell-reloaded.tar.gz' | sha256sum -c -
+          tar -xOzf dist/xell-reloaded.tar.gz xell-2f.bin > dist/xell-2f.bin
+          echo '6135e50126b993db965bce234b639040e61142da2724ff616307e9f83db0750a  dist/xell-2f.bin' | sha256sum -c -
       - name: Make USB ZIPs with the real Debian root
         run: |
           python3 release/build_usb_debian_packs.py \
-            --old-rgh dist/old/RGH.zip \
-            --old-freemyxe dist/old/FreeMyXe.zip \
+            --freemyxe-xell dist/xell-2f.bin \
             --launcher dist/kernel/xenon.elf \
             --kernel dist/kernel/vmlinux \
             --dtb dist/kernel/xenon.dtb \
@@ -232,43 +207,14 @@ jobs:
             --iso dist/image/X360Linux-ELF-Linux-UNVERIFIED.iso \
             --output-dir dist/publish \
             --tag v0.3.0-alpha
-      - name: Check final USB ZIPs and embedded ISO
+      - name: Test ISO boot files and persistence from the RGH ZIP on FAT32
         run: |
-          python3 - <<'PY'
-          from pathlib import Path
-          from zipfile import ZipFile
-          from hashlib import file_digest
-          import gzip
-          base=Path("dist/publish")
-          iso=base/"X360Linux.iso"
-          with iso.open("rb") as f:
-              f.seek(32769)
-              assert f.read(5)==b"CD001"
-          with iso.open("rb") as source:
-              expected=file_digest(source, "sha256").digest()
-          for flavor in ("RGH-USB","ABadAvatar-FreeMyXe-USB"):
-              path=base/f"X360Linux-v0.3.0-alpha-{flavor}.zip"
-              with ZipFile(path) as z:
-                  assert z.testzip() is None
-                  assert z.read("X360Linux/USB-ROOT.ID")==b"X360LINUX-USB-ROOT-V1\n"
-                  assert "X360Linux/system.ext4" not in z.namelist()
-                  assert z.getinfo("X360Linux/USB-DATA.ext4").file_size == 512 * 1024 * 1024
-                  with z.open(f"X360Linux/{iso.name}") as source:
-                      assert file_digest(source, "sha256").digest()==expected
-                  with open("distro/rootfs/init", "rb") as source:
-                      assert source.read() in gzip.decompress(z.read("X360Linux/initramfs.cpio.gz"))
-                  assert b"iso-root.sh" in gzip.decompress(z.read("X360Linux/initramfs.cpio.gz"))
-                  roots = {name.split("/")[0] for name in z.namelist()}
-                  expected_roots = {"xenon.elf", "X360Linux"}
-                  if flavor.startswith("ABadAvatar"):
-                      expected_roots.add("BadUpdatePayload")
-                  assert roots == expected_roots, roots
-                  assert "X360Linux/vmlinux" in z.namelist()
-                  print("READY",path.name)
-          PY
+          sudo unshare --mount --propagation private \
+            bash release/test_usb_pack.sh dist/publish/X360Linux-v0.3.0-alpha-RGH-USB.zip
       - uses: actions/upload-artifact@v4
         with:
           name: X360Linux-USB
           path: dist/publish/*.zip
+          compression-level: 0
           retention-days: 14
           if-no-files-found: error
