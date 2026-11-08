@@ -19,22 +19,18 @@
 | Keyboard, mouse, controller, audio, Ethernet | ⬜ Individual hardware tests pending |
 | Separate X360Boot / Debian Ports shell experiments | ✅ Previous v0.2-era boot and shell testing; independent from the legacy XEX archive |
 
-## v0.3.0-alpha — XEX is the primary boot path
+## v0.3.0-alpha — one XEX download for RGH and ABadAvatar
 
-**[Download release v0.3.0-alpha](https://github.com/heltindev/X360Linux/releases/tag/v0.3.0-alpha)**
+**[Download X360Linux v0.3 XEX USB ZIP](https://github.com/heltindev/X360Linux/releases/download/v0.3.0-alpha/X360Linux-v0.3.0-alpha-Legacy-XEX-USB.zip)** — `X360Linux-v0.3.0-alpha-Legacy-XEX-USB.zip`.
 
-- **Legacy XEX/Ubuntu Xenon:** `X360Linux-v0.3.0-alpha-Legacy-XEX-USB.zip` — historical 2011 Ubuntu 10.10 Xenon binaries. The maintainer confirmed the XEX launches the Linux startup/installer path on RGH hardware.
-- **Older Debian/IceWM experiment:** The previously released RGH and FreeMyXe Debian ZIP assets are separate, historical boot methods. They are not interchangeable with the legacy XeLL/XEX files and **have not** been validated as full desktops by this test.
+**Both methods use exactly the same Linux files** (including `default.xex`, `xell.bin`, `vmlinux`, and `casper/filesystem.squashfs`).
 
-### Legacy XEX quick start
+- **RGH/JTAG:** One FAT32 pendrive with the extracted Linux ZIP. Launch `default.xex` through Aurora. This XEX startup path was confirmed on the maintainer's real RGH console.
+- **ABadAvatar:** **TWO different pendrives:** keep the ABadAvatar exploit files unchanged on USB 1 and extract **the very same Linux ZIP** onto FAT32 USB 2. When a compatible XEX launcher/dashboard is available, run `default.xex` from USB 2. ABadAvatar alone may not include an XEX launcher. This exact two-USB arrangement is not yet hardware-verified.
 
-1. Use an RGH/JTAG Xbox 360 with a working Aurora dashboard.
-2. Back up your pendrive and format it as one **FAT32** volume.
-3. **Extract** the legacy ZIP onto the **USB root**, not an extra directory. Root must contain `default.xex`, `xell.bin`, `vmlinux` and `casper/filesystem.squashfs`.
-4. On Xbox 360, start `default.xex` with Aurora. The compatible XeLL/Linux startup will be attempted.
-5. **The Ubuntu installer/startup flow may appear. Do not install to internal Xbox storage.** Direct graphical live boot is not yet provided.
+**No separate ABadAvatar Linux package is needed.** The older RGH/FreeMyXe ZIP attachments are unrelated historical Debian/IceWM experiments and must not be mixed with the XEX files. See the [detailed instructions](docs/V03-LEGACY-XEX.md).
 
-No Rufus, ISO extraction or build step is needed for that boot attempt. For precise checksums, warnings and known limitations, see **[v0.3 legacy USB instructions](docs/V03-LEGACY-XEX.md)**.
+The confirmed RGH test reached Linux startup/installer, **not a verified automatic USB desktop**. The latter remains a v0.4 goal. Do not install to Xbox internal HDD or flash NAND.
 
 **Retired:** the old x360linux-local-cache release and tag have been deleted. The automatic cache upload and ISO packing workflow is disabled. Neither is needed for the tested XEX boot path.
 
