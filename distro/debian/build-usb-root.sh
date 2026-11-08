@@ -51,6 +51,17 @@ echo "Debian release information"
 "$BB" cat /etc/os-release
 echo "To preserve files, shut down cleanly before unplugging the USB."
 echo
+if [ -e /bootusb/X360Linux/CONSOLE-ONLY ]; then
+  echo "Console-only mode requested."
+elif [ -c /dev/fb0 ] && [ -x /usr/lib/x360linux/start-desktop ]; then
+  echo "Starting the X360Linux desktop..."
+  "$BB" setsid "$BB" cttyhack /usr/lib/x360linux/start-desktop
+  status=$?
+  if [ "$status" -ne 0 ]; then
+    echo "The desktop could not start. Returning to the Debian console."
+    "$BB" tail -n 12 /run/x360linux-xorg.log 2>/dev/null || "$BB" tail -n 12 /run/x360linux-desktop.log
+  fi
+fi
 # Linux PID 1 must never exit, or the kernel would panic.
 while :; do
   "$BB" setsid "$BB" cttyhack /bin/bash -i
@@ -99,8 +110,8 @@ qemu-ppc -cpu 750 -L "$root" "$bash_path" -c 'echo X360LINUX_DEBIAN_SHELL_OK'
 mkdir -p "$(dirname "$output")"
 # mkfs.ext4 -d copies files into the image without root mounts, retaining
 # symlinks and Unix file modes even though the eventual USB boot partition
-# is FAT32. 768MiB is DISK storage, NOT system RAM consumption.
-truncate -s 768M "$output"
+# is FAT32. 1024 MiB is DISK storage, NOT system RAM consumption.
+truncate -s 1024M "$output"
 mkfs.ext4 -q -F -b 4096 -L X360LINUX -d "$root" "$output"
 e2fsck -fn "$output"
 echo "EXT4_USB_ROOT_READY=$output"

@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # SPDX-License-Identifier: Apache-2.0
-# Debian Ports powerpc BE base; optional, NOT auto-booted. No Xbox HDD writes.
+# Debian Ports powerpc BE filesystem with the X360Linux desktop.
 set -euo pipefail
 repo="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 work="${DEBIAN_WORK_DIR:-$repo/distro/work/debian-ports}"
@@ -32,13 +32,44 @@ if ! chroot "$root" /usr/bin/qemu-ppc-static /bin/sh /debootstrap/debootstrap --
     echo "Debian second stage failed: incomplete rootfs MUST NOT ship." >&2
     exit 1
 fi
-rm -f "$root/usr/bin/qemu-ppc-static"
 printf '%s\n' "x360linux" > "$root/etc/hostname"
 cat > "$root/etc/apt/sources.list" <<EOF
 deb [signed-by=/usr/share/keyrings/debian-ports-archive-keyring.gpg] $mirror unstable main
 EOF
 install -D -m 0644 /usr/share/keyrings/debian-ports-archive-keyring.gpg \
     "$root/usr/share/keyrings/debian-ports-archive-keyring.gpg"
+# Package installation inside the build chroot must not start host-facing daemons.
+printf '#!/bin/sh\nexit 101\n' > "$root/usr/sbin/policy-rc.d"
+chmod 0755 "$root/usr/sbin/policy-rc.d"
+chroot "$root" /usr/bin/apt-get update
+chroot "$root" /usr/bin/env DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
+    icewm pcmanfm udev xauth xinit xterm xfonts-base x11-xserver-utils \
+    xserver-xorg-core xserver-xorg-input-libinput xserver-xorg-video-fbdev xvfb
+
+install -D -m 0644 "$repo/distro/debian/x360linux.conf" "$root/etc/X11/x360linux.conf"
+install -D -m 0755 "$repo/distro/debian/start-desktop" "$root/usr/lib/x360linux/start-desktop"
+install -D -m 0755 "$repo/distro/debian/desktop-session" "$root/usr/lib/x360linux/desktop-session"
+install -D -m 0644 "$repo/distro/debian/icewm-menu" "$root/root/.icewm/menu"
+sh -n "$root/usr/lib/x360linux/start-desktop"
+sh -n "$root/usr/lib/x360linux/desktop-session"
+chroot "$root" /usr/lib/xorg/Xorg -version
+chroot "$root" /usr/bin/env HOME=/root xvfb-run -a -s '-screen 0 800x600x24' /bin/sh -eu -c '
+    /usr/lib/x360linux/desktop-session &
+    desktop=$!
+    trap "kill $desktop 2>/dev/null || true" EXIT
+    for attempt in $(seq 1 15); do
+        if xprop -root _NET_SUPPORTING_WM_CHECK | grep -q "window id"; then
+            echo X360LINUX_ICEWM_SESSION_OK
+            exit 0
+        fi
+        kill -0 "$desktop" || exit 1
+        sleep 1
+    done
+    exit 1
+'
+chroot "$root" /usr/bin/env DEBIAN_FRONTEND=noninteractive apt-get purge -y xvfb
+rm -f "$root/usr/sbin/policy-rc.d" "$root/usr/bin/qemu-ppc-static"
+find "$root/var/lib/apt/lists" -maxdepth 1 -type f -delete
 bash_path="$root/usr/bin/bash"
 if [[ ! -x "$bash_path" ]]; then bash_path="$root/bin/bash"; fi
 readelf -h "$bash_path" | grep -q 'Class:.*ELF32'
@@ -49,10 +80,8 @@ rm -f "$root/var/cache/apt/archives/"*.deb
 cat > "$out/README-DEBIAN-PORTS.txt" <<'EOF'
 X360Linux Debian Ports powerpc (32-bit big-endian) base filesystem.
 Signed upstream source: https://deb.debian.org/debian-ports/
-This is optional, NOT the active live boot OS. The real Xbox boots
-Xenon Linux + static BusyBox + X360Desk by default.
-Before a safe Debian boot we must test mounting an external ext4 rootfs
-and the CPU instruction compatibility, RAM use and terminal on hardware.
+The USB ISO starts this Debian filesystem and an IceWM desktop.
+The console is available as a fallback.
 Do NOT unpack this on FAT32 (permissions and symlinks will be lost).
 No NAND flash, Xbox HDD formatting, or saved-games changes.
 EOF

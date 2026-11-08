@@ -16,12 +16,13 @@
 | Debian installed in a USB ext4 image | ✅ Mounted and reached Debian init on a real Xbox 360 |
 | Boot Debian directly from USB | ✅ Debian shell and command input confirmed on a real Xbox 360 |
 | USB file persistence after reboot | 🟡 Designed; **not hardware-tested** |
-| Desktop, audio, browser, mouse and controller inside Debian | ⬜ Future milestones |
+| IceWM desktop | 🟡 Automatic startup, pending Xbox 360 display testing |
+| Audio, browser and controller inside Debian | ⬜ Future milestones |
 | Xbox 360 XEX launcher | ⬜ Last milestone, after stable USB Linux |
 
 **Current direction:** X360Linux boots the actual Debian Ports **32-bit big-endian PowerPC** filesystem from an ISO file on a FAT32 pendrive. A separate ext4 data image keeps changes. The previous Photos/Videos/System demo is not started and is not included in the new boot initramfs.
 
-A real Xbox 360 mounted the USB ext4 image, opened the Debian shell and returned Debian GNU/Linux forky/sid from `cat /etc/os-release`. That direct ext4 build is available under [v0.2.0-alpha](https://github.com/heltindev/X360Linux/releases/tag/v0.2.0-alpha). The ISO revision runs that check automatically and needs a console test.
+A real Xbox 360 mounted the USB ext4 image, opened the Debian shell and returned Debian GNU/Linux forky/sid from `cat /etc/os-release`. That direct ext4 build is available under [v0.2.0-alpha](https://github.com/heltindev/X360Linux/releases/tag/v0.2.0-alpha). A later hardware test confirmed the ISO reached the Debian shell. This revision starts IceWM automatically and falls back to that shell if graphics fail.
 
 ## 🚀 Quick start
 
@@ -29,7 +30,7 @@ A real Xbox 360 mounted the USB ext4 image, opened the Debian shell and returned
 2. Back up your FAT32 USB and extract the ZIP directly to its **root**, with `xenon.elf` next to the `X360Linux/` folder. At least **2 GB free** is recommended.
 3. Check the presence of `xenon.elf`, `X360Linux/vmlinux`, `X360Linux/initramfs.cpio.gz`, `X360Linux/USB-ROOT.ID`, and `X360Linux/X360Linux.iso` and `X360Linux/USB-DATA.ext4`.
 4. Boot the Xbox with the same XeLL method you already use. X360Boot automatically starts the Linux kernel.
-5. Linux searches for **only the explicitly marked USB partition**, mounts the ISO and its writable data image, then starts Debian; otherwise it uses a rescue shell. Debian shows its release information and opens the shell automatically. A USB keyboard is only needed for typing commands.
+5. Linux searches for **only the explicitly marked USB partition**, mounts the ISO and its writable data image, then starts Debian; otherwise it uses a rescue shell. Debian opens the IceWM desktop automatically. If graphics fail, the Debian shell remains available.
 
 **No partitioning wizard, NAND flashing, Xbox HDD installation or internal disk formatting.** Extracting the ZIP onto the USB is the installation step. The ISO is read-only, and the data image stores your changes.
 

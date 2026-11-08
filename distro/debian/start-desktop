@@ -1,0 +1,14 @@
+#!/bin/sh
+# SPDX-License-Identifier: Apache-2.0
+set -eu
+exec >> /run/x360linux-desktop.log 2>&1
+
+install -d -m 1777 /tmp/.X11-unix
+if /usr/lib/systemd/systemd-udevd --daemon; then
+    udevadm trigger --subsystem-match=input || true
+    udevadm settle --timeout=4 || true
+fi
+
+exec /usr/bin/startx /usr/lib/x360linux/desktop-session -- \
+    /usr/lib/xorg/Xorg :0 vt1 -keeptty -nolisten tcp \
+    -config /etc/X11/x360linux.conf -logfile /run/x360linux-xorg.log

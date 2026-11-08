@@ -4,10 +4,16 @@ The ZIP contains a Debian Ports PowerPC ISO and a writable data image. The Xbox 
 
 1. Use a FAT32 USB drive with at least 2 GB free.
 2. Extract the correct ZIP directly to the USB root. Keep `xenon.elf` next to the `X360Linux/` folder.
-3. Connect the USB drive and start XeLL. Wait for the Debian version and prompt to appear.
+3. Connect the USB drive and start XeLL. Wait for the IceWM desktop to open. A USB keyboard and mouse can be used to open the menu and applications.
 4. Shut down cleanly before unplugging. `X360Linux/USB-DATA.ext4` holds the changes made inside Debian, so back it up before updating.
 
 The launcher loads the Xenon kernel and initramfs. Linux mounts `X360Linux/X360Linux.iso` read-only and uses `USB-DATA.ext4` as its writable layer. The direct ext4 build tested on Xbox hardware is available under [v0.2.0-alpha](https://github.com/heltindev/X360Linux/releases/tag/v0.2.0-alpha).
+
+## Desktop and terminal recovery
+
+The Debian ISO opens IceWM automatically. The menu includes a terminal and a file manager. If the desktop cannot start, Debian returns to its console and shows the latest Xorg error.
+
+For console-only boot, create an empty file named `CONSOLE-ONLY` inside the `X360Linux/` folder on the pendrive.
 
 ## Ethernet and DHCP
 
