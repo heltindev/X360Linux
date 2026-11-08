@@ -1,5 +1,8 @@
 ## v0.4.1-dev - PC-built ext4 boot experiment
 
+**What are Casper and vmlinux? Can Debian run?** [Read the Xbox 360 boot architecture and Debian PowerPC compatibility guide](https://github.com/heltindev/X360Linux/blob/main/docs/BOOT-CASPER-VMLINUX-DEBIAN.md).
+
+
 The new local prototype includes a full 3-GiB UNCOMPRESSED Ubuntu PowerPC ext4 rootfs, an external USB-only initramfs, XeLL-style menu and a PPC framebuffer milestone progress bar. **Corona Aurora default.xex still black-screens; XeLL-to-desktop 0-100%, Wi-Fi and boot speed are NOT proven.** The public v0.4 ZIP remains unchanged.
 
 [Implementation status](docs/V041-EXT4-BOOT-EXPERIMENTAL.md) | [New source code](scripts/v041-ext4/README.md).
