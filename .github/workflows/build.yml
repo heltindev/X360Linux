@@ -77,7 +77,9 @@ jobs:
           qemu-ppc -cpu 750 distro/work/busybox-1.37.0/busybox true
           qemu-ppc -cpu 750 distro/work/busybox-1.37.0/busybox sh -c 'echo X360LINUX_PPC32_SMOKE_OK'
           qemu-ppc -cpu 750 distro/work/busybox-1.37.0/busybox --list | grep -qx cttyhack
-          grep -q 'exec $BB switch_root -c /dev/console /newroot /sbin/init' distro/rootfs/init
+          sh -n distro/rootfs/init
+          sh -n distro/rootfs/iso-root.sh
+          grep -Fq 'exec $BB switch_root -c /dev/console "$root" /sbin/init' distro/rootfs/init
           grep -q 'X360LINUX-USB-ROOT-V1' distro/rootfs/init
           test -s distro/out/busybox-static-ppc32
           qemu-ppc -cpu 750 distro/out/busybox-static-ppc32 --list | grep -qx losetup
