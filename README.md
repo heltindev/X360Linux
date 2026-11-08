@@ -37,6 +37,10 @@ If XeLL stops at `Requesting DHCP`, disconnect Ethernet, restart XeLL and reconn
 
 See [USB Debian beginner guide](docs/USB-DEBIAN-BOOT.md) and [recovery steps](docs/TESTING.md).
 
+## Build for Xbox 360
+
+Open [Build Xbox 360](https://github.com/heltindev/X360Linux/actions/workflows/build.yml) and select **Run workflow**. The completed run publishes an **X360Linux-USB** artifact with the RGH/JTAG and FreeMyXe/ABadAvatar ZIPs. Download the artifact, then extract the appropriate ZIP to the FAT32 USB drive.
+
 ## 📁 Project layout
 
 ```text

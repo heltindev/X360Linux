@@ -1,170 +1,274 @@
 name: Build Xbox 360
 
 on:
-  push:
-  pull_request:
   workflow_dispatch:
 
 permissions:
   contents: read
 
 jobs:
-  test:
-    name: Check source code
+  kernel:
+    name: Compile Xenon kernel and X360Boot
     runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - name: Validate source
-        run: |
-          bash -n kernel/build-kernel.sh distro/build-rootfs.sh distro/debian/build-usb-root.sh distro/rootfs/init
-          python3 -m py_compile launcher/make_iso.py distro/pack_initramfs.py distro/make_system_image.py release/build_usb_debian_packs.py
-          gcc -std=c11 -Wall -Wextra -Werror -pedantic \
-            -Ilauncher/source launcher/source/settings.c \
-            launcher/tests/test_settings.c -o /tmp/x360boot-test
-          /tmp/x360boot-test
-
-  launcher:
-    name: Compile X360Boot ELF and launcher ISO
-    needs: test
-    runs-on: ubuntu-latest
-    timeout-minutes: 35
-    container:
-      image: free60/libxenon:latest
-    steps:
-      - uses: actions/checkout@v4
-      - name: Set up Xbox 360 compiler
-        run: |
-          echo "DEVKITXENON=/usr/local/xenon" >> "$GITHUB_ENV"
-          echo "/usr/local/xenon/bin" >> "$GITHUB_PATH"
-          echo "/usr/local/xenon/usr/bin" >> "$GITHUB_PATH"
-          git config --global --add safe.directory "$GITHUB_WORKSPACE"
-      - name: Compile native ELF and launcher ISO
-        run: |
-          set -eu
-          make -C launcher
-          test -s launcher/x360boot.elf32
-          mkdir -p dist/launcher
-          cp launcher/x360boot.elf32 dist/launcher/x360boot.elf32
-          cp launcher/x360boot.elf32 dist/launcher/xenon.elf
-          apt-get update -qq
-          DEBIAN_FRONTEND=noninteractive apt-get install -y -qq xorriso python3
-          python3 launcher/make_iso.py --boot-elf launcher/x360boot.elf32 \
-            --output dist/launcher/X360Boot-launcher.iso
-          file dist/launcher/xenon.elf
-          (cd dist/launcher && sha256sum xenon.elf x360boot.elf32 X360Boot-launcher.iso > SHA256SUMS)
-      - uses: actions/upload-artifact@v4
-        with:
-          name: X360Boot-launcher
-          path: dist/launcher/
-          if-no-files-found: error
-          retention-days: 14
-
-  distro:
-    name: Compile Xbox 360 Linux userspace
-    needs: test
-    runs-on: ubuntu-latest
-    timeout-minutes: 40
-    steps:
-      - uses: actions/checkout@v4
-      - name: Install PowerPC32 Linux compiler
-        run: |
-          sudo apt-get update -qq
-          sudo apt-get install -y gcc-powerpc-linux-gnu libc6-dev-powerpc-cross \
-            binutils-powerpc-linux-gnu qemu-user make bzip2 curl python3
-      - name: Create and emulate Linux initramfs
-        run: |
-          bash distro/build-rootfs.sh
-          qemu-ppc -cpu 750 distro/work/busybox-1.37.0/busybox true
-          qemu-ppc -cpu 750 distro/work/busybox-1.37.0/busybox sh -c 'echo X360LINUX_PPC32_SMOKE_OK'
-          qemu-ppc -cpu 750 distro/work/busybox-1.37.0/busybox --list | grep -qx cttyhack
-          sh -n distro/rootfs/init
-          sh -n distro/rootfs/iso-root.sh
-          grep -Fq 'exec $BB switch_root -c /dev/console "$root" /sbin/init' distro/rootfs/init
-          grep -q 'X360LINUX-USB-ROOT-V1' distro/rootfs/init
-          test -s distro/out/busybox-static-ppc32
-          qemu-ppc -cpu 750 distro/out/busybox-static-ppc32 --list | grep -qx losetup
-          qemu-ppc -cpu 750 distro/out/busybox-static-ppc32 --list | grep -qx switch_root
-          python3 - <<'PY'
-          import gzip
-          from pathlib import Path
-          raw=gzip.decompress(Path("distro/out/initramfs.cpio.gz").read_bytes())
-          assert b"bin/x360desk" not in raw
-          assert b"X360LINUX-USB-ROOT-V1" in raw
-          print("USB_DEBIAN_INITRAMFS_ONLY")
-          PY
-          test -s distro/out/initramfs.cpio.gz
-          file distro/out/initramfs.cpio.gz
-      - uses: actions/upload-artifact@v4
-        with:
-          name: X360Linux-userspace
-          path: distro/out/
-          if-no-files-found: error
-          retention-days: 14
-
-  xell:
-    name: Compile XeLL initial bootloader
-    needs: test
-    runs-on: ubuntu-latest
-    timeout-minutes: 35
+    timeout-minutes: 110
     container:
       image: free60/libxenon:latest
     steps:
       - uses: actions/checkout@v4
         with:
           submodules: recursive
-      - name: Set up XeLL compiler
+      - name: Install kernel dependencies
         run: |
           echo "DEVKITXENON=/usr/local/xenon" >> "$GITHUB_ENV"
           echo "/usr/local/xenon/bin" >> "$GITHUB_PATH"
           echo "/usr/local/xenon/usr/bin" >> "$GITHUB_PATH"
           git config --global --add safe.directory "$GITHUB_WORKSPACE"
-          git config --global --add safe.directory "$GITHUB_WORKSPACE/external/xell-reloaded"
-      - name: Verify both loader builds (NAND binaries are not published)
+          apt-get update -qq
+          DEBIAN_FRONTEND=noninteractive apt-get install -y -qq \
+            curl xz-utils bc bison flex libssl-dev libelf-dev python3 file patch
+      - name: Download and compile Linux for Xbox 360
         run: |
           set -eu
-          cd external/xell-reloaded
-          make xell-gggggg.bin
-          test -s xell-gggggg.bin
-          make clean
-          make xell-2f.bin
-          test -s xell-2f.bin
-          echo "XeLL compiler check passed. Never flash experimental NAND files."
-
-  package:
-    name: Make easy-to-download developer kit
-    needs: [launcher, distro, xell]
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/download-artifact@v4
-        with:
-          name: X360Boot-launcher
-          path: dist/launcher
-      - uses: actions/download-artifact@v4
-        with:
-          name: X360Linux-userspace
-          path: dist/linux
-      - name: Pack one development ZIP
+          curl -fL --retry 3 \
+            "https://cdn.kernel.org/pub/linux/kernel/v6.x/linux-6.18.58.tar.xz" \
+            -o /tmp/linux-6.18.58.tar.xz
+          tar -xf /tmp/linux-6.18.58.tar.xz -C /tmp
+          JOBS=3 bash kernel/build-kernel.sh /tmp/linux-6.18.58
+          test -s /tmp/linux-6.18.58/arch/powerpc/boot/zImage.xenon
+          mkdir -p dist/kernel
+          cp /tmp/linux-6.18.58/arch/powerpc/boot/zImage.xenon dist/kernel/vmlinux
+          cp external/xell-reloaded/source/lv2/linux/xenon.dtb dist/kernel/xenon.dtb
+          file dist/kernel/vmlinux
+          sha256sum dist/kernel/vmlinux dist/kernel/xenon.dtb > dist/kernel/SHA256SUMS
+      - name: Compile native X360Boot launcher
         run: |
-          set -eu
-          mkdir -p kit/X360Linux dist/release
-          cp dist/launcher/xenon.elf kit/xenon.elf
-          cp dist/launcher/x360boot.elf32 kit/x360boot.elf32
-          cp dist/launcher/X360Boot-launcher.iso kit/X360Boot-launcher.iso
-          cp dist/linux/initramfs.cpio.gz kit/X360Linux/initramfs.cpio.gz
-          printf '%s\n' \
-            "X360Linux alpha developer kit" \
-            "1. Requires an Xbox 360 with RGH/JTAG and a working XeLL loader." \
-            "2. FAT32 USB root: xenon.elf boots the experimental X360Boot menu." \
-            "3. The Linux kernel vmlinux and xenon.dtb are NOT included yet." \
-            "4. The Linux initramfs cannot boot without a matching Xenon kernel." \
-            "5. NEVER flash NAND or use updxell.bin/updflash.bin names." \
-            > kit/START-HERE.txt
-          (cd kit && sha256sum xenon.elf x360boot.elf32 X360Boot-launcher.iso X360Linux/initramfs.cpio.gz > SHA256SUMS)
-          python3 -c 'import shutil; shutil.make_archive("dist/release/X360Linux-development-kit", "zip", "kit")'
-          test -s dist/release/X360Linux-development-kit.zip
+          make -C launcher
+          test -s launcher/x360boot.elf32
+          cp launcher/x360boot.elf32 dist/kernel/xenon.elf
+          sha256sum dist/kernel/xenon.elf >> dist/kernel/SHA256SUMS
       - uses: actions/upload-artifact@v4
         with:
-          name: X360Linux-development-kit
-          path: dist/release/X360Linux-development-kit.zip
+          name: x360-kernel
+          path: dist/kernel/
+          retention-days: 7
           if-no-files-found: error
-          retention-days: 30
+
+  distro:
+    name: Compile minimal Linux userspace
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install PowerPC32 compiler
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y gcc-powerpc-linux-gnu libc6-dev-powerpc-cross \
+            binutils-powerpc-linux-gnu qemu-user make bzip2 curl python3
+      - name: Check launcher settings and boot scripts
+        run: |
+          gcc -std=c11 -Wall -Wextra -Werror -pedantic \
+            -Ilauncher/source launcher/source/settings.c \
+            launcher/tests/test_settings.c -o /tmp/x360boot-test
+          /tmp/x360boot-test
+          for script in distro/rootfs/init distro/rootfs/iso-root.sh distro/debian/ethernet distro/debian/dhcp-event; do
+            sh -n "$script"
+          done
+      - name: Build and emulate baseline PowerPC32 BusyBox
+        run: |
+          bash distro/build-rootfs.sh
+          qemu-ppc -cpu 750 distro/out/busybox-static-ppc32 --list > distro/out/applets.txt
+          for applet in mount umount readlink chroot switch_root cttyhack dmesg grep tail; do
+            grep -qx "$applet" distro/out/applets.txt
+          done
+      - uses: actions/upload-artifact@v4
+        with:
+          name: x360-userspace
+          path: distro/out/
+          retention-days: 7
+          if-no-files-found: error
+
+  debian-powerpc:
+    name: Build signed Debian Ports root filesystem
+    runs-on: ubuntu-24.04
+    timeout-minutes: 75
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install signed Debian Ports bootstrap tools
+        run: |
+          sudo apt-get update -qq
+          sudo DEBIAN_FRONTEND=noninteractive apt-get install -y \
+            debootstrap debian-ports-archive-keyring qemu-user-static \
+            qemu-user binfmt-support tar binutils curl
+          # Ubuntu 24.04 has a 2024 archive keyring. Debian Ports rotated to
+          # its 2026 signing key (C6894E6BB25B9C99); fetch the Debian 2026
+          # keyring .deb and verify the SHA256 published by packages.debian.org.
+          curl -fsSL --retry 3 \
+            -o /tmp/debian-ports-archive-keyring_2026.02.04_all.deb \
+            https://deb.debian.org/debian/pool/main/d/debian-ports-archive-keyring/debian-ports-archive-keyring_2026.02.04_all.deb
+          echo '9b3feecd398b14969acc3141d42ed493f322c5a2140a33d4fda4bef2ea9441a6  /tmp/debian-ports-archive-keyring_2026.02.04_all.deb' | sha256sum -c -
+          sudo dpkg -i /tmp/debian-ports-archive-keyring_2026.02.04_all.deb
+          sudo update-binfmts --enable qemu-ppc
+          test -s /usr/share/keyrings/debian-ports-archive-keyring.gpg
+      - name: Bootstrap actual Debian Ports powerpc userland
+        run: sudo bash distro/debian/build-debian-rootfs.sh
+      - name: Verify root filesystem archive
+        run: |
+          test -s distro/out/debian-ports/debian-ports-powerpc-rootfs.tar.gz
+          (cd distro/out/debian-ports && sha256sum -c SHA256SUMS)
+          tar -tzf distro/out/debian-ports/debian-ports-powerpc-rootfs.tar.gz | grep 'usr/bin/bash'
+      - uses: actions/upload-artifact@v4
+        with:
+          name: x360-debian-ports
+          path: distro/out/debian-ports/
+          if-no-files-found: error
+          retention-days: 14
+
+  usb-debian:
+    name: Assemble and verify the Debian ISO USB pack
+    needs: [kernel, distro, debian-powerpc]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install ext4 tools and PowerPC emulator
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y e2fsprogs qemu-user binutils busybox xorriso unzip curl python3
+      - uses: actions/download-artifact@v4
+        with:
+          name: x360-kernel
+          path: dist/kernel
+      - uses: actions/download-artifact@v4
+        with:
+          name: x360-userspace
+          path: dist/recovery
+      - uses: actions/download-artifact@v4
+        with:
+          name: x360-debian-ports
+          path: dist/debian
+      - name: Verify all source artifacts
+        run: |
+          sha256sum -c dist/kernel/SHA256SUMS
+          (cd dist/recovery && sha256sum -c SHA256SUMS)
+          (cd dist/debian && sha256sum -c SHA256SUMS)
+          test -s dist/kernel/vmlinux
+          test -s dist/recovery/busybox-static-ppc32
+          test -s dist/debian/debian-ports-powerpc-rootfs.tar.gz
+          python3 - <<'PY'
+          from pathlib import Path
+          import zlib
+          kernel = Path("dist/kernel/vmlinux").read_bytes()
+          config = zlib.decompress(kernel[kernel.index(b"IKCFG_ST") + 8:], 31).splitlines()
+          for name in (b"ISO9660_FS", b"OVERLAY_FS", b"SIS190", b"PACKET"):
+              assert b"CONFIG_" + name + b"=y" in config, name
+          PY
+      - name: Create preinstalled Debian PowerPC ext4 root
+        run: |
+          sudo bash distro/debian/build-usb-root.sh \
+            dist/debian/debian-ports-powerpc-rootfs.tar.gz \
+            dist/recovery/busybox-static-ppc32 \
+            dist/install/system.ext4
+          test -s dist/install/system.ext4
+          file dist/install/system.ext4
+      - name: Build ISO with preinstalled Debian ext4 system
+        run: |
+          python3 distro/make_system_image.py \
+            --kernel dist/kernel/vmlinux \
+            --dtb dist/kernel/xenon.dtb \
+            --initramfs dist/recovery/initramfs.cpio.gz \
+            --usb-root dist/install/system.ext4 \
+            --output-dir dist/image --iso
+          (cd dist/image && sha256sum -c SHA256SUMS)
+      - name: Test the ISO root and persistence across remounts
+        run: |
+          truncate -s 512M dist/USB-DATA.ext4
+          mkfs.ext4 -q -F -L X360DATA dist/USB-DATA.ext4
+          e2fsck -fn dist/USB-DATA.ext4
+          sudo unshare --mount --propagation private bash -e <<'SH'
+          state=$(mktemp -d)
+          trap 'umount -R "$state/root" 2>/dev/null || true; umount -R "$state/mounts" 2>/dev/null || true; rm -rf "$state"' EXIT
+          cp --sparse=always dist/USB-DATA.ext4 "$state/data.ext4"
+          mkdir "$state/root" "$state/mounts"
+          mount -t tmpfs tmpfs "$state/mounts"
+          BB=busybox
+          . distro/rootfs/iso-root.sh
+          image=dist/image/X360Linux-ELF-Linux-UNVERIFIED.iso
+          mount_iso_root "$image" "$state/data.ext4" "$state/mounts" "$state/root"
+          test -x "$state/root/usr/bin/bash"
+          grep -qx ID=debian "$state/root/etc/os-release"
+          echo ISO_USB_PERSISTENCE_OK > "$state/root/root/iso-test"
+          test ! -e "$state/mounts/base/root/iso-test"
+          mkdir -p "$state/root/run"
+          busybox mount -o move "$state/mounts" "$state/root/run"
+          test -s "$state/root/run/iso/X360Linux/system.ext4"
+          busybox mount -o move "$state/root/run" "$state/mounts"
+          umount "$state/root" "$state/mounts/data" "$state/mounts/base" "$state/mounts/iso"
+          mount_iso_root "$image" "$state/data.ext4" "$state/mounts" "$state/root"
+          grep -qx ISO_USB_PERSISTENCE_OK "$state/root/root/iso-test"
+          echo X360LINUX_ISO_OVERLAY_PERSISTENCE_OK
+          SH
+      - name: Fetch verified USB pack templates
+        run: |
+          mkdir -p dist/old
+          recovery=https://github.com/heltindev/X360Linux/releases/download/v0.2.0-alpha
+          curl -fL --retry 3 -o dist/old/RGH.zip \
+            "$recovery/X360Linux-v0.2.0-alpha-RGH-USB.zip"
+          curl -fL --retry 3 -o dist/old/FreeMyXe.zip \
+            "$recovery/X360Linux-v0.2.0-alpha-ABadAvatar-FreeMyXe-USB.zip"
+          printf '%s\n' \
+            'fe180993330361cba518c40732279eb894ea4db93194a541febd960d81377df2  dist/old/RGH.zip' \
+            'a197a441dae601f1f67aff0b1cdc677e35c15264a1adca8e99852413d1456232  dist/old/FreeMyXe.zip' \
+            | sha256sum -c -
+      - name: Make USB ZIPs with the real Debian root
+        run: |
+          python3 release/build_usb_debian_packs.py \
+            --old-rgh dist/old/RGH.zip \
+            --old-freemyxe dist/old/FreeMyXe.zip \
+            --launcher dist/kernel/xenon.elf \
+            --kernel dist/kernel/vmlinux \
+            --dtb dist/kernel/xenon.dtb \
+            --initramfs dist/recovery/initramfs.cpio.gz \
+            --userdata dist/USB-DATA.ext4 \
+            --iso dist/image/X360Linux-ELF-Linux-UNVERIFIED.iso \
+            --output-dir dist/publish \
+            --tag v0.3.0-alpha
+      - name: Check final USB ZIPs and embedded ISO
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          from zipfile import ZipFile
+          from hashlib import file_digest
+          import gzip
+          base=Path("dist/publish")
+          iso=base/"X360Linux.iso"
+          with iso.open("rb") as f:
+              f.seek(32769)
+              assert f.read(5)==b"CD001"
+          with iso.open("rb") as source:
+              expected=file_digest(source, "sha256").digest()
+          for flavor in ("RGH-USB","ABadAvatar-FreeMyXe-USB"):
+              path=base/f"X360Linux-v0.3.0-alpha-{flavor}.zip"
+              with ZipFile(path) as z:
+                  assert z.testzip() is None
+                  assert z.read("X360Linux/USB-ROOT.ID")==b"X360LINUX-USB-ROOT-V1\n"
+                  assert "X360Linux/system.ext4" not in z.namelist()
+                  assert z.getinfo("X360Linux/USB-DATA.ext4").file_size == 512 * 1024 * 1024
+                  with z.open(f"X360Linux/{iso.name}") as source:
+                      assert file_digest(source, "sha256").digest()==expected
+                  with open("distro/rootfs/init", "rb") as source:
+                      assert source.read() in gzip.decompress(z.read("X360Linux/initramfs.cpio.gz"))
+                  assert b"iso-root.sh" in gzip.decompress(z.read("X360Linux/initramfs.cpio.gz"))
+                  roots = {name.split("/")[0] for name in z.namelist()}
+                  expected_roots = {"xenon.elf", "X360Linux"}
+                  if flavor.startswith("ABadAvatar"):
+                      expected_roots.add("BadUpdatePayload")
+                  assert roots == expected_roots, roots
+                  assert "X360Linux/vmlinux" in z.namelist()
+                  print("READY",path.name)
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: X360Linux-USB
+          path: dist/publish/*.zip
+          retention-days: 14
+          if-no-files-found: error
