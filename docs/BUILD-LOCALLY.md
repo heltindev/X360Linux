@@ -1,33 +1,24 @@
-# Build X360Linux on the Windows PC
+# X360Linux local development - XEX first (November 2026)
 
-Linux kernel and Debian compilation can happen on the computer; GitHub Actions only needs to compile XeLL/X360Boot and package the resulting ISO and USB ZIP files.
+## Main experimental boot
 
-## First-time setup
+The maintainer confirmed that the historical default.xex launches the XeLL/Linux startup path through Aurora on an RGH Xbox 360. Full USB desktop boot and persistent storage are NOT yet proven.
 
-The connected Windows PC has an Intel Xeon E5-2667 v4 (8 cores, 16 threads) and approximately 16 GB RAM. Ubuntu 24.04 LTS has now been installed and booted successfully as WSL2 on the connected Windows computer (2026-11-08). The Windows firmware virtualization flag was misleading: the WSL2 Linux kernel did start. The build launcher selects `Ubuntu-24.04` and runs within this dedicated WSL environment; it does not change the PC BIOS.
+For v0.3, download X360Linux-v0.3.0-alpha-Legacy-XEX-USB.zip from:
+https://github.com/heltindev/X360Linux/releases/tag/v0.3.0-alpha
 
-Ubuntu **WSL2** is required because the Debian PowerPC build needs Linux mount namespaces, chroot, QEMU and Unix filesystem permissions. Git Bash alone is insufficient. If the PC's firmware virtualization is disabled, enable Intel VT-x in BIOS/UEFI. On a PC running inside a VM, nested virtualization may be necessary.
+Extract the ZIP to the root of a FAT32 USB drive, connect it to the Xbox 360 and launch default.xex through Aurora. Read docs/V03-LEGACY-XEX.md for the complete safety guidance.
 
-Install Ubuntu WSL2 once, from an administrator PowerShell (Windows command: wsl --install -d Ubuntu), restart when prompted, and complete Ubuntu's first-run account setup. The script will not change PC firmware or reboot your computer automatically.
+The old x360linux-local-cache release and tag have been removed. Its uploader and GitHub Actions ISO packaging path are disabled. They are NOT required to boot the console via XEX.
 
-## One-click local build
+## v0.4 local development
 
-Double-click **scripts/BUILD-LOCAL.cmd**. It will:
+Develop on the Windows PC in Desktop/PEN DRIVE/BOOT-DIRETO/v0.4-dev/ using Ubuntu WSL2 where appropriate. The historical binary baseline is preserved in legacy-v0.3-base. The experimental-no-installer directory has a modified 2011 Ubuntu 10.10 filesystem with installer autostart disabled; XEX, XeLL and kernel are unchanged.
 
-1. Clone the GitHub source into the Ubuntu WSL2 filesystem (not the Windows NTFS drive).
-2. Install Ubuntu PowerPC cross-compilers and QEMU, and set up Docker Engine with Free60's existing Xenon toolchain image.
-3. Compile the Linux kernel and PowerPC recovery environment on the PC.
-4. Construct the Debian Ports root filesystem from cryptographically signed packages; exclude all mounted proc/dev pseudo-filesystems.
-5. Build a reproducible archive in Windows Downloads and stage it to a separate **x360linux-local-cache** GitHub prerelease using your existing Windows Git login.
+The v0.4 experiment is NOT hardware tested as a complete desktop. Goal: Aurora XEX -> XeLL -> Xenon Linux kernel -> root filesystem on USB -> automatic graphical desktop, without an installer or console commands.
 
-The local build output includes kernel/vmlinux, xenon.dtb, xenon.elf, recovery initramfs and static BusyBox, Debian rootfs, the exact source commit SHA and a SHA256 manifest.
+Later steps: maintainable Debian Ports PowerPC32 (only if Xenon kernel-compatible), USB persistence, Openbox desktop, USB mouse and keyboard, gamepad pointer, wired network, sound and video.
 
-## Fast GitHub packaging
+The old BUILD-LOCAL.cmd is legacy research. It may compile old ELF/ISO inputs locally, but it no longer uploads cache archives or dispatches GitHub Actions.
 
-Once compilation finishes, the Windows helper uploads the precompiled archive **and automatically starts** [Package precompiled Linux with XeLL and ISO](https://github.com/heltindev/X360Linux/actions/workflows/package-prebuilt.yml) with `publish_release = false`. This workflow downloads the Linux files, compiles XeLL and X360Boot, builds the Debian ISO and RGH/FreeMyXe ZIPs, verifies contents, and provides the downloads as workflow artifacts. It does not publish a public release before the Xbox testing.
-
-Only after testing those packages on real Xbox 360 hardware should you use **publish_release = true**, which publishes them to a separate **v0.5.0-alpha**, leaving previous tested releases unchanged.
-
-A source SHA check prevents the Action from combining a newly changed source tree with older precompiled components. The slow full-GitHub build remains available only by manual launch; normal pushes run fast source checks instead.
-
-**No NAND flashing, formatting the Xbox 360 internal HDD or modifying game saves.** The new Debian/XeLL ISO is still an experimental build until verified on a physical console.
+Never flash NAND or overwrite Xbox HDD partitions. Ubuntu 10.10 is obsolete and unsuitable for sensitive accounts.
