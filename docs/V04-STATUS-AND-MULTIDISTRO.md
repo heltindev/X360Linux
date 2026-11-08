@@ -66,3 +66,9 @@ Public v0.3 and v0.4 **binaries were not changed** as part of this audit.
 ## New local v0.4.1-dev prototype
 
 The two-file live USB snapshot above describes v0.4. The new LOCAL v0.4.1-dev boot folder additionally has kboot.conf and distros/ubuntu-x360 with a full 3-GiB preinstalled ext4 Ubuntu image, new PowerPC initramfs and Linux milestone renderer. This is NOT part of the existing v0.4 public ZIP and NOT confirmed bootable on real Corona hardware. [New notes](V041-EXT4-BOOT-EXPERIMENTAL.md).
+
+## Understanding Casper, vmlinux and Debian
+
+The historical vmlinux is the Xenon-specific PowerPC kernel; casper/filesystem.squashfs is the older compressed Ubuntu Live rootfs, while the new distros/ubuntu-x360/rootfs.ext4 contains a preinstalled, unpacked ext4 Ubuntu root filesystem. Debian PowerPC is a realistic future port, NOT a working second boot entry yet. The current initramfs hardcodes the Ubuntu directory and checks for GNOME. A Debian build needs its own PowerPC-compatible rootfs, boot arguments, initramfs adaptations and verified Xenon-compatible kernel/drivers.
+
+Read the [Casper, vmlinux and Debian compatibility guide](https://github.com/heltindev/X360Linux/blob/main/docs/BOOT-CASPER-VMLINUX-DEBIAN.md).
