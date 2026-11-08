@@ -53,6 +53,14 @@ jobs:
           test -s dist/kernel/vmlinux
           test -s dist/recovery/busybox-static-ppc32
           test -s dist/debian/debian-ports-powerpc-rootfs.tar.gz
+          python3 - <<'PY'
+          from pathlib import Path
+          import zlib
+          kernel = Path("dist/kernel/vmlinux").read_bytes()
+          config = zlib.decompress(kernel[kernel.index(b"IKCFG_ST") + 8:], 31).splitlines()
+          for name in (b"ISO9660_FS", b"OVERLAY_FS", b"SIS190", b"PACKET"):
+              assert b"CONFIG_" + name + b"=y" in config, name
+          PY
       - name: Build the current USB boot initramfs
         run: |
           sh -n distro/rootfs/init
@@ -89,9 +97,10 @@ jobs:
           e2fsck -fn dist/install/USB-DATA.ext4
           sudo unshare --mount --propagation private bash -e <<'SH'
           state=$(mktemp -d)
-          trap 'umount "$state/root" "$state/mounts/data" "$state/mounts/base" "$state/mounts/iso" 2>/dev/null || true; rm -rf "$state"' EXIT
+          trap 'umount -R "$state/root" 2>/dev/null || true; umount -R "$state/mounts" 2>/dev/null || true; rm -rf "$state"' EXIT
           cp --sparse=always dist/install/USB-DATA.ext4 "$state/data.ext4"
-          mkdir "$state/root"
+          mkdir "$state/root" "$state/mounts"
+          mount -t tmpfs tmpfs "$state/mounts"
           BB=busybox
           . distro/rootfs/iso-root.sh
           image=dist/image/X360Linux-ELF-Linux-UNVERIFIED.iso
@@ -100,6 +109,9 @@ jobs:
           grep -qx ID=debian "$state/root/etc/os-release"
           echo ISO_USB_PERSISTENCE_OK > "$state/root/root/iso-test"
           test ! -e "$state/mounts/base/root/iso-test"
+          busybox mount -o move "$state/mounts" "$state/root/run"
+          test -s "$state/root/run/iso/X360Linux/system.ext4"
+          busybox mount -o move "$state/root/run" "$state/mounts"
           umount "$state/root" "$state/mounts/data" "$state/mounts/base" "$state/mounts/iso"
           mount_iso_root "$image" "$state/data.ext4" "$state/mounts" "$state/root"
           grep -qx ISO_USB_PERSISTENCE_OK "$state/root/root/iso-test"
