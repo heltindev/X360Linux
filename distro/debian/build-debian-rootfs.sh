@@ -15,7 +15,14 @@ test -s /usr/share/keyrings/debian-ports-archive-keyring.gpg || {
     echo "Missing Debian Ports signed keyring; refusing unsigned packages" >&2; exit 1;
 }
 mkdir -p "$work" "$out"
-if [[ ! -f "$root/debootstrap/debootstrap" ]]; then
+# A successful PowerPC debootstrap may remove its own staging folder.
+# Never re-extract a freshly downloaded base on top of a configured Debian:
+# doing so can overwrite files and make dpkg-deb fail on a resumed build.
+if [[ -s "$root/var/lib/dpkg/status" ]] &&
+   chroot "$root" /usr/bin/dpkg-query -W -f='${Status}' base-files 2>/dev/null |
+     grep -qx 'install ok installed'; then
+    echo "REUSING_COMPLETED_DEBIAN_FIRST_STAGE"
+elif [[ ! -f "$root/debootstrap/debootstrap" ]]; then
     mkdir -p "$root"
     debootstrap --foreign --variant=minbase --arch=powerpc \
         --keyring=/usr/share/keyrings/debian-ports-archive-keyring.gpg \
