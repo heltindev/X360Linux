@@ -4,7 +4,7 @@
 
 - [x] Earlier X360Boot/Xenon experiments reached a BusyBox shell on RGH hardware.
 - [x] Earlier independent Debian Ports experiments reached Debian shell on hardware.
-- [x] **November 8, 2026:** The maintainer launched the **legacy `default.xex` successfully** on a real RGH Xbox 360 and reached the Linux startup/installer flow.
+- [x] **November 8, 2026 CORRECTION:** Corona Phison RGH starts NAND XeLL via Eject. The legacy Aurora `default.xex` goes to a **black screen**; prior XEX success claim was inaccurate.
 - [ ] A direct USB graphical desktop without installer is **not yet confirmed** for that legacy XEX package.
 - [ ] USB persistence, keyboard/mouse, controller, wired Internet, sound and video require individual tests.
 
@@ -67,3 +67,9 @@ This experimental 2011 Ubuntu live image is not a persistent Debian installation
 - [ ] Keep logs visible in a diagnostic mode, and measure boot on real hardware before updating binaries.
 
 See [engineering notes](V04-DHCP-SPLASH.md). Current alpha ZIP is NOT modified.
+
+## Real-world v0.4 status and multi-distro architecture
+
+A complete 0-100% splash, USB persistence, usable Wi-Fi, faster startup, generic ISO boot and a multi-distro selector are **NOT implemented**. The Linux rootfs is compressed SquashFS, not an uncompressed ext4 install. Use the **Corona Eject XeLL** as the baseline: Aurora XEX fails.
+
+See [verified status and new architecture](V04-STATUS-AND-MULTIDISTRO.md). Hardware blocker: https://github.com/heltindev/X360Linux/issues/3.
