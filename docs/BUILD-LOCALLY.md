@@ -4,7 +4,7 @@
 
 The maintainer confirmed that the historical default.xex launches the XeLL/Linux startup path through Aurora on an RGH Xbox 360. Full USB desktop boot and persistent storage are NOT yet proven.
 
-For v0.3, download X360Linux-v0.3.0-alpha-Legacy-XEX-USB.zip from:
+For v0.3, download X360Linux-v0.3.0-alpha-XEX-USB.zip from:
 https://github.com/heltindev/X360Linux/releases/tag/v0.3.0-alpha
 
 Extract the ZIP to the root of a FAT32 USB drive, connect it to the Xbox 360 and launch default.xex through Aurora. Read docs/V03-LEGACY-XEX.md for the complete safety guidance.
