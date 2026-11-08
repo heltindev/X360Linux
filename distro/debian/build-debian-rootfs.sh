@@ -43,7 +43,7 @@ printf '#!/bin/sh\nexit 101\n' > "$root/usr/sbin/policy-rc.d"
 chmod 0755 "$root/usr/sbin/policy-rc.d"
 chroot "$root" /usr/bin/apt-get update
 chroot "$root" /usr/bin/env DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
-    icewm pcmanfm udev xauth xinit xterm xfonts-base x11-xserver-utils \
+    icewm pcmanfm udev xauth xinit xterm xfonts-base x11-utils x11-xserver-utils \
     xserver-xorg-core xserver-xorg-input-libinput xserver-xorg-video-fbdev xvfb
 
 install -D -m 0644 "$repo/distro/debian/x360linux.conf" "$root/etc/X11/x360linux.conf"
