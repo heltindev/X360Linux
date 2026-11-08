@@ -23,7 +23,7 @@ sudo apt-get update -qq
 sudo DEBIAN_FRONTEND=noninteractive apt-get install -y -qq \
   gcc-powerpc-linux-gnu libc6-dev-powerpc-cross binutils-powerpc-linux-gnu \
   qemu-user qemu-user-static binfmt-support make bzip2 curl python3 \
-  debootstrap debian-ports-archive-keyring ca-certificates tar xz-utils docker.io
+  debootstrap debian-ports-archive-keyring ca-certificates tar xz-utils docker.io build-essential
 # The first local build sets up Docker Engine automatically inside Ubuntu.
 if ! docker info >/dev/null 2>&1; then
   sudo service docker start || true
@@ -48,6 +48,13 @@ sudo dpkg -i "$deb"
 if ! grep -q '^enabled' /proc/sys/fs/binfmt_misc/qemu-ppc 2>/dev/null; then
   sudo update-binfmts --enable qemu-ppc
 fi
+cached_sha="$(cat "$out/kernel/BUILD_SOURCE_SHA" 2>/dev/null || true)"
+if [[ "$cached_sha" =~ ^[a-f0-9]{40}$ ]] &&
+   [[ -s "$out/kernel/vmlinux" && -s "$out/kernel/xenon.dtb" && -s "$out/kernel/xenon.elf" ]] &&
+   git cat-file -e "$cached_sha^{commit}" &&
+   git diff --quiet "$cached_sha" "$sha" -- kernel launcher external .gitmodules; then
+  echo "REUSING_VERIFIED_XENON_KERNEL_FROM=$cached_sha"
+else
 archive="$work/linux-6.18.58.tar.xz"
 if [[ ! -s "$archive" ]]; then
   curl -fL --retry 3 -o "$archive" \
@@ -68,6 +75,8 @@ install -D /workspace/.local-build/linux-6.18.58/arch/powerpc/boot/zImage.xenon 
 install -D external/xell-reloaded/source/lv2/linux/xenon.dtb dist/local-inputs/kernel/xenon.dtb
 install -D launcher/x360boot.elf32 dist/local-inputs/kernel/xenon.elf
 '
+printf '%s\n' "$sha" > "$out/kernel/BUILD_SOURCE_SHA"
+fi
 bash distro/build-rootfs.sh
 cp distro/out/{initramfs.cpio.gz,busybox-static-ppc32} "$out/recovery/"
 # A private mount namespace avoids touching host mounts.
