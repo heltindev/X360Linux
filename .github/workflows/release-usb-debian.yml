@@ -92,13 +92,13 @@ jobs:
           (cd dist/image && sha256sum -c SHA256SUMS)
       - name: Test the ISO root and persistence across remounts
         run: |
-          truncate -s 512M dist/install/USB-DATA.ext4
-          mkfs.ext4 -q -F -L X360DATA dist/install/USB-DATA.ext4
-          e2fsck -fn dist/install/USB-DATA.ext4
+          truncate -s 512M dist/USB-DATA.ext4
+          mkfs.ext4 -q -F -L X360DATA dist/USB-DATA.ext4
+          e2fsck -fn dist/USB-DATA.ext4
           sudo unshare --mount --propagation private bash -e <<'SH'
           state=$(mktemp -d)
           trap 'umount -R "$state/root" 2>/dev/null || true; umount -R "$state/mounts" 2>/dev/null || true; rm -rf "$state"' EXIT
-          cp --sparse=always dist/install/USB-DATA.ext4 "$state/data.ext4"
+          cp --sparse=always dist/USB-DATA.ext4 "$state/data.ext4"
           mkdir "$state/root" "$state/mounts"
           mount -t tmpfs tmpfs "$state/mounts"
           BB=busybox
@@ -109,6 +109,7 @@ jobs:
           grep -qx ID=debian "$state/root/etc/os-release"
           echo ISO_USB_PERSISTENCE_OK > "$state/root/root/iso-test"
           test ! -e "$state/mounts/base/root/iso-test"
+          mkdir -p "$state/root/run"
           busybox mount -o move "$state/mounts" "$state/root/run"
           test -s "$state/root/run/iso/X360Linux/system.ext4"
           busybox mount -o move "$state/root/run" "$state/mounts"
@@ -137,7 +138,7 @@ jobs:
             --kernel dist/kernel/vmlinux \
             --dtb dist/kernel/xenon.dtb \
             --initramfs dist/recovery/initramfs.cpio.gz \
-            --userdata dist/install/USB-DATA.ext4 \
+            --userdata dist/USB-DATA.ext4 \
             --iso dist/image/X360Linux-ELF-Linux-UNVERIFIED.iso \
             --output-dir dist/publish \
             --tag v0.3.0-alpha
