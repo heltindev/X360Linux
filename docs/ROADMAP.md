@@ -1,46 +1,34 @@
-# X360Linux development roadmap
+# X360Linux roadmap — v0.3 to v0.4
 
-**Current goal:** Make the BusyBox shell fully interactive with a USB keyboard, then work toward an actual graphical distribution. The kernel and `#` shell prompt have already been verified on a real Xbox 360; console input and TTY behavior still need testing.
+## Verified and reported milestones
 
-## 1. First Linux boot (current milestone)
+- [x] Earlier X360Boot/Xenon experiments reached a BusyBox shell on RGH hardware.
+- [x] Earlier independent Debian Ports experiments reached Debian shell on hardware.
+- [x] **November 8, 2026:** The maintainer launched the **legacy `default.xex` successfully** on a real RGH Xbox 360 and reached the Linux startup/installer flow.
+- [ ] A direct USB graphical desktop without installer is **not yet confirmed** for that legacy XEX package.
+- [ ] USB persistence, keyboard/mouse, controller, wired Internet, sound and video require individual tests.
 
-- [x] Compile the native Xbox 360 X360Boot ELF launcher.
-- [x] Open the X360Boot menu with the Xbox 360 controller on real RGH hardware.
-- [x] Compile an experimental Linux 6.18.58 Xenon kernel and device tree.
-- [x] Start the Linux kernel on real Xbox 360 hardware; it reached the initramfs at `/init`.
-- [x] Identify the original BusyBox PowerPC64 illegal-instruction failure.
-- [x] Build a conservative static PowerPC32 BusyBox and smoke-test it under PowerPC emulation.
-- [x] Simplify X360Boot: detect the X360Linux folder and autostart after a short, B-to-cancel delay.
-- [x] **Reach the PowerPC32 BusyBox `#` shell prompt on a real RGH Xbox 360** (photo verified).
-- [ ] **Verify USB keyboard interaction and controlling TTY**, with BusyBox `cttyhack`.
-- [ ] Confirm reliable reboot, logs and failure recovery.
+## v0.4 — direct boot distribution
 
-## 2. Reliability and storage
+**Goal:** Aurora `default.xex` → compatible XeLL → kernel → initramfs → USB Linux root filesystem → graphical desktop. No manual Linux install, NAND changes or console commands.
 
-- [ ] Validate wired and wireless Xbox 360 controllers inside Linux, separately from X360Boot.
-- [ ] Test USB keyboard, mouse and storage in the Linux system.
-- [ ] Initialize wired Ethernet automatically with DHCP.
-- [ ] Add persistent storage so settings and files survive power-off.
-- [ ] Test safe internal HDD access without formatting Xbox partitions or deleting games.
-- [ ] Improve video, audio, graphics and other hardware support across Xbox 360 models.
+1. **Freeze tested boot files.** Keep SHA-256 verified copies of legacy `default.xex`, `xell.bin`, `vmlinux` and `casper/filesystem.squashfs`. Never mix them with the unrelated experimental Debian release binaries.
+2. **Observe the actual startup.** Record full boot log and determine what launches the installer (Ubuntu Ubiquity or other), the kernel arguments, video/USB detection and exact Xbox model.
+3. **Direct Linux from USB.** Experiment on a filesystem *copy* to disable installer auto-start, mount rootfs automatically, and have a safe recovery console when desktop startup fails.
+4. **Persistent settings.** Test ext4 USB persistence without formatting Xbox internal storage; save, power down and restart with file verification.
+5. **Modern distro.** Test maintainable, signed **Debian Ports 32-bit big-endian PowerPC** userspace, subject to Xenon kernel/ABI compatibility and upstream support. The 2011 Ubuntu 10.10 archive itself is not a secure production base.
+6. **Desktop and RAM.** Target **Openbox + LXPanel + PCManFM (not IceWM)**, X.Org/framebuffer as supported, within 512 MiB RAM.
+7. **Hardware features.** Validate keyboard, USB mouse, Ethernet/DHCP, Xbox gamepad-as-pointer, native audio, then video acceleration. Each one must be proven on the Xbox 360 before release.
+8. **Local development only.** Work in `BOOT-DIRETO/v0.4-dev` on Windows + WSL2. No GitHub Actions requirement. Preserve the prior 3.3 GB unverified Debian image untouched.
 
-## 3. Our own lightweight X360Linux distribution
+## Release gates
 
-- [x] Add a signed Debian Ports powerpc (32-bit big-endian) rootfs bootstrap workflow.
-- [ ] Test an optional Debian Ports userland in an external, read-only environment on a real console before making it the default.
-- [x] Implement the initial C framebuffer desktop, image viewer, silent X36V player and Linux input mapping.
-- [x] Display X360Desk framebuffer on a physical RGH Xbox 360.
-- [ ] Validate the corrected TV-scale layout, gamepad cursor, and real image/video playback on hardware.
-- [x] Build an initial JPG/PNG/BMP image viewer, silent raw X36V player and analog-stick cursor.
-- [ ] Add actual MP4/H.264 decode, sound, production video performance and a full desktop after console tests.
-- [ ] Add software installation and updates.
-- [ ] Investigate a compatible web browser with modern TLS.
-- [ ] Make beginner-friendly USB releases and consider an HDD installer only after persistence is safe and tested.
+- [ ] Direct USB desktop shown in a video or real-console logs.
+- [ ] Usable keyboard/mouse and successful clean shutdown.
+- [ ] Root filesystem and settings survive complete power cycle.
+- [ ] Accurate hardware compatibility table and source-license audit.
+- [ ] v0.4 public download only after all essential tests pass.
 
-## 4. Final milestone — XEX
+**Safety:** No NAND flashes, no Xbox HDD installation, no unverified claims of modern software compatibility.
 
-- [ ] Only after the XeLL Linux boot and distribution work reliably, develop a `default.xex` launcher.
-- [ ] Test an XEX-to-Linux handoff from Aurora on physical Xbox 360 hardware.
-- [ ] Keep a known-working XeLL recovery route.
-
-**Important:** A green GitHub Actions build or a progress percentage does not prove Linux boots successfully. The launcher reports file-preparation milestones; kernel failures must remain visible for debugging. Never flash test files to NAND.
+See [v0.3 legacy XEX guide](V03-LEGACY-XEX.md), [credits](CREDITS.md) and [release page](https://github.com/heltindev/X360Linux/releases/tag/v0.3.0-alpha).
