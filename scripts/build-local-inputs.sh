@@ -43,7 +43,11 @@ if [[ ! -s "$deb" ]]; then
 fi
 echo "9b3feecd398b14969acc3141d42ed493f322c5a2140a33d4fda4bef2ea9441a6  $deb" | sha256sum -c -
 sudo dpkg -i "$deb"
-sudo update-binfmts --enable qemu-ppc
+# Modern Ubuntu may register QEMU handlers through systemd-binfmt rather
+# than update-binfmts; do not fail if it is already enabled.
+if ! grep -q '^enabled' /proc/sys/fs/binfmt_misc/qemu-ppc 2>/dev/null; then
+  sudo update-binfmts --enable qemu-ppc
+fi
 archive="$work/linux-6.18.58.tar.xz"
 if [[ ! -s "$archive" ]]; then
   curl -fL --retry 3 -o "$archive" \
