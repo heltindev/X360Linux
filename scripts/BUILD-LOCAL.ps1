@@ -28,14 +28,20 @@ cd X360Linux-local
 git pull --ff-only
 git submodule update --init --recursive
 bash scripts/build-local-inputs.sh
-cp dist/X360Linux-local-inputs-*.tar.gz "$LINUX_DOWNLOADS/"
+source_short="$(git rev-parse --short=8 HEAD)"
+file="dist/X360Linux-local-inputs-${source_short}.tar.gz"
+test -s "$file"
+cp "$file" "$LINUX_DOWNLOADS/"
 '@
 Write-Host "Compiling on this PC. The first build can take a long time."
 & wsl.exe -d $distro -u root -- env "LINUX_DOWNLOADS=$linuxDownload" bash -lc $linux
 if ($LASTEXITCODE -ne 0) { throw "Local Linux compilation failed. No release was modified." }
-$archive = Get-ChildItem -Path $download -Filter 'X360Linux-local-inputs-*.tar.gz' |
-  Sort-Object LastWriteTime -Descending | Select-Object -First 1
-if (!$archive) { throw "Precompiled Linux archive not found in Downloads." }
+$sourceShort = (& wsl.exe -d $distro -u root -- git -C /root/X360Linux-local rev-parse --short=8 HEAD | Out-String).Trim()
+if ($LASTEXITCODE -ne 0 -or $sourceShort -notmatch '^[a-f0-9]{8}$') {
+    throw "Cannot verify the compiled source revision."
+}
+$archive = Get-Item -LiteralPath (Join-Path $download "X360Linux-local-inputs-$sourceShort.tar.gz") -ErrorAction Stop
+if (!$archive -or $archive.Length -lt 1024) { throw "The exact source archive is missing or empty." }
 Write-Host "Built: $($archive.FullName)" -ForegroundColor Green
 python.exe (Join-Path $PSScriptRoot 'upload-local-inputs.py') $archive.FullName
 if ($LASTEXITCODE -ne 0) { throw "GitHub cache upload failed; file remains in Downloads." }
