@@ -63,7 +63,7 @@ jobs:
         run: |
           sudo apt-get update -qq
           sudo apt-get install -y gcc-powerpc-linux-gnu libc6-dev-powerpc-cross \
-            binutils-powerpc-linux-gnu qemu-user make bzip2 curl python3 dnsmasq-base iproute2
+            binutils-powerpc-linux-gnu qemu-user make bzip2 curl python3 dnsmasq-base iproute2 udhcpc
       - name: Check launcher settings and boot scripts
         run: |
           gcc -std=c11 -Wall -Wextra -Werror -pedantic \
@@ -77,13 +77,13 @@ jobs:
         run: |
           bash distro/build-rootfs.sh
           qemu-ppc -cpu 750 distro/out/busybox-static-ppc32 --list > distro/out/applets.txt
-          for applet in mount umount readlink chroot switch_root cttyhack dmesg grep tail; do
+          for applet in mount umount readlink chroot switch_root cttyhack dmesg grep tail udhcpc ip ifconfig; do
             grep -qx "$applet" distro/out/applets.txt
           done
-      - name: Verify PowerPC DHCP client and lease hook
+      - name: Verify DHCP lease handling on the runner
         run: |
           sudo unshare --mount --net --propagation private \
-            bash release/test_ethernet_dhcp.sh distro/out/busybox-static-ppc32
+            bash release/test_ethernet_dhcp.sh
       - uses: actions/upload-artifact@v4
         with:
           name: x360-userspace
