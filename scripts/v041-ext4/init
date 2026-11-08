@@ -1,0 +1,95 @@
+#!/bin/sh
+# X360Linux v0.5-dev - Xenon PowerPC32 USB ext4 loop boot
+# Needs XeLL support for EXTERNAL initrd and kernel arguments.
+# Experimental only: NEVER writes Xbox NAND or internal HDD.
+PATH=/bin:/sbin:/usr/bin
+export PATH
+BB=/bin/busybox
+USB=/bootusb
+ROOT=/newroot
+IDENTITY=X360LINUX-UBUNTU-EXT4-V05
+REL=distros/ubuntu-x360
+
+$BB mount -t proc proc /proc 2>/dev/null
+$BB mount -t sysfs sysfs /sys 2>/dev/null
+$BB mount -t devtmpfs devtmpfs /dev 2>/dev/null || :
+echo /bin/mdev > /proc/sys/kernel/hotplug 2>/dev/null || :
+$BB mdev -s 2>/dev/null || :
+$BB mkdir -p /dev/pts /run "$USB" "$ROOT"
+$BB mount -t devpts devpts /dev/pts 2>/dev/null || :
+$BB mount -t tmpfs -o size=12m,mode=0755 tmpfs /run 2>/dev/null || :
+$BB mkdir -p /run/x360linux
+LOG=/run/x360linux/boot.log
+$BB touch "$LOG"
+exec 3>>"$LOG"
+
+DEBUG=0
+for arg in $($BB cat /proc/cmdline 2>/dev/null); do
+    case "$arg" in x360debug=1|debug) DEBUG=1;; esac
+done
+report() {
+    echo "X360Linux: $*" >&3
+    if [ "$DEBUG" = 1 ]; then echo "X360Linux: $*" >/dev/console; fi
+}
+fail() {
+    echo "BOOT FAILURE: $*" >&3
+    echo "X360Linux: erro - $*" >/dev/console
+    if [ -f "$USB/$REL/ROOTFS.ID" ]; then
+        $BB cp "$LOG" "$USB/BOOT-DIAGNOSTICS.txt" 2>/dev/null || :
+    fi
+    echo "X360Linux: modo de recuperacao. NAND nao modificada." >/dev/console
+    exec /bin/sh </dev/console >/dev/console 2>&1
+}
+
+report "stage=10 kernel launched; waiting for USB storage"
+if [ "$DEBUG" = 0 ]; then /bin/fbprogress 10 2>/dev/null || :; fi
+FOUND=
+ATTEMPT=0
+while [ "$ATTEMPT" -lt 14 ] && [ -z "$FOUND" ]; do
+    $BB mdev -s 2>/dev/null || :
+    for link in /sys/class/block/*; do
+        [ -e "$link" ] || continue
+        physical=$($BB readlink -f "$link" 2>/dev/null) || continue
+        # Probe USB storage only; not SATA or Xbox internal HDD.
+        case "$physical" in */usb[0-9]*/*) ;; *) continue ;; esac
+        node=/dev/$($BB basename "$link")
+        [ -b "$node" ] || continue
+        $BB mount -t vfat -o ro,umask=0077 "$node" "$USB" 2>/dev/null || continue
+        if [ "$($BB cat "$USB/$REL/ROOTFS.ID" 2>/dev/null)" = "$IDENTITY" ] &&
+           [ -f "$USB/$REL/rootfs.ext4" ]; then
+            FOUND=$node
+            report "stage=30 USB FAT32 found at $node"
+            if [ "$DEBUG" = 0 ]; then /bin/fbprogress 30 2>/dev/null || :; fi
+            break
+        fi
+        $BB umount "$USB" 2>/dev/null || :
+    done
+    [ -n "$FOUND" ] || $BB sleep 1
+    ATTEMPT=$((ATTEMPT + 1))
+done
+[ -n "$FOUND" ] || fail "USB FAT32 rootfs marker not found after 14s."
+$BB mount -o remount,rw "$USB" 2>/dev/null || fail "USB FAT32 could not be remounted writable."
+report "stage=50 mounting uncompressed Linux root image"
+if [ "$DEBUG" = 0 ]; then /bin/fbprogress 50 2>/dev/null || :; fi
+[ -b /dev/loop0 ] || $BB mknod /dev/loop0 b 7 0 2>/dev/null || :
+$BB mount -t ext4 -o loop,rw,noatime "$USB/$REL/rootfs.ext4" "$ROOT" 2>/dev/null || {
+    $BB losetup /dev/loop0 "$USB/$REL/rootfs.ext4" 2>/dev/null || :
+    $BB mount -t ext4 -o rw,noatime /dev/loop0 "$ROOT" 2>/dev/null ||
+        fail "ext4 loop mount failed: check Xenon kernel and filesystem features."
+}
+[ -x "$ROOT/sbin/init" ] || fail "Preinstalled PowerPC Linux /sbin/init is missing."
+[ -x "$ROOT/usr/bin/gnome-session" ] || fail "GNOME desktop is missing."
+report "stage=75 Linux root mounted; preparing system services"
+if [ "$DEBUG" = 0 ]; then /bin/fbprogress 75 2>/dev/null || :; fi
+$BB mkdir -p "$ROOT/bootusb" "$ROOT/dev" "$ROOT/proc" "$ROOT/sys" "$ROOT/run"
+$BB mount -o bind "$USB" "$ROOT/bootusb" || fail "Cannot bind USB mount."
+$BB mount -o bind /proc "$ROOT/proc" || fail "Cannot bind /proc."
+$BB mount -o bind /sys "$ROOT/sys" || fail "Cannot bind /sys."
+$BB mount -o rbind /dev "$ROOT/dev" || fail "Cannot bind /dev."
+$BB mount -t tmpfs -o mode=0755,size=32m tmpfs "$ROOT/run" || :
+$BB mkdir -p "$ROOT/var/log/x360linux"
+$BB cp "$LOG" "$ROOT/var/log/x360linux/boot.log" 2>/dev/null || :
+report "stage=90 handing off to Ubuntu/GDM; 100% only after desktop starts."
+if [ "$DEBUG" = 0 ]; then /bin/fbprogress 90 2>/dev/null || :; fi
+exec /bin/run-init "$ROOT" /sbin/init
+fail "switch_root failed."
