@@ -2,6 +2,15 @@ name: Build Xbox 360
 
 on:
   workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/build.yml'
+      - 'kernel/**'
+      - 'distro/**'
+      - 'launcher/**'
+      - 'release/**'
+      - '.gitmodules'
 
 permissions:
   contents: read
@@ -211,10 +220,37 @@ jobs:
         run: |
           sudo unshare --mount --propagation private \
             bash release/test_usb_pack.sh dist/publish/X360Linux-v0.3.0-alpha-RGH-USB.zip
+      - name: Validate both ready-to-copy ZIP archives and their checksums
+        run: python3 release/verify_usb_release.py dist/publish
       - uses: actions/upload-artifact@v4
         with:
           name: X360Linux-USB
-          path: dist/publish/*.zip
+          path: dist/publish/
           compression-level: 0
           retention-days: 14
           if-no-files-found: error
+
+  publish-release:
+    name: Publish precompiled X360Linux USB ZIPs to v0.3.0-alpha
+    if: github.ref == 'refs/heads/main'
+    needs: [usb-debian]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    permissions:
+      actions: read
+      contents: write
+    concurrency:
+      group: x360linux-v03-publish
+      cancel-in-progress: false
+    steps:
+      - uses: actions/checkout@v4
+      - name: Download the complete verified USB ZIPs
+        uses: actions/download-artifact@v4
+        with:
+          name: X360Linux-USB
+          path: dist/publish
+      - name: Publish ZIPs with complete ISO and no user-side compilation
+        env:
+          GH_TOKEN: ${{ github.token }}
+          SOURCE_SHA: ${{ github.sha }}
+        run: bash release/publish_usb_release.sh dist/publish
