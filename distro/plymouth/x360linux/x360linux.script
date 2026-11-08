@@ -1,0 +1,60 @@
+# X360Linux boot splash proof-of-concept for Plymouth script plugin (Ubuntu 10.10)
+# NOT active in any public image. Loaded only after Linux/Plymouth initializes.
+# Percent below is Plymouth's userspace boot progress estimate, not a XeLL metric.
+
+Window.SetBackgroundTopColor (0.01, 0.04, 0.02);
+Window.SetBackgroundBottomColor (0.01, 0.02, 0.01);
+
+screen_width = Window.GetWidth ();
+screen_height = Window.GetHeight ();
+
+bar.width = Math.Int (screen_width * 0.57);
+if (bar.width > 600) bar.width = 600;
+if (bar.width < 100) bar.width = 100;
+bar.height = 15;
+bar.x = Math.Int ((screen_width - bar.width) / 2);
+bar.y = Math.Int (screen_height * 0.61);
+
+title.image = Image.Text ("X360LINUX", 0.30, 0.93, 0.42);
+title.sprite = Sprite (title.image);
+title.sprite.SetPosition ((screen_width - title.image.GetWidth ()) / 2, bar.y - 100, 10);
+
+status.image = Image.Text ("Iniciando sistema...", 0.80, 0.87, 0.81);
+status.sprite = Sprite (status.image);
+status.sprite.SetPosition ((screen_width - status.image.GetWidth ()) / 2, bar.y - 35, 10);
+
+bar.background = Image.New (bar.width, bar.height);
+bar.background.Fill (0.16, 0.22, 0.18);
+bar.back_sprite = Sprite (bar.background);
+bar.back_sprite.SetPosition (bar.x, bar.y, 10);
+
+bar.original = Image.New (bar.width, bar.height);
+bar.original.Fill (0.23, 0.87, 0.38);
+bar.fill_sprite = Sprite ();
+bar.fill_sprite.SetPosition (bar.x, bar.y, 11);
+
+percent.sprite = Sprite ();
+percent.sprite.SetPosition ((screen_width / 2) - 20, bar.y + 27, 10);
+percent.last = -1;
+
+fun show_progress (duration, progress)
+{
+    # Plymouth reports userspace progress in the range [0.0, 1.0].
+    # XeLL startup and early kernel boot are not covered by this callback.
+    if (progress < 0) progress = 0;
+    if (progress > 1) progress = 1;
+
+    local.value = Math.Int (progress * 100);
+    if (local.value == percent.last) return;
+    percent.last = local.value;
+
+    local.width = Math.Int (bar.width * progress);
+    if (local.width < 1) local.width = 1;
+    bar.fill_sprite.SetImage (bar.original.Scale (local.width, bar.height));
+
+    local.label = Image.Text (local.value + "%", 0.80, 0.95, 0.84);
+    percent.sprite.SetImage (local.label);
+}
+
+Plymouth.SetBootProgressFunction (show_progress);
+show_progress (0, 0);
