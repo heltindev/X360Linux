@@ -28,7 +28,9 @@ echo "Checking Debian PPC32 shell with qemu-user-static..."
 chroot "$root" /usr/bin/qemu-ppc-static /bin/sh -c 'echo QEMU_POWERPC_SHELL_READY'
 # qemu executes a PowerPC ELF (the shell), which then interprets the
 # debootstrap shell script; passing the script directly to qemu is invalid.
-if ! chroot "$root" /usr/bin/qemu-ppc-static /bin/sh /debootstrap/debootstrap --second-stage; then
+if chroot "$root" /usr/bin/dpkg-query -W -f='${Status}' base-files 2>/dev/null | grep -qx 'install ok installed'; then
+    echo "REUSING_COMPLETED_DEBIAN_BASE (signed debootstrap already finished)"
+elif ! chroot "$root" /usr/bin/qemu-ppc-static /bin/sh /debootstrap/debootstrap --second-stage; then
     echo "Debian second stage failed: incomplete rootfs MUST NOT ship." >&2
     exit 1
 fi
@@ -136,10 +138,25 @@ tar --one-file-system --sort=name --numeric-owner --owner=0 --group=0 \
     --exclude='./proc/*' --exclude='./sys/*' --exclude='./dev/pts/*' \
     --exclude='./run/*' --exclude='./tmp/*' -C "$root" \
     -czf "$out/debian-ports-powerpc-rootfs.tar.gz" .
-tar -tzf "$out/debian-ports-powerpc-rootfs.tar.gz" | grep -q 'usr/bin/bash'
-if tar -tzf "$out/debian-ports-powerpc-rootfs.tar.gz" | grep -Eq '^\./(proc/[0-9]+|dev/pts/[0-9]+)(/|$)'; then
-    echo "Refusing archive containing live kernel pseudo-filesystems." >&2
-    exit 1
-fi
+# Validate every member without early-closing tar's stdout. Under pipefail,
+# grep -q can cause tar to die with SIGPIPE after a matching early entry.
+python3 - "$out/debian-ports-powerpc-rootfs.tar.gz" <<'PY'
+import sys,tarfile
+path=sys.argv[1]
+seen=set()
+with tarfile.open(path,"r:gz") as archive:
+    for entry in archive:
+        if entry.name in ("./usr/bin/bash","usr/bin/bash"):
+            seen.add("bash")
+        if entry.name in ("./usr/lib/x360linux/start-desktop","usr/lib/x360linux/start-desktop"):
+            seen.add("desktop")
+        normalized=entry.name.lstrip("./")
+        parts=normalized.split("/")
+        if len(parts)>1 and ((parts[0]=="proc" and parts[1].isdigit())
+             or (parts[:2]==["dev","pts"] and len(parts)>2 and parts[2].isdigit())):
+            raise SystemExit("Refusing archive containing live pseudo-filesystems: "+entry.name)
+assert seen == {"bash","desktop"},seen
+print("DEBIAN_ARCHIVE_CONTENTS_VERIFIED")
+PY
 (cd "$out" && sha256sum debian-ports-powerpc-rootfs.tar.gz > SHA256SUMS)
 printf 'DEBIAN_PORTS_BASE_BUILD_OK size=%s\n' "$(stat -c%s "$out/debian-ports-powerpc-rootfs.tar.gz")"
