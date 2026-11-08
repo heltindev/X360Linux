@@ -5,14 +5,22 @@
   <p><a href="https://github.com/heltindev/X360Linux/releases/tag/v0.3.0-alpha">v0.3 download</a> · <a href="docs/V03-LEGACY-XEX.md">XEX USB guide</a> · <a href="docs/ROADMAP.md">v0.4 roadmap</a></p>
 </div>
 
+## Corona Phison RGH - confirmed XEX black screen
+
+**Important correction (2026-11-08):** On the maintainer's Corona Phison Xbox 360 with RGH, opening the legacy `default.xex` in Aurora **gives a black screen**. XeLL **does** open through the physical Eject button. The old 2011 XeLL/XellLaunch pair cannot be described as a verified working Corona XEX boot. A direct graphical Linux desktop remains **unverified**.
+
+[Hardware status, Wi-Fi, progress and modular distros](docs/V04-STATUS-AND-MULTIDISTRO.md) · [Corona XEX issue](https://github.com/heltindev/X360Linux/issues/3)
+
+
+
 ## What works on the real Xbox 360?
 
-**Maintainer hardware report — November 8, 2026:** The legacy `default.xex` starts from an RGH Xbox 360 dashboard and reaches the Linux boot/installer experience. This verifies the XEX-to-XeLL launch path; it **does not** yet verify a complete desktop boot from USB.
+**Corrected maintainer report — November 8, 2026:** the historical Aurora `default.xex` goes to a black screen on Corona Phison; XeLL works via Eject only. Direct Linux desktop remains unverified.
 
 | Component | Status |
 | --- | --- |
-| Legacy `default.xex` launched from Aurora | ✅ Confirmed by maintainer on a real RGH Xbox 360 |
-| XeLL/Linux startup or installer | ✅ Reached according to maintainer's hardware test |
+| Legacy `default.xex` via Aurora on Corona Phison | ❌ Confirmed black screen |
+| NAND XeLL via physical Eject on Corona Phison | ✅ XeLL screen boots; Linux GUI not yet confirmed |
 | Legacy `vmlinux` ELF and Ubuntu 10.10 SquashFS | ✅ File signatures and checksums verified |
 | Automatic graphical desktop without installer | ⬜ Not yet demonstrated |
 | Persistent Linux files on USB | ⬜ Not yet demonstrated |
@@ -27,7 +35,7 @@ The release has a **single ZIP**, containing exactly the five files from the mai
 
 - **RGH/JTAG:** Extract to one FAT32 pendrive and launch default.xex from Aurora.
 - **ABadAvatar:** Use TWO separate pendrives: USB 1 for ABadAvatar exploit files (unchanged), USB 2 for the same extracted Linux ZIP. Launch default.xex from USB 2 using a compatible homebrew XEX launcher.
-- **Test status:** The maintainer confirmed XEX startup to Linux installer on RGH; a complete Linux desktop or ABadAvatar startup has not been independently verified.
+- **Test status:** Aurora XEX fails on Corona Phison (black screen), while XeLL via Eject works. Direct Linux GUI and ABadAvatar are not confirmed.
 
 There are **no alternative Debian/FreeMyXe assets** in the current v0.3 release. See [full instructions](docs/V03-LEGACY-XEX.md). Never flash NAND or install onto Xbox HDD partitions.
 
@@ -45,7 +53,7 @@ See [v0.4 detailed guide](docs/V04-XEX-LIVE.md) and [source build script](script
 
 ## v0.4 — develop a real USB-native Linux distribution
 
-Use the hardware-confirmed XEX launch route as the starting point. The planned boot sequence is **Aurora XEX → XeLL → Xenon kernel → initramfs → USB root filesystem → lightweight Linux desktop**, without a manual installer or console commands.
+Use the known-working Eject XeLL as the hardware baseline; the Corona Phison Aurora XEX black-screen problem must be fixed independently. The planned boot sequence is **Aurora XEX → XeLL → Xenon kernel → initramfs → USB root filesystem → lightweight Linux desktop**, without a manual installer or console commands.
 
 Target a supported **Debian Ports PowerPC 32-bit big-endian userland**, subject to Xenon kernel ABI and driver validation, and **Openbox + LXPanel + PCManFM** (not IceWM). Add persistence, keyboard/mouse, wired networking, controller pointer and audio/video in measurable hardware-tested stages, within the Xbox 360's **512 MiB RAM** budget.
 
