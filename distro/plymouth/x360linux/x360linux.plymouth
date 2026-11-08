@@ -1,0 +1,8 @@
+[Plymouth Theme]
+Name=X360Linux
+Description=Green live boot progress preview for Xbox 360 (userspace only)
+ModuleName=script
+
+[script]
+ImageDir=/lib/plymouth/themes/x360linux
+ScriptFile=/lib/plymouth/themes/x360linux/x360linux.script
