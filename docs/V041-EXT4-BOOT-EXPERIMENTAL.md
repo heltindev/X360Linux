@@ -13,3 +13,9 @@ Wi-Fi adapter drivers, XeLL DHCP wait, any-ISO compatibility, true faster boot a
 Source and WSL2 build steps: https://github.com/heltindev/X360Linux/tree/main/scripts/v041-ext4
 
 The public v0.4.0-alpha ZIP and v0.3 ZIP have NOT been replaced. This is development source, not a hardware-proven release. Do not modify Xbox NAND or internal HDD.
+
+## Understanding Casper, vmlinux and Debian
+
+The historical vmlinux is the Xenon-specific PowerPC kernel; casper/filesystem.squashfs is the older compressed Ubuntu Live rootfs, while the new distros/ubuntu-x360/rootfs.ext4 contains a preinstalled, unpacked ext4 Ubuntu root filesystem. Debian PowerPC is a realistic future port, NOT a working second boot entry yet. The current initramfs hardcodes the Ubuntu directory and checks for GNOME. A Debian build needs its own PowerPC-compatible rootfs, boot arguments, initramfs adaptations and verified Xenon-compatible kernel/drivers.
+
+Read the [Casper, vmlinux and Debian compatibility guide](https://github.com/heltindev/X360Linux/blob/main/docs/BOOT-CASPER-VMLINUX-DEBIAN.md).
