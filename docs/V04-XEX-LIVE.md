@@ -41,3 +41,9 @@ The package is NOT a new Debian distribution or proof of a persistent install. S
 Never flash the NAND, rename xell.bin as a flash payload, or install to the Xbox internal HDD. Ubuntu 10.10 (2011) is obsolete and unsuitable for sensitive browsing. Source provenance and third-party license obligations are not fully audited.
 
 If a black screen remains, capture the console boot output to determine if the issue is kernel, Casper, GDM, Xorg or xenosfb. Do not claim success until physical hardware confirms a desktop.
+
+## Planned (not yet included in alpha ZIP): offline DHCP and green boot bar
+
+The maintainer reported a XeLL DHCP error without Ethernet and requested a graphical progress bar from 0 to 100%. The root cause of the early DHCP text appears inside XeLL, before Ubuntu. Plymouth can show estimated progress only once the Linux framebuffer and userspace are active.
+
+See [ongoing engineering investigation](V04-DHCP-SPLASH.md). A source-only splash prototype exists in distro/plymouth/x360linux; no ZIP changes have been published.
