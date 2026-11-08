@@ -41,6 +41,8 @@ install -D -m 0644 /usr/share/keyrings/debian-ports-archive-keyring.gpg \
 # Package installation inside the build chroot must not start host-facing daemons.
 printf '#!/bin/sh\nexit 101\n' > "$root/usr/sbin/policy-rc.d"
 chmod 0755 "$root/usr/sbin/policy-rc.d"
+mount -t proc -o ro,nosuid,nodev,noexec proc "$root/proc"
+trap 'umount "$root/proc"' EXIT
 chroot "$root" /usr/bin/apt-get update
 chroot "$root" /usr/bin/env DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
     icewm pcmanfm udev xauth xinit xterm xfonts-base x11-utils x11-xserver-utils \
@@ -68,6 +70,8 @@ chroot "$root" /usr/bin/env HOME=/root xvfb-run -a -s '-screen 0 800x600x24' /bi
     exit 1
 '
 chroot "$root" /usr/bin/env DEBIAN_FRONTEND=noninteractive apt-get purge -y xvfb
+umount "$root/proc"
+trap - EXIT
 rm -f "$root/usr/sbin/policy-rc.d" "$root/usr/bin/qemu-ppc-static"
 find "$root/var/lib/apt/lists" -maxdepth 1 -type f -delete
 bash_path="$root/usr/bin/bash"

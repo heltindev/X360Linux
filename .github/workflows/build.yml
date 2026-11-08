@@ -114,7 +114,7 @@ jobs:
           sudo update-binfmts --enable qemu-ppc
           test -s /usr/share/keyrings/debian-ports-archive-keyring.gpg
       - name: Bootstrap actual Debian Ports powerpc userland
-        run: sudo bash distro/debian/build-debian-rootfs.sh
+        run: sudo unshare --mount --propagation private bash distro/debian/build-debian-rootfs.sh
       - name: Verify root filesystem archive
         run: |
           test -s distro/out/debian-ports/debian-ports-powerpc-rootfs.tar.gz
