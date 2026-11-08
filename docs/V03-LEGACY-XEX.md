@@ -1,5 +1,9 @@
 # X360Linux v0.3.0-alpha - XEX USB
 
+## Corona Phison hardware correction
+
+**The maintainer's Corona Phison RGH black-screens when running the legacy Aurora default.xex.** Eject boots the existing NAND XeLL. Therefore the old XEX route must NOT be described as confirmed on this model. The direct Linux desktop is still unverified. See [v0.4 hardware audit](V04-STATUS-AND-MULTIDISTRO.md).
+
 **The same ZIP and XEX files are used for RGH/JTAG and ABadAvatar.**
 
 [Download the single XEX USB ZIP](https://github.com/heltindev/X360Linux/releases/download/v0.3.0-alpha/X360Linux-v0.3.0-alpha-XEX-USB.zip)
@@ -26,7 +30,7 @@ Use **two separate USB drives**. USB 1 holds the ABadAvatar exploit and must be 
 
 ## Status
 
-The maintainer reported that default.xex started the historical XeLL/Linux process and reached Linux startup/installer on an RGH Xbox 360. **Automatic USB desktop boot and the ABadAvatar two-USB setup remain unverified**; this is an experimental 2011 Ubuntu 10.10 Xenon PowerPC32 environment.
+CORRECTED: On Corona Phison RGH, Aurora default.xex gives a black screen; Eject starts the NAND XeLL. Linux GUI remains unverified. **Automatic USB desktop boot and the ABadAvatar two-USB setup remain unverified**; this is an experimental 2011 Ubuntu 10.10 Xenon PowerPC32 environment.
 
 The original Linux binary SHA-256 values are:
 
