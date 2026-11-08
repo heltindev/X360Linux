@@ -27,7 +27,7 @@
 - [ ] Usable keyboard/mouse and successful clean shutdown.
 - [ ] Root filesystem and settings survive complete power cycle.
 - [ ] Accurate hardware compatibility table and source-license audit.
-- [ ] v0.4 public download only after all essential tests pass.
+- [ ] Stable v0.4 public release only after essential hardware tests. The alpha preview is experimental and labelled untested.
 
 **Safety:** No NAND flashes, no Xbox HDD installation, no unverified claims of modern software compatibility.
 
@@ -45,3 +45,17 @@ observed in a physical test.
 A local experimental COPY of the filesystem disables only the automatic
 start condition for that installer job. The XEX, XeLL and kernel stay
 unchanged. This is not proof that GDM or a graphical desktop boots.
+
+## v0.4.0-alpha build status (2026-11-08)
+
+- [x] Preserve v0.3 XEX, XeLL and kernel checksums.
+- [x] Repack the already-preloaded Ubuntu live SquashFS with Ubiquity disabled.
+- [x] Enable GDM automatic ubuntu live login and trim optional background services.
+- [x] Verify rebuilt SquashFS contents and packaged USB ZIP on the Windows PC.
+- [ ] Confirm direct-to-graphical-desktop boot on a real RGH Xbox 360.
+- [ ] Measure startup time, then identify actual bottlenecks before further optimization.
+- [ ] Verify USB keyboard, mouse, Xbox gamepad, networking and audio.
+- [ ] Implement and validate writable USB persistence.
+- [ ] Validate two-pendrive ABadAvatar startup.
+
+This experimental 2011 Ubuntu live image is not a persistent Debian installation.
