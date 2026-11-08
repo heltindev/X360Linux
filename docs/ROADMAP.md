@@ -73,3 +73,16 @@ See [engineering notes](V04-DHCP-SPLASH.md). Current alpha ZIP is NOT modified.
 A complete 0-100% splash, USB persistence, usable Wi-Fi, faster startup, generic ISO boot and a multi-distro selector are **NOT implemented**. The Linux rootfs is compressed SquashFS, not an uncompressed ext4 install. Use the **Corona Eject XeLL** as the baseline: Aurora XEX fails.
 
 See [verified status and new architecture](V04-STATUS-AND-MULTIDISTRO.md). Hardware blocker: https://github.com/heltindev/X360Linux/issues/3.
+
+## v0.4.1-dev preinstalled ext4 stage (PC-built, hardware untested)
+
+- [x] Build 3-GiB unpacked Ubuntu PowerPC ext4 root image.
+- [x] Build PPC32 custom external initrd with USB detection, loop root mount and rescue shell.
+- [x] Add XeLL normal/diagnostic/legacy menu and framebuffer milestone progress bar.
+- [x] Clean obsolete local logs, caches and verified duplicate expanded packages.
+- [ ] Test actual Corona Phison GUI and writable rootfs via Eject XeLL.
+- [ ] Fix Aurora XEX black screen, early XeLL DHCP delay and wireless drivers.
+- [ ] Validate 0-100% from XeLL through desktop and measure actual boot time.
+- [ ] Add another compatible Xenon PowerPC Linux userland.
+
+[Detailed implementation](V041-EXT4-BOOT-EXPERIMENTAL.md).
