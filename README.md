@@ -19,18 +19,17 @@
 | Keyboard, mouse, controller, audio, Ethernet | ⬜ Individual hardware tests pending |
 | Separate X360Boot / Debian Ports shell experiments | ✅ Previous v0.2-era boot and shell testing; independent from the legacy XEX archive |
 
-## v0.3.0-alpha — one XEX download for RGH and ABadAvatar
+## v0.3.0-alpha - one XEX ZIP for everyone
 
-**[Download X360Linux v0.3 XEX USB ZIP](https://github.com/heltindev/X360Linux/releases/download/v0.3.0-alpha/X360Linux-v0.3.0-alpha-Legacy-XEX-USB.zip)** — `X360Linux-v0.3.0-alpha-Legacy-XEX-USB.zip`.
+**[Download X360Linux-v0.3.0-alpha-XEX-USB.zip](https://github.com/heltindev/X360Linux/releases/download/v0.3.0-alpha/X360Linux-v0.3.0-alpha-XEX-USB.zip)**
 
-**Both methods use exactly the same Linux files** (including `default.xex`, `xell.bin`, `vmlinux`, and `casper/filesystem.squashfs`).
+The release has a **single ZIP**, containing exactly the five files from the maintainer's Downloads/LINUX 360 directory: default.xex, xell.bin, vmlinux, casper/filesystem.squashfs, and readme.txt. The same files work as the experimental starting point for RGH/JTAG and ABadAvatar.
 
-- **RGH/JTAG:** One FAT32 pendrive with the extracted Linux ZIP. Launch `default.xex` through Aurora. This XEX startup path was confirmed on the maintainer's real RGH console.
-- **ABadAvatar:** **TWO different pendrives:** keep the ABadAvatar exploit files unchanged on USB 1 and extract **the very same Linux ZIP** onto FAT32 USB 2. When a compatible XEX launcher/dashboard is available, run `default.xex` from USB 2. ABadAvatar alone may not include an XEX launcher. This exact two-USB arrangement is not yet hardware-verified.
+- **RGH/JTAG:** Extract to one FAT32 pendrive and launch default.xex from Aurora.
+- **ABadAvatar:** Use TWO separate pendrives: USB 1 for ABadAvatar exploit files (unchanged), USB 2 for the same extracted Linux ZIP. Launch default.xex from USB 2 using a compatible homebrew XEX launcher.
+- **Test status:** The maintainer confirmed XEX startup to Linux installer on RGH; a complete Linux desktop or ABadAvatar startup has not been independently verified.
 
-**No separate ABadAvatar Linux package is needed.** The older RGH/FreeMyXe ZIP attachments are unrelated historical Debian/IceWM experiments and must not be mixed with the XEX files. See the [detailed instructions](docs/V03-LEGACY-XEX.md).
-
-The confirmed RGH test reached Linux startup/installer, **not a verified automatic USB desktop**. The latter remains a v0.4 goal. Do not install to Xbox internal HDD or flash NAND.
+There are **no alternative Debian/FreeMyXe assets** in the current v0.3 release. See [full instructions](docs/V03-LEGACY-XEX.md). Never flash NAND or install onto Xbox HDD partitions.
 
 **Retired:** the old x360linux-local-cache release and tag have been deleted. The automatic cache upload and ISO packing workflow is disabled. Neither is needed for the tested XEX boot path.
 
