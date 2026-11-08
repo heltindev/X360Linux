@@ -13,6 +13,7 @@ The goal is to boot a preinstalled Linux desktop from a USB drive, with no conso
 - [ ] **5. Reduce boot time.** Measure XeLL, USB, kernel, initramfs and desktop startup on the console before claiming any speed improvement.
 - [ ] **6. Replace visible boot messages with a graphical loading screen.** A green Linux framebuffer/Plymouth prototype exists, but XeLL and early kernel messages are not hidden. Keep a verbose recovery mode.
 - [x] **7. Keep distributions in separate folders.** The local package uses `distros/ubuntu-x360/`; adding Debian and verifying the XeLL boot menu are still pending.
+- [ ] **8. Boot Linux from `default.xex` in Aurora, as well as via XeLL/Eject.** Develop and test a Corona Phison-compatible XEX launcher that starts the Linux boot chain without a black screen. The old 2011 `default.xex` is known to fail on this console.
 
 Checked boxes indicate **PC preparation or file layout only**, not successful Xbox 360 hardware testing.
 
