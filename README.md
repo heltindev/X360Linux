@@ -38,9 +38,17 @@ If XeLL stops at `Requesting DHCP`, disconnect Ethernet, restart XeLL and reconn
 
 See [USB Debian beginner guide](docs/USB-DEBIAN-BOOT.md) and [recovery steps](docs/TESTING.md).
 
-## Build for Xbox 360
+## Build locally + package with GitHub Actions (recommended)
 
-Open [Build Xbox 360](https://github.com/heltindev/X360Linux/actions/workflows/build.yml) and select **Run workflow**. The completed run publishes an **X360Linux-USB** artifact with the RGH/JTAG and FreeMyXe/ABadAvatar ZIPs. Download the artifact, then extract the appropriate ZIP to the FAT32 USB drive.
+The slow Debian build is **no longer triggered automatically on each GitHub push**. The previous Action was cancelled while TAR tried to archive a mounted Linux `/proc`; this is now prevented in the build scripts.
+
+**Windows / WSL2:** see the [one-time preparation and one-click local build guide](docs/BUILD-LOCALLY.md). After Ubuntu WSL2 is ready, double-click `scripts/BUILD-LOCAL.cmd`. The PC compiles the Xenon kernel, BusyBox and Debian Ports and uploads verified components to a GitHub build cache.
+
+Then open [Package precompiled Linux with XeLL and ISO](https://github.com/heltindev/X360Linux/actions/workflows/package-prebuilt.yml). This **shorter workflow** compiles XeLL/X360Boot, assembles the ISO and both beginner USB ZIPs, without recompiling the Linux kernel or installing Debian again. First run with **publish_release = false** to inspect the artifacts; publishing the experimental v0.5 alpha is optional.
+
+The older [Full Linux rebuild](https://github.com/heltindev/X360Linux/actions/workflows/build.yml) remains available **manually** for diagnostics. Fast [source checks](https://github.com/heltindev/X360Linux/actions/workflows/checks.yml) run automatically.
+
+**Current local PC limitation:** at last inspection, Ubuntu WSL was not installed and hardware virtualization was not available to Windows. The one-time Windows/BIOS setup must be completed before a local Linux compilation can start. No successful local Debian build is claimed yet.
 
 ## 📁 Project layout
 

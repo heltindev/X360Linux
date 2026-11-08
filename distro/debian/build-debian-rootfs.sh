@@ -46,10 +46,16 @@ mkdir -p "$root/proc" "$root/dev/pts"
 mount -t proc -o nosuid,nodev,noexec proc "$root/proc"
 mount -t devpts -o nosuid,noexec devpts "$root/dev/pts"
 cleanup_chroot_mounts() {
-    umount "$root/dev/pts" 2>/dev/null || true
-    umount "$root/proc" 2>/dev/null || true
+    # Never package a live /proc or /dev/pts. A busy mount must stop
+    # the build instead of creating an archive of the runner's /proc.
+    if mountpoint -q "$root/dev/pts"; then
+        umount "$root/dev/pts" || return 1
+    fi
+    if mountpoint -q "$root/proc"; then
+        umount "$root/proc" || return 1
+    fi
 }
-trap cleanup_chroot_mounts EXIT
+trap 'cleanup_chroot_mounts || echo "WARNING: rootfs temporary mount is still busy" >&2' EXIT
 chroot "$root" /usr/bin/apt-get update
 
 # Xorg requires udev, but X360Linux runs under its own minimal BusyBox PID 1.
@@ -96,8 +102,17 @@ chroot "$root" /usr/bin/env HOME=/root xvfb-run -a -s '-screen 0 800x600x24 -fbd
 test -x "$root/usr/bin/Xvfb"
 test -x "$root/usr/lib/x360linux/x360-fb-bridge"
 # Keep Xvfb: it is the automatic fallback on Xenon when Xorg fbdev refuses the screen.
-cleanup_chroot_mounts
+cleanup_chroot_mounts || {
+    echo "Refusing to archive Debian: /proc or /dev/pts still mounted." >&2
+    exit 1
+}
 trap - EXIT
+for mount_dir in "$root/proc" "$root/dev/pts"; do
+    if mountpoint -q "$mount_dir"; then
+        echo "Refusing to archive an active pseudo-filesystem: $mount_dir" >&2
+        exit 1
+    fi
+done
 rm -f "$root/usr/sbin/policy-rc.d" "$root/usr/bin/qemu-ppc-static"
 find "$root/var/lib/apt/lists" -maxdepth 1 -type f -delete
 bash_path="$root/usr/bin/bash"
@@ -115,7 +130,16 @@ The console is available as a fallback.
 Do NOT unpack this on FAT32 (permissions and symlinks will be lost).
 No NAND flash, Xbox HDD formatting, or saved-games changes.
 EOF
-tar --sort=name --numeric-owner --owner=0 --group=0 -C "$root" \
+# Guard against mounted proc/dev pseudo-filesystems even if a future build
+# accidentally leaves mounts behind. Never recurse into a live procfs.
+tar --one-file-system --sort=name --numeric-owner --owner=0 --group=0 \
+    --exclude='./proc/*' --exclude='./sys/*' --exclude='./dev/pts/*' \
+    --exclude='./run/*' --exclude='./tmp/*' -C "$root" \
     -czf "$out/debian-ports-powerpc-rootfs.tar.gz" .
+tar -tzf "$out/debian-ports-powerpc-rootfs.tar.gz" | grep -q 'usr/bin/bash'
+if tar -tzf "$out/debian-ports-powerpc-rootfs.tar.gz" | grep -Eq '^\./(proc/[0-9]+|dev/pts/[0-9]+)(/|$)'; then
+    echo "Refusing archive containing live kernel pseudo-filesystems." >&2
+    exit 1
+fi
 (cd "$out" && sha256sum debian-ports-powerpc-rootfs.tar.gz > SHA256SUMS)
 printf 'DEBIAN_PORTS_BASE_BUILD_OK size=%s\n' "$(stat -c%s "$out/debian-ports-powerpc-rootfs.tar.gz")"

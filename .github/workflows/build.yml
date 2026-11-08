@@ -1,16 +1,16 @@
-name: Build Xbox 360
+name: Full Linux rebuild (manual, slow)
 
+# The 75-minute Debian stage is never triggered by a normal git push.
+# For everyday development, use the fast Check source workflow.
+# For local CPU-intensive builds, use Package precompiled Linux with XeLL and ISO.
 on:
   workflow_dispatch:
-  push:
-    branches: [main]
-    paths:
-      - '.github/workflows/build.yml'
-      - 'kernel/**'
-      - 'distro/**'
-      - 'launcher/**'
-      - 'release/**'
-      - '.gitmodules'
+    inputs:
+      publish_release:
+        type: boolean
+        description: "Replace rolling v0.3.0-alpha release only after validation"
+        required: true
+        default: false
 
 permissions:
   contents: read
@@ -233,7 +233,7 @@ jobs:
 
   publish-release:
     name: Publish precompiled X360Linux USB ZIPs to v0.3.0-alpha
-    if: github.ref == 'refs/heads/main'
+    if: ${{ github.ref == 'refs/heads/main' && inputs.publish_release }}
     needs: [usb-debian]
     runs-on: ubuntu-24.04
     timeout-minutes: 45

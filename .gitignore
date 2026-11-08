@@ -24,6 +24,7 @@ launcher/*.map
 *.bak
 
 # Local developer files
+.local-build/
 __pycache__/
 *.pyc
 .vscode/

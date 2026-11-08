@@ -1,0 +1,39 @@
+name: Check source (fast)
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate source and scripts without compiling Debian
+        run: |
+          set -euo pipefail
+          bash -n distro/build-rootfs.sh \
+            distro/debian/build-debian-rootfs.sh \
+            distro/debian/build-usb-root.sh kernel/build-kernel.sh \
+            scripts/build-local-inputs.sh release/publish_usb_release.sh
+          sh -n distro/rootfs/init distro/debian/start-desktop
+          python3 -m py_compile distro/pack_initramfs.py \
+            distro/make_system_image.py release/build_usb_debian_packs.py \
+            release/verify_usb_release.py
+          gcc -std=c11 -Wall -Wextra -Werror -pedantic \
+            -Ilauncher/source launcher/source/settings.c \
+            launcher/tests/test_settings.c -o /tmp/x360boot-test
+          /tmp/x360boot-test
+          grep -Fq -- "--exclude='./proc/*'" distro/debian/build-debian-rootfs.sh
+          grep -Fq -- "mountpoint -q" distro/debian/build-debian-rootfs.sh
+          if grep -q "debootstrap" .github/workflows/package-prebuilt.yml; then
+            echo "Found Debian compilation in fast packaging workflow" >&2
+            exit 1
+          fi
+          echo "FAST_CHECK_OK: No expensive kernel/Debian compilation on push"
