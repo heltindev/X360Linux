@@ -1,5 +1,10 @@
 # X360Linux v0.4.0-alpha - preloaded XEX live USB
 
+## Corona Phison known hardware failure (2026-11-08)
+
+**The legacy default.xex launched in Aurora gives a BLACK SCREEN on the maintainer's Corona Phison RGH.** The installed XeLL opens via Eject. Direct Linux boot has NOT been demonstrated. Read [the verified hardware audit](V04-STATUS-AND-MULTIDISTRO.md). Do not treat the experimental Aurora boot steps below as working for this model.
+
+
 WARNING: This build was generated and statically verified on a Windows PC using Ubuntu WSL2. It has NOT been tested as a working graphical desktop on a real Xbox 360. It is a trial, not a confirmed fix.
 
 Download: https://github.com/heltindev/X360Linux/releases/tag/v0.4.0-alpha
