@@ -1,0 +1,16 @@
+#KBOOTCONFIG
+; X360Linux v0.4.1-dev — experimental Corona Phison Eject XeLL menu.
+; Requires a XeLL version supporting kboot.conf, USB paths and external initrd.
+; default.xex/XellLaunch from 2011 black-screens on this Corona.
+; No flash of Xbox NAND/HDD occurs; only FAT32 USB is accessed.
+;
+; Normal mode: boot quiet with Ubuntu 10.10 ext4 preinstalled, Plymouth theme.
+; Debug mode: show kernel and early userspace errors on screen.
+; Legacy: use original vmlinux + SquashFS, does not require an XEX.
+
+default=x360linux
+timeout=3
+
+x360linux="uda:/distros/ubuntu-x360/vmlinux initrd=uda:/distros/ubuntu-x360/initrd.gz x360debug=0 console=tty0 console=ttyS0,115200n8 video=xenonfb panic=60 maxcpus=3 quiet splash loglevel=3"
+x360linux_debug="uda:/distros/ubuntu-x360/vmlinux initrd=uda:/distros/ubuntu-x360/initrd.gz x360debug=1 console=tty0 console=ttyS0,115200n8 video=xenonfb panic=60 maxcpus=3 loglevel=7 noplymouth nosplash"
+legacy_v04="uda:/vmlinux boot=casper console=tty0 console=ttyS0,115200n8 video=xenonfb panic=60 maxcpus=3"
