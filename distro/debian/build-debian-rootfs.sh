@@ -41,12 +41,28 @@ install -D -m 0644 /usr/share/keyrings/debian-ports-archive-keyring.gpg \
 # Package installation inside the build chroot must not start host-facing daemons.
 printf '#!/bin/sh\nexit 101\n' > "$root/usr/sbin/policy-rc.d"
 chmod 0755 "$root/usr/sbin/policy-rc.d"
-mount -t proc -o ro,nosuid,nodev,noexec proc "$root/proc"
-trap 'umount "$root/proc"' EXIT
+# Run package scripts with procfs and PTYs inside the isolated CI mount namespace.
+mkdir -p "$root/proc" "$root/dev/pts"
+mount -t proc -o nosuid,nodev,noexec proc "$root/proc"
+mount -t devpts -o nosuid,noexec devpts "$root/dev/pts"
+cleanup_chroot_mounts() {
+    umount "$root/dev/pts" 2>/dev/null || true
+    umount "$root/proc" 2>/dev/null || true
+}
+trap cleanup_chroot_mounts EXIT
 chroot "$root" /usr/bin/apt-get update
+
+# Xorg requires udev, but X360Linux runs under its own minimal BusyBox PID 1.
+# Full systemd 262 postinst crashes under QEMU PPC32; avoid pulling it in
+# through udev's alternate sysusers/tmpfiles dependencies.
 chroot "$root" /usr/bin/env DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
+    systemd-standalone-sysusers systemd-standalone-tmpfiles \
     icewm pcmanfm udev xauth xinit xterm xfonts-base x11-utils x11-xserver-utils \
     xserver-xorg-core xserver-xorg-input-libinput xserver-xorg-video-fbdev xvfb
+if chroot "$root" /usr/bin/dpkg-query -W -f='${Status}' systemd 2>/dev/null | grep -q 'install ok installed'; then
+    echo "Unexpected full systemd dependency in minimal Xbox Debian build" >&2
+    exit 1
+fi
 
 install -D -m 0644 "$repo/distro/debian/x360linux.conf" "$root/etc/X11/x360linux.conf"
 install -D -m 0755 "$repo/distro/debian/start-desktop" "$root/usr/lib/x360linux/start-desktop"
@@ -70,7 +86,7 @@ chroot "$root" /usr/bin/env HOME=/root xvfb-run -a -s '-screen 0 800x600x24' /bi
     exit 1
 '
 chroot "$root" /usr/bin/env DEBIAN_FRONTEND=noninteractive apt-get purge -y xvfb
-umount "$root/proc"
+cleanup_chroot_mounts
 trap - EXIT
 rm -f "$root/usr/sbin/policy-rc.d" "$root/usr/bin/qemu-ppc-static"
 find "$root/var/lib/apt/lists" -maxdepth 1 -type f -delete
