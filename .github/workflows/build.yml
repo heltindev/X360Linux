@@ -111,7 +111,8 @@ jobs:
           sudo apt-get update -qq
           sudo DEBIAN_FRONTEND=noninteractive apt-get install -y \
             debootstrap debian-ports-archive-keyring qemu-user-static \
-            qemu-user binfmt-support tar binutils curl
+            qemu-user binfmt-support tar binutils curl \
+            gcc-powerpc-linux-gnu libc6-dev-powerpc-cross
           # Ubuntu 24.04 has a 2024 archive keyring. Debian Ports rotated to
           # its 2026 signing key (C6894E6BB25B9C99); fetch the Debian 2026
           # keyring .deb and verify the SHA256 published by packages.debian.org.

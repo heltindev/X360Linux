@@ -7,7 +7,7 @@ work="${DEBIAN_WORK_DIR:-$repo/distro/work/debian-ports}"
 out="${DEBIAN_OUT_DIR:-$repo/distro/out/debian-ports}"
 root="$work/rootfs"
 mirror="https://deb.debian.org/debian-ports"
-for program in debootstrap qemu-ppc-static qemu-ppc tar sha256sum readelf; do
+for program in debootstrap qemu-ppc-static qemu-ppc powerpc-linux-gnu-gcc tar sha256sum readelf; do
     command -v "$program" >/dev/null || { echo "Missing $program" >&2; exit 1; }
 done
 [[ "$(id -u)" -eq 0 ]] || { echo "Run as root on build runner" >&2; exit 1; }
@@ -58,20 +58,28 @@ chroot "$root" /usr/bin/apt-get update
 chroot "$root" /usr/bin/env DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
     systemd-standalone-sysusers systemd-standalone-tmpfiles \
     icewm pcmanfm udev xauth xinit xterm xfonts-base x11-utils x11-xserver-utils \
-    xserver-xorg-core xserver-xorg-input-libinput xserver-xorg-video-fbdev xvfb
+    xserver-xorg-core xserver-xorg-input-libinput xserver-xorg-video-fbdev \
+    xvfb libxtst6
 if chroot "$root" /usr/bin/dpkg-query -W -f='${Status}' systemd 2>/dev/null | grep -q 'install ok installed'; then
     echo "Unexpected full systemd dependency in minimal Xbox Debian build" >&2
     exit 1
 fi
 
 install -D -m 0644 "$repo/distro/debian/x360linux.conf" "$root/etc/X11/x360linux.conf"
+# Build a native PPC32 Xvfb framebuffer-to-TV bridge (no PC/server at runtime).
+mkdir -p "$root/usr/lib/x360linux"
+powerpc-linux-gnu-gcc -std=c11 -O2 -Wall -Wextra -Werror \
+    "$repo/distro/debian/x360-fb-bridge.c" \
+    -o "$root/usr/lib/x360linux/x360-fb-bridge" -ldl
+readelf -h "$root/usr/lib/x360linux/x360-fb-bridge" | grep -q 'Machine:.*PowerPC'
 install -D -m 0755 "$repo/distro/debian/start-desktop" "$root/usr/lib/x360linux/start-desktop"
 install -D -m 0755 "$repo/distro/debian/desktop-session" "$root/usr/lib/x360linux/desktop-session"
 install -D -m 0644 "$repo/distro/debian/icewm-menu" "$root/root/.icewm/menu"
 sh -n "$root/usr/lib/x360linux/start-desktop"
 sh -n "$root/usr/lib/x360linux/desktop-session"
 chroot "$root" /usr/lib/xorg/Xorg -version
-chroot "$root" /usr/bin/env HOME=/root xvfb-run -a -s '-screen 0 800x600x24' /bin/sh -eu -c '
+chroot "$root" /usr/bin/env HOME=/root xvfb-run -a -s '-screen 0 800x600x24 -fbdir /tmp' /bin/sh -eu -c '
+    /usr/lib/x360linux/x360-fb-bridge --inspect-xwd /tmp/Xvfb_screen0
     /usr/lib/x360linux/desktop-session &
     desktop=$!
     trap "kill $desktop 2>/dev/null || true" EXIT
@@ -85,7 +93,9 @@ chroot "$root" /usr/bin/env HOME=/root xvfb-run -a -s '-screen 0 800x600x24' /bi
     done
     exit 1
 '
-chroot "$root" /usr/bin/env DEBIAN_FRONTEND=noninteractive apt-get purge -y xvfb
+test -x "$root/usr/bin/Xvfb"
+test -x "$root/usr/lib/x360linux/x360-fb-bridge"
+# Keep Xvfb: it is the automatic fallback on Xenon when Xorg fbdev refuses the screen.
 cleanup_chroot_mounts
 trap - EXIT
 rm -f "$root/usr/sbin/policy-rc.d" "$root/usr/bin/qemu-ppc-static"

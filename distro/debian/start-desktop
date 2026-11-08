@@ -1,14 +1,88 @@
 #!/bin/sh
 # SPDX-License-Identifier: Apache-2.0
-set -eu
+# Native Xenon framebuffer compositor for the real Debian IceWM desktop.
+# Xvfb is an offline software X11 server: no streaming PC or network required.
+set -u
 exec >> /run/x360linux-desktop.log 2>&1
-
+export HOME=/root
+export PATH=/usr/sbin:/usr/bin:/sbin:/bin
 install -d -m 1777 /tmp/.X11-unix
-if /usr/lib/systemd/systemd-udevd --daemon; then
+install -d -m 0755 /run/x360linux-virtual-x
+echo "X360Linux: preparing the built-in IceWM desktop."
+
+if [ -x /usr/lib/systemd/systemd-udevd ]; then
+    /usr/lib/systemd/systemd-udevd --daemon || true
     udevadm trigger --subsystem-match=input || true
     udevadm settle --timeout=4 || true
 fi
 
-exec /usr/bin/startx /usr/lib/x360linux/desktop-session -- \
+diagnostics() {
+    {
+        printf 'X360Linux automatic desktop diagnostics\n'
+        printf 'Kernel: '; uname -r
+        printf 'Framebuffer: '; ls -l /dev/fb0 2>&1 || true
+        printf 'DRM: '; ls -l /dev/dri/card* 2>&1 || true
+        printf '\nDesktop log:\n'
+        tail -n 65 /run/x360linux-desktop.log 2>/dev/null || true
+        printf '\nVirtual X server log:\n'
+        tail -n 45 /run/x360linux-xvfb.log 2>/dev/null || true
+        printf '\nXorg fbdev log:\n'
+        tail -n 45 /run/x360linux-xorg.log 2>/dev/null || true
+    } > /bootusb/X360Linux/BOOT-DIAGNOSTICS.txt 2>/dev/null || true
+}
+# Save the reason on the FAT32 pendrive, so testers never have to type commands.
+trap diagnostics EXIT
+
+try_virtual_desktop() {
+    [ -c /dev/fb0 ] || return 1
+    [ -x /usr/bin/Xvfb ] || return 1
+    [ -x /usr/lib/x360linux/x360-fb-bridge ] || return 1
+    echo "X360Linux: starting PowerPC software X11 -> Xenon /dev/fb0."
+    /usr/bin/Xvfb :1 -screen 0 800x600x24 \
+        -fbdir /run/x360linux-virtual-x -nolisten tcp -ac \
+        > /run/x360linux-xvfb.log 2>&1 &
+    server=$!
+    count=0
+    while [ "$count" -lt 20 ]; do
+        [ -s /run/x360linux-virtual-x/Xvfb_screen0 ] && break
+        kill -0 "$server" 2>/dev/null || break
+        sleep 1
+        count=$((count+1))
+    done
+    if [ ! -s /run/x360linux-virtual-x/Xvfb_screen0 ]; then
+        echo "X360Linux: software X11 could not create its framebuffer."
+        kill "$server" 2>/dev/null || true
+        wait "$server" 2>/dev/null || true
+        return 1
+    fi
+    DISPLAY=:1 /usr/lib/x360linux/desktop-session \
+        > /run/x360linux-icewm.log 2>&1 &
+    window_manager=$!
+    sleep 2
+    if ! kill -0 "$server" 2>/dev/null; then
+        echo "X360Linux: software X11 exited prematurely."
+        kill "$window_manager" 2>/dev/null || true
+        return 1
+    fi
+    echo "X360Linux: IceWM running, projecting to the TV."
+    diagnostics
+    /usr/lib/x360linux/x360-fb-bridge /dev/fb0 \
+        /run/x360linux-virtual-x/Xvfb_screen0
+    status=$?
+    kill "$window_manager" "$server" 2>/dev/null || true
+    wait "$window_manager" "$server" 2>/dev/null || true
+    echo "X360Linux: framebuffer desktop exited with status $status."
+    return "$status"
+}
+
+if try_virtual_desktop; then
+    exit 0
+fi
+
+echo "X360Linux: framebuffer compositor unavailable; trying X.Org fbdev."
+/usr/bin/startx /usr/lib/x360linux/desktop-session -- \
     /usr/lib/xorg/Xorg :0 vt1 -keeptty -nolisten tcp \
     -config /etc/X11/x360linux.conf -logfile /run/x360linux-xorg.log
+status=$?
+echo "X360Linux: X.Org returned $status."
+exit "$status"

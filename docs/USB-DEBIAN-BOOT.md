@@ -11,7 +11,7 @@ The launcher loads the Xenon kernel and initramfs. Linux mounts `X360Linux/X360L
 
 ## Desktop and terminal recovery
 
-The Debian ISO opens IceWM automatically. The menu includes a terminal and a file manager. If the desktop cannot start, Debian returns to its console and shows the latest Xorg error.
+The Debian ISO attempts to open IceWM automatically. Xbox 360 hardware testing showed the X.Org fbdev driver failed with `No devices detected` and `no screens found`. The current experimental build first starts a local **software X11 (Xvfb) desktop** and draws its pixels directly to the Xbox `/dev/fb0` using a native PowerPC bridge. It requires no other computer, display-streaming server, internet connection, or commands at the console. Input from USB keyboard/mouse is forwarded via XTest. If that framebuffer method cannot start, it tries classic X.Org fbdev as a fallback and returns to a recovery terminal if graphics still fail. This new path is pending validation on real Xbox 360 hardware.\n\nIf the graphical boot fails, a report is written automatically to `X360Linux/BOOT-DIAGNOSTICS.txt` on the FAT32 USB drive. That text file can be read in Windows without typing commands on the Xbox.
 
 For console-only boot, create an empty file named `CONSOLE-ONLY` inside the `X360Linux/` folder on the pendrive.
 
