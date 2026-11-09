@@ -21,3 +21,9 @@ distro/x360os-native/*.sh text eol=lf
 distro/x360os-native/init text eol=lf
 distro/x360os-native/udhcpc-script text eol=lf
 distro/x360os-native/*.c text eol=lf
+
+# X360OS v8: Linux initramfs and cross-platform native source with LF endings
+distro/x360os-v8/*.sh text eol=lf
+distro/x360os-v8/init text eol=lf
+distro/x360os-v8/*.c text eol=lf
+distro/x360os-v8/*.py text eol=lf

@@ -70,3 +70,13 @@ The new [X360OS Native](distro/x360os-native/README.md) is a **fully custom, Ubu
 The verified Free60 Xenon kernel remains unchanged. **The kernel's pre-existing Casper first-stage loader is still used temporarily**, so the complete boot chain is not yet entirely independent of Ubuntu. A new custom initramfs and real Xbox console testing are required for full independence.
 
 The native-alpha image is built separately from the working v5/v6 distributions, does **not** reuse Ubuntu `casper-rw`, does not modify the Xbox NAND/HDD, and is not a stable release. Its USB-ready testing files are produced only by the local workstation build scripts under `distro/x360os-native`. This development does not use GitHub Actions.
+
+## X360OS Native v8.0.0-alpha — NO Ubuntu, NO Casper
+
+**The first truly Ubuntu-independent system tree** is now in [`distro/x360os-v8`](distro/x360os-v8/README.md), on branch `v8-native-zero-ubuntu`.
+
+This is **not** a GNOME skin or Ubuntu remix. The USB contains the verified Free60 Xenon `vmlinux`, an independent original `initrd-x360os.gz` newc CPIO with our own `/init`, BusyBox/musl static PPC32 big-endian binaries, Free60 input modules and original X360OS C dashboard. No Ubuntu, Casper, `filesystem.squashfs`, Xorg, GTK, GDM, GNOME, APT or Python in the target image. XeLL external initrd and `rdinit=/init` replace the old `boot=casper` chain.
+
+**Real defect found and addressed:** Xenos framebuffer memory uses 32×32 pixel tiles. Old `x360os-ui` wrote it linearly, explaining the checkerboard-like corruption in the user's Xbox photograph. v8 implements the Free60 XeLL `xenos_pset32()` tiled address mapping and pixel format. Static PowerPC compiled and QEMU-rendered tiled output matches the linear reference in both 800×480 and 1280×720.
+
+**Still experimental:** Physical Xbox v8 XeLL-initrd handoff and framebuffer/controller behavior have NOT been verified yet. The kernel is a preserved Linux Free60 kernel, not a newly written Linux kernel. Do not overwrite working USB `E:\`, NAND or internal HDD. Keep the successful-video recovery image separate for fallback, but never copy its Ubuntu files into the native v8 build.

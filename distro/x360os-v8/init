@@ -1,0 +1,51 @@
+#!/bin/sh
+# X360OS v8: independent initramfs /init, NO Ubuntu, Casper, GNOME or Xorg.
+# This script is PID 1 in a custom gzip/newc Linux initramfs from XeLL.
+PATH=/sbin:/bin:/usr/sbin:/usr/bin
+HOME=/root
+TERM=linux
+export PATH HOME TERM
+umask 022
+exec </dev/console >/dev/console 2>&1
+echo "[X360OS NATIVE v8] Kernel has launched the independent system."
+mount -t proc proc /proc 2>/dev/null || :
+mount -t sysfs sysfs /sys 2>/dev/null || :
+mkdir -p /dev/pts /run/x360os /tmp /var/log /media/usb /root
+mount -t devtmpfs devtmpfs /dev 2>/dev/null || :
+mount -t devpts devpts /dev/pts 2>/dev/null || :
+mount -t tmpfs -o size=8m,mode=0755 tmpfs /run 2>/dev/null || :
+mkdir -p /run/x360os
+mount -t tmpfs -o size=16m,mode=1777 tmpfs /tmp 2>/dev/null || :
+hostname x360os
+echo /sbin/mdev > /proc/sys/kernel/hotplug 2>/dev/null || :
+mdev -s 2>/dev/null || :
+{
+ echo "X360OS v8.0 (native initramfs, Ubuntu-free)"
+ uname -a
+ cat /proc/cpuinfo 2>/dev/null | head -16
+ ls -l /dev/fb* /dev/input/ 2>/dev/null || :
+} >/run/x360os/boot.log 2>&1
+# Original 2.6.36.2 Xenon USB xpad is built-in. These exact kernel drivers
+# expose joystick/evdev nodes IF a compatible USB input is actually present.
+for module in /lib/modules/2.6.36.2-xenon/kernel/drivers/input/joydev.ko \
+              /lib/modules/2.6.36.2-xenon/kernel/drivers/input/evdev.ko; do
+ if [ -s "$module" ]; then
+  insmod "$module" >>/run/x360os/boot.log 2>&1 || :
+ fi
+done
+mdev -s 2>/dev/null || :
+# Network intentionally not started: boot and graphics must work offline.
+# The Xbox 360 internal wireless receiver is NOT guaranteed to be supported.
+# Kernel messages below warning priority should not overwrite dashboard.
+dmesg -n 1 >/dev/null 2>&1 || :
+echo "[X360OS] Starting Xenos tiled framebuffer interface..."
+while :; do
+ /usr/bin/x360os-ui >>/run/x360os/ui.log 2>&1
+ code=$?
+ echo "[X360OS] UI stopped ($code). See /run/x360os/ui.log."
+ if [ "$code" -eq 3 ]; then
+  echo "[X360OS] Framebuffer missing, recovery BusyBox shell."
+  exec /bin/sh
+ fi
+ sleep 2
+done
