@@ -56,15 +56,21 @@ def memory_info():
         return 'Memory unavailable'
 
 def network_info():
+    # A link is not proof of DHCP, DNS, or internet access.
     try:
-        for name in os.listdir('/sys/class/net'):
-            if name != 'lo':
-                f = '/sys/class/net/%s/operstate' % name
-                if os.path.exists(f) and open(f).read().strip() == 'up':
-                    return 'Network link active (Internet not verified)'
-    except Exception:
+        interfaces = [n for n in os.listdir('/sys/class/net') if n != 'lo']
+        wifi = [n for n in interfaces if n.startswith(('wlan', 'wl', 'ra'))]
+        for n in interfaces:
+            f = '/sys/class/net/%s/operstate' % n
+            if os.path.exists(f) and open(f).read().strip() == 'up':
+                return '%s link active (internet unverified)' % n
+        if wifi:
+            return '%s found: select Network to connect' % wifi[0]
+        if interfaces:
+            return '%s disconnected; internal Wi-Fi needs driver' % interfaces[0]
+    except (OSError, IOError):
         pass
-    return 'Network disconnected / unverified'
+    return 'No network interface: Wi-Fi driver may be missing'
 
 class Home(object):
     def __init__(self):
@@ -190,7 +196,7 @@ class Home(object):
         info = self.label('Enter a website address using the on-screen keyboard', 13, WHITE)
         dialog.vbox.pack_start(info, False, False, 8)
         entry = gtk.Entry()
-        entry.set_text('https://example.org/')
+        entry.set_text('http://example.com/')
         dialog.vbox.pack_start(entry, False, False, 8)
         keys = ['1234567890', 'qwertyuiop', 'asdfghjkl', 'zxcvbnm']
         for line in keys:

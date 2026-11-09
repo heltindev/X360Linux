@@ -1,0 +1,11 @@
+#!/bin/sh
+# Load available Xbox input modules and start gamepad to X11 bridge.
+[ -n "$DISPLAY" ] || exit 0
+[ -x /usr/bin/python2.6 ] || exit 0
+if [ -x /usr/bin/pgrep ] && /usr/bin/pgrep -f '^/usr/bin/python2.6 /usr/share/x360os/controller.py$' >/dev/null 2>&1; then exit 0; fi
+mkdir -p "$HOME/.x360os" 2>/dev/null || :
+for module in joydev evdev xpad; do
+  [ -x /sbin/modprobe ] && /sbin/modprobe "$module" >/dev/null 2>&1 || :
+done
+/usr/bin/python2.6 /usr/share/x360os/controller.py > "$HOME/.x360os/controller.log" 2>&1 &
+exit 0

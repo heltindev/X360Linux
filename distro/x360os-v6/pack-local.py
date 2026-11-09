@@ -18,7 +18,7 @@ def main():
     if args.output.exists():
         raise SystemExit('Refusing to overwrite: %s' % args.output)
     args.output.parent.mkdir(parents=True, exist_ok=True)
-    readme = """X360OS v6.0 DEVELOPMENT BUILD - XBOX 360 RGH/JTAG
+    readme = """X360OS v6.0.1 DEVELOPMENT TEST - XBOX 360 RGH/JTAG
 THIS VERSION HAS NOT YET BEEN BOOT-TESTED ON REAL XBOX HARDWARE.
 1. Keep a backup of your known-working X360Linux v5 USB.
 2. Prepare a different 8 GB+ FAT32 USB drive (formatting erases data).
@@ -29,8 +29,9 @@ THIS VERSION HAS NOT YET BEEN BOOT-TESTED ON REAL XBOX HARDWARE.
 7. Press F10 on a USB keyboard to switch to classic Ubuntu if the shell opens.
 
 BROWSER NOTE: Firefox 3.6 in the old Ubuntu is obsolete; do not use passwords.
-CONTROLLER NOTE: wired/USB xpad support still needs Xbox hardware validation.
-NETWORK NOTE: NetworkManager is included; connectivity is not yet proven.
+CONTROLLER NOTE: js/evdev support is included, but internal wireless gamepad input is not guaranteed.
+NETWORK NOTE: internal Xbox 360 Slim Marvell Wi-Fi driver is NOT available; try wired Ethernet for Internet tests.
+BOOT NOTE: XeLL DHCP and stdin/stderr error messages may appear before Linux; not fixed by Ubuntu.
 Do not use this as a verified production release. No NAND/HDD changes.
 """
     with zipfile.ZipFile(args.v5_boot, 'r') as v5, \
@@ -54,10 +55,11 @@ Do not use this as a verified production release. No NAND/HDD changes.
                 shutil.copyfileobj(src, dest, 4*1024*1024)
         print('Included unused fresh v5 persistence image (NOT user data)', flush=True)
         final.writestr('READ-ME-FIRST.txt', readme, compress_type=zipfile.ZIP_DEFLATED)
+        final.write(Path(__file__).with_name('TESTE-PTBR.txt'), 'TESTE-PTBR.txt')
     with zipfile.ZipFile(args.output) as final:
         assert final.testzip() is None
         assert set(final.namelist()) == {
-            'kboot.conf','vmlinux','casper/filesystem.squashfs','casper-rw','READ-ME-FIRST.txt'
+            'kboot.conf','vmlinux','casper/filesystem.squashfs','casper-rw','READ-ME-FIRST.txt', 'TESTE-PTBR.txt'
         }
         assert final.getinfo('casper-rw').file_size == 3 * 1024**3
     h = hashlib.sha256()

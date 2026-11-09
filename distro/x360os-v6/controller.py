@@ -141,17 +141,65 @@ class Mapper(object):
             self.click(5 if ry > 0 else 4, False)
             self.last_scroll = now
 
+def candidate_event_device():
+    # Don't grab a keyboard, mouse, or non-input wireless/network device.
+    for path in sorted(glob.glob('/dev/input/event*')):
+        name_path = '/sys/class/input/' + os.path.basename(path) + '/device/name'
+        try:
+            name = open(name_path).read().strip().lower()
+        except IOError:
+            continue
+        if any(word in name for word in
+               ('xbox', 'gamepad', 'joystick', 'joypad', 'xpad', '360 controller')):
+            return path
+    return None
+
+def handle_evdev(mapper, data, fd):
+    # Xenon is 32-bit big-endian PowerPC; input_event timeval uses 32-bit longs.
+    # Python struct '=' forces 32-bit timeval widths independent of host tests.
+    import sys
+    endian = '>' if sys.byteorder == 'big' else '<'
+    if len(data) != 16:
+        return
+    sec, usec, etype, code, value = struct.unpack(endian + 'IIHHi', data)
+    if etype == 1:
+        buttons = {304:0, 305:1, 308:2, 307:3, 310:4, 311:5}
+        if code in buttons:
+            mapper.button(buttons[code], value != 0)
+        elif value == 1 and code in (544, 545, 546, 547):
+            mapper.key({544:'up', 545:'down', 546:'left', 547:'right'}[code])
+    elif etype == 3:
+        if code in (16, 17):  # ABS_HAT0X / ABS_HAT0Y
+            mapper.axes[6 if code == 16 else 7] = (
+                -32767 if value < 0 else (32767 if value > 0 else 0))
+        elif code in (0, 1, 3, 4):  # Sticks
+            try:
+                import fcntl
+                info = fcntl.ioctl(fd, 0x80184540 + code, '\x00' * 24)
+                current, minimum, maximum, fuzz, flat, resolution = struct.unpack(
+                    endian + '6i', info)
+                center = (minimum + maximum) // 2
+                radius = max(1, (maximum - minimum) // 2)
+                normalized = max(-32767, min(32767, (value - center) * 32767 // radius))
+            except (IOError, OSError, ValueError, struct.error):
+                normalized = value
+            mapper.axes[code] = normalized
+
 def run():
     mapper = Mapper()
-    print('X360OS input service ready; /dev/input/js* auto-discovery')
+    print('X360OS controller bridge: joystick + gamepad evdev discovery')
     while True:
-        devices = sorted(glob.glob('/dev/input/js*'))
-        if not devices:
-            time.sleep(1.0)
+        sticks = sorted(glob.glob('/dev/input/js*'))
+        path = sticks[0] if sticks else candidate_event_device()
+        if not path:
+            print('NO INPUT DEVICE: kernel may not expose the Xbox wireless pad.')
+            time.sleep(4.0)
             continue
+        evdev = '/event' in path
         fd = None
         try:
-            fd = os.open(devices[0], os.O_RDONLY | os.O_NONBLOCK)
+            fd = os.open(path, os.O_RDONLY | os.O_NONBLOCK)
+            print('INPUT:', path, 'mode:', 'evdev' if evdev else 'joystick')
             mapper.axes.clear()
             mapper.pressed.clear()
             while True:
@@ -159,13 +207,23 @@ def run():
                 if errors:
                     break
                 if readable:
-                    data = os.read(fd, 8)
-                    if len(data) != 8:
-                        break
-                    mapper.event(*decode_event(data))
+                    try:
+                        data = os.read(fd, 16 if evdev else 8)
+                    except OSError as exc:
+                        if exc.errno in (11, 35):  # EAGAIN
+                            data = None
+                        else:
+                            raise
+                    if data is not None:
+                        if len(data) != (16 if evdev else 8):
+                            break
+                        if evdev:
+                            handle_evdev(mapper, data, fd)
+                        else:
+                            mapper.event(*decode_event(data))
                 mapper.frame()
         except (OSError, IOError) as error:
-            print('Controller disconnected:', error)
+            print('INPUT ERROR:', error)
             time.sleep(1.0)
         finally:
             if fd is not None:

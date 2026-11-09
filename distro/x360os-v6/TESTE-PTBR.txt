@@ -1,0 +1,22 @@
+X360OS v6.0.1 - TESTE NO XBOX 360
+
+Esta versao tenta abrir automaticamente a interface X360OS.
+Ainda NAO esta comprovado que funcione no seu console.
+
+1. Guarde o pendrive da v5 que ja funcionou.
+2. Use outro pendrive FAT32 de pelo menos 8 GB.
+3. Extraia TODO o arquivo ZIP da v6.0.1 diretamente na raiz.
+4. Conecte ao Xbox 360 RGH/JTAG e ligue pelo botao Eject (XeLL).
+5. Aguarde abrir o menu X360OS.
+6. Teste o controle pelo direcional e botao A.
+7. Se abrir so o Ubuntu, veja a pasta oculta /home/ubuntu/.x360os
+   para ler home.log e hardware.txt (e diga o erro).
+8. Se o controle nao mexer, veja /home/ubuntu/.x360os/controller.log.
+
+INTERNET: o Wi-Fi interno do Xbox 360 Slim precisa de driver
+especifico Marvell 88W8786U ainda nao confirmado para este kernel.
+O erro DHCP do XeLL ocorre antes de entrar no Linux. Sem cabo Ethernet
+ele pode aparecer mesmo que o Linux inicie normalmente.
+
+AVISO: Firefox 3.6 e antigo. Nao use senhas ou contas importantes.
+O teste nao altera a NAND nem o HD interno do Xbox.

@@ -1,0 +1,8 @@
+[Desktop Entry]
+Type=Application
+Name=X360OS Home (GNOME fallback)
+Comment=Open X360OS automatically when the old GNOME session starts
+Exec=/usr/bin/x360os-start-gnome
+Terminal=false
+X-GNOME-Autostart-enabled=true
+NoDisplay=true

@@ -39,6 +39,12 @@ install -D -m 0644 "$here/home.py" "$root/usr/share/x360os/home.py"
 install -D -m 0644 "$here/controller.py" "$root/usr/share/x360os/controller.py"
 install -D -m 0755 "$here/x360os-session" "$root/usr/bin/x360os-session"
 install -D -m 0644 "$here/x360os.desktop" "$root/usr/share/xsessions/x360os.desktop"
+# 2010 GDM can ignore DefaultSession or use an old persistent user preference.
+# GNOME XDG autostart also starts the home screen on such systems.
+install -D -m 0755 "$here/x360os-start-gnome" "$root/usr/bin/x360os-start-gnome"
+install -D -m 0755 "$here/x360os-input-start" "$root/usr/bin/x360os-input-start"
+install -D -m 0644 "$here/x360os-autostart.desktop" "$root/etc/xdg/autostart/x360os.desktop"
+install -D -m 0644 "$here/probe.py" "$root/usr/share/x360os/probe.py"
 python3 - "$root" <<'PY'
 from pathlib import Path
 import sys
@@ -47,14 +53,14 @@ gdm=root/'etc/gdm/custom.conf'
 txt=gdm.read_text()
 assert '[daemon]' in txt and 'AutomaticLogin=ubuntu' in txt
 assert 'DefaultSession=gnome.desktop' in txt, 'Unexpected GDM baseline; refusing patch'
-gdm.write_text(txt.replace('DefaultSession=gnome.desktop','DefaultSession=x360os.desktop'))
+gdm.write_text(txt.replace('DefaultSession=gnome.desktop','DefaultSession=x360os'))
 (root/'etc/x360os-release').write_text(
-    'X360OS 6.0-dev\n'
+    'X360OS 6.0.1-dev\n'
     'base=Ubuntu_10.10_PowerPC32_Casper\n'
     'kernel=UNCHANGED_from_X360Linux_v5\n'
     'ui=PyGTK2_10-foot_screen\n'
-    'input=xpad_joydev_to_XTest_experimental\n'
-    'network=existing_NetworkManager_unverified_on_console\n'
+    'input=joydev_and_evdev_to_XTest_experimental\n'
+    'network=NetworkManager_present_internal_Marvell_WiFi_driver_missing\n'
     'browser=legacy_Firefox_3.6_unsafe_for_sensitive_accounts\n'
     'hardware_test=NOT_DONE\n')
 PY
@@ -63,7 +69,10 @@ mksquashfs "$root" "$out/filesystem.squashfs" \
   -comp gzip -b 131072 -noappend -no-progress -processors 4 \
   > "$out/squashfs-build.log" 2>&1
 unsquashfs -s "$out/filesystem.squashfs" | grep -q 'Compression gzip'
-unsquashfs -cat "$out/filesystem.squashfs" etc/gdm/custom.conf | grep -q 'DefaultSession=x360os.desktop'
+unsquashfs -cat "$out/filesystem.squashfs" etc/gdm/custom.conf | grep -q 'DefaultSession=x360os'
+unsquashfs -cat "$out/filesystem.squashfs" etc/xdg/autostart/x360os.desktop | grep -q 'x360os-start-gnome'
+unsquashfs -cat "$out/filesystem.squashfs" usr/bin/x360os-input-start | grep -q 'modprobe'
+unsquashfs -cat "$out/filesystem.squashfs" usr/share/x360os/probe.py | grep -q 'XBOX_360_INTERNAL_WIFI_DETECTED'
 unsquashfs -cat "$out/filesystem.squashfs" etc/x360os-release | grep -q 'hardware_test=NOT_DONE'
 unsquashfs -cat "$out/filesystem.squashfs" usr/share/x360os/controller.py | grep -q 'class Mapper'
 sha256sum "$src" "$out/filesystem.squashfs" "$base/vmlinux" > "$out/IMAGE-SHA256SUMS.txt"

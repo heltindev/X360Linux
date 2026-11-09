@@ -1,8 +1,16 @@
 # X360OS v6 — Xbox 360 console-style Ubuntu
 
-**Status: local development prototype. NOT tested on a real Xbox yet.** The existing v5.0.0 release stays unchanged.
+**Status: v6.0.1 local repair candidate. The original v6 console test loaded GNOME rather than X360OS; the repair has not yet been retested on Xbox hardware.** The existing v5.0.0 release stays unchanged.
 
 X360OS v6 reuses the working 32-bit big-endian PowerPC Ubuntu 10.10 Casper system and the original Xenon Linux 2.6.36.2 kernel. It does **not** install Steam or replace XeLL.
+
+## v6.0.1 boot/input fix
+
+A real console test of the initial v6 loaded the old Ubuntu desktop rather than X360OS. This revision includes a GNOME XDG autostart fallback in addition to GDM's custom-session preference. The fallback opens X360OS on top of GNOME if GDM ignores the custom session, and writes startup/controller/hardware logs under /home/ubuntu/.x360os/. Its appearance and RAM consumption still need physical testing.
+
+The controller daemon now supports both the joystick API and recognizable evdev gamepad devices. However, **the Xbox 360's internal wireless controller radio is not proven to appear as a Linux input device**. The built-in Xbox 360 Slim Wi-Fi module (Marvell 88W8786U, USB 045e:0765) does not have a confirmed compatible driver on the preserved Xenon 2.6.36.2 kernel; NetworkManager cannot solve this by itself. The XeLL DHCP request and possible stdin/stderr messages happen before Ubuntu and are not fixed by changing Linux DHCP.
+
+For the test report and how to inspect logs, read FIXES-v6.0.1.md and TESTE-PTBR.txt. The production v5 release remains untouched.
 
 ## What's implemented in source
 
@@ -16,7 +24,7 @@ X360OS v6 reuses the working 32-bit big-endian PowerPC Ubuntu 10.10 Casper syste
 
 ## Local build (never GitHub Actions)
 
-Use WSL Ubuntu with `squashfs-tools` installed on a Windows computer that contains the working v5 `BOOT-DIRETO` folder.
+Use WSL Ubuntu with `squashfs-tools` installed on Windows. If the local v5 `BOOT-DIRETO` folder is empty, first run `python3 distro/x360os-v6/restore-v5-source.py --zip PATH/TO/X360Linux-v5.0.0-USB-BOOT.zip --output PATH/TO/v6-source-v5`. Then provide that extracted folder to `build-local.sh`. The v5 kernel is preserved.
 
 ```bash
 bash distro/x360os-v6/build-local.sh "/mnt/c/Users/USERNAME/Desktop/PEN DRIVE/BOOT-DIRETO" "/mnt/c/Users/USERNAME/Desktop/PEN DRIVE/work/release-v6"
