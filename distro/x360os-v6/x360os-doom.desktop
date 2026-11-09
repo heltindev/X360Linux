@@ -1,0 +1,10 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=DOOM (Freedoom)
+Comment=Free DOOM-style game with PrBoom engine
+Exec=/usr/bin/x360os-doom
+Icon=applications-games
+Terminal=false
+Categories=Game;ActionGame;
+StartupNotify=false

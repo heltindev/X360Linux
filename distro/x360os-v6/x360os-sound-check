@@ -1,0 +1,15 @@
+#!/bin/sh
+# Read-only ALSA diagnostic, no kernel or mixer state changes.
+out="$HOME/.x360os/sound-check.txt"
+mkdir -p "$HOME/.x360os" 2>/dev/null || :
+{
+  echo "X360OS audio diagnostic"
+  uname -r
+  echo "--- /proc/asound/cards"
+  cat /proc/asound/cards 2>/dev/null || echo "ALSA cards not enumerated"
+  echo "--- /dev/snd"
+  ls -l /dev/snd 2>&1 || :
+  echo "--- ALSA playback devices"
+  command -v aplay >/dev/null 2>&1 && aplay -l 2>&1 || :
+} > "$out"
+cat "$out"

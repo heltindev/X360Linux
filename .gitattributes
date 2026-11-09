@@ -12,3 +12,6 @@ distro/x360os-v6/x360os-toggle text eol=lf
 distro/x360os-v6/x360os-install-launcher text eol=lf
 distro/x360os-v6/*.rules text eol=lf
 distro/x360os-v6/*.desktop text eol=lf
+distro/x360os-v6/x360os-doom text eol=lf
+distro/x360os-v6/x360os-session-light text eol=lf
+distro/x360os-v6/x360os-sound-check text eol=lf

@@ -1,0 +1,25 @@
+#!/bin/sh
+# X360OS v6 X session: leave the verified kernel, XeLL and Casper unchanged.
+# The classic GNOME desktop remains a recovery fallback when the shell exits.
+export PATH=/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin
+if [ -x /usr/bin/openbox ]; then
+  /usr/bin/openbox >/tmp/x360os-window.log 2>&1 &
+elif [ -x /usr/bin/metacity ]; then
+  /usr/bin/metacity --sm-disable >/tmp/x360os-window.log 2>&1 &
+fi
+if [ -x /usr/bin/nm-applet ]; then
+  /usr/bin/nm-applet >/tmp/x360os-network.log 2>&1 &
+fi
+[ -x /usr/bin/python2.6 ] || exec /usr/bin/gnome-session
+# Load the input bridges if the old Xenon kernel ships them as modules.
+[ -x /sbin/modprobe ] && /sbin/modprobe joydev >/dev/null 2>&1 || :
+[ -x /sbin/modprobe ] && /sbin/modprobe evdev >/dev/null 2>&1 || :
+/usr/bin/x360os-install-launcher
+mkdir -p "$HOME/.x360os" 2>/dev/null || :
+/usr/bin/python2.6 /usr/share/x360os/probe.py > "$HOME/.x360os/hardware.txt" 2>&1 || :
+/usr/bin/x360os-sound-check >/dev/null 2>&1 || :
+/usr/bin/x360os-input-start
+/usr/bin/python2.6 /usr/share/x360os/home.py > "$HOME/.x360os/home.log" 2>&1
+printf 'X360OS home exited (see logs)\n' >> "$HOME/.x360os/home.log"
+# Exit/F10 recovers the known Ubuntu desktop, without touching NAND/HDD.
+exec /usr/bin/gnome-session

@@ -1,0 +1,22 @@
+#!/bin/sh
+# FreeDOOM is a free IWAD; old PrBoom provides the Boom-compatible engine.
+# The bundled Chocolate Doom is for users who supply a compatible licensed IWAD.
+WAD=/usr/share/games/doom/freedoom.wad
+ENGINE=/usr/games/prboom
+if [ ! -s "$WAD" ] || [ ! -x "$ENGINE" ]; then
+  echo "PrBoom or Freedoom IWAD missing; run diagnostics." >&2
+  exit 1
+fi
+STATE="$HOME/.x360os"
+mkdir -p "$STATE" 2>/dev/null || :
+export SDL_VIDEODRIVER=x11
+# Sound is optional; fall back to dummy only if no audio device is present.
+if [ ! -e /dev/snd/pcmC0D0p ] && [ ! -e /dev/dsp ]; then
+    export SDL_AUDIODRIVER=dummy
+fi
+echo "doom" > "$STATE/game-mode"
+trap 'rm -f "$STATE/game-mode"' EXIT HUP INT TERM
+"$ENGINE" -iwad "$WAD" -window -width 640 -height 400 "$@" >>"$STATE/doom.log" 2>&1
+rc=$?
+[ -x /usr/bin/x360os-toggle ] && /usr/bin/x360os-toggle >/dev/null 2>&1 || :
+exit "$rc"

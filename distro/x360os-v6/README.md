@@ -55,3 +55,9 @@ python3 distro/x360os-v6/pack-local.py --v5-boot "PATH/TO/X360Linux-v5.0.0-USB-B
 **Known limitation:** Ubuntu 10.10 is end-of-life. Do not sign in to personal accounts on its Firefox 3.6 browser. Modern browsing is a separate porting/kernel-upgrade milestone. The console's internal wireless controller support is unknown.
 
 For upstream X360OS roadmap, see [X360OS ROADMAP](../../docs/X360OS-ROADMAP.md).
+
+## v6.1.0 (Openbox + games; not hardware verified)
+
+See [v6.1.0-TESTING.md](v6.1.0-TESTING.md). The separate `build-v6.1-ppc.sh` script takes the locally built v6.0.2 rootfs and 2010-era **PowerPC big-endian** Ubuntu packages for Openbox, PrBoom, Chocolate Doom, SDL1.2 extras and Freedoom. No kernel changes, no NAND flashes, no GitHub Actions. A safe GTK2 home is shipped as `home-stable.py`; an experimental uncommitted 900-line SteamOS UI draft in `home.py` remains untouched. The free `freedoom.wad` uses the Boom-compatible PrBoom launcher; Chocolate Doom is provided for compatible IWADs supplied separately.
+
+The official Ubuntu archive package paths are documented in `v6.1.0-TESTING.md`. Ethernet, ALSA, USB xpad and USB storage are already in the old Xenon kernel; internal Marvell Wi-Fi and console RF controller remain unverified or unsupported. Test on a spare FAT32 USB before considering stable release.
