@@ -62,3 +62,11 @@ The release assets contain the complete USB payload split into packages that can
 - [Persistent USB design](docs/PERSISTENT-USB-LEGACY-KERNEL.md)
 - [Hardware test log](docs/V041-CORONA-TEST-2026-11-08.md)
 - [Credits and licenses](docs/CREDITS.md)
+
+## X360OS Native — Xbox 360-only system (v7.0.0-alpha)
+
+The new [X360OS Native](distro/x360os-native/README.md) is a **fully custom, Ubuntu-free root filesystem** for Xbox 360 RGH/JTAG hardware, built locally for PowerPC 32-bit big-endian using **musl + BusyBox + a C framebuffer interface**. No GNOME, Xorg, APT, Python or browser is included in the new userspace.
+
+The verified Free60 Xenon kernel remains unchanged. **The kernel's pre-existing Casper first-stage loader is still used temporarily**, so the complete boot chain is not yet entirely independent of Ubuntu. A new custom initramfs and real Xbox console testing are required for full independence.
+
+The native-alpha image is built separately from the working v5/v6 distributions, does **not** reuse Ubuntu `casper-rw`, does not modify the Xbox NAND/HDD, and is not a stable release. Its USB-ready testing files are produced only by the local workstation build scripts under `distro/x360os-native`. This development does not use GitHub Actions.

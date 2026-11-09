@@ -1,0 +1,59 @@
+#!/bin/sh
+# X360OS Native v7.0 alpha PID 1: no Ubuntu/GNOME/systemd/Xorg.
+# Transitional boot: original Xenon kernel/Casper bootstrap, clean custom rootfs.
+PATH=/sbin:/bin:/usr/sbin:/usr/bin
+export PATH HOME=/root
+umask 022
+exec </dev/console >/dev/console 2>&1
+echo "[X360OS] Native userspace starting"
+mount -t proc proc /proc 2>/dev/null || :
+mount -t sysfs sysfs /sys 2>/dev/null || :
+mount -t devtmpfs devtmpfs /dev 2>/dev/null || :
+mkdir -p /dev/pts /run /tmp /media/usb /root /var/log
+mount -t devpts devpts /dev/pts 2>/dev/null || :
+mount -t tmpfs -o size=16m,mode=0755 tmpfs /run 2>/dev/null || :
+mount -t tmpfs -o size=32m,mode=1777 tmpfs /tmp 2>/dev/null || :
+mkdir -p /run/x360os
+echo /sbin/mdev > /proc/sys/kernel/hotplug 2>/dev/null || :
+mdev -s 2>/dev/null || :
+hostname x360os
+echo "[X360OS] Kernel $(uname -r), architecture $(uname -m)" | tee /run/x360os/boot.log
+if grep -iqE 'xenon|xbox.?360' /proc/cpuinfo 2>/dev/null; then
+ echo "[X360OS] Xbox hardware signature detected" | tee -a /run/x360os/boot.log
+else
+ echo "[X360OS] WARNING: Xbox hardware signature unconfirmed" | tee -a /run/x360os/boot.log
+fi
+# Only load Free60 modules BUILT FOR THIS exact Xenon kernel.
+for mod in /lib/modules/2.6.36.2-xenon/kernel/drivers/input/joydev.ko \
+           /lib/modules/2.6.36.2-xenon/kernel/drivers/input/evdev.ko; do
+ [ ! -s "$mod" ] || insmod "$mod" >/dev/null 2>&1 || :
+done
+# Mount USB storage read-only. Never mount the console's internal SATA HDD.
+for node in /sys/class/block/sd*; do
+ [ -e "$node" ] || continue
+ physical="$(readlink -f "$node" 2>/dev/null)" || continue
+ case "$physical" in */usb[0-9]*/*) ;; *) continue ;; esac
+ block="/dev/$(basename "$node")"
+ [ -b "$block" ] || continue
+ if mount -t vfat -o ro,nosuid,nodev "$block" /media/usb 2>/dev/null; then
+  echo "[X360OS] USB mounted read-only: $block" | tee -a /run/x360os/boot.log
+  break
+ fi
+done
+# Kernel has native wired Ethernet; internal Slim Wi-Fi is not supported.
+if [ -d /sys/class/net/eth0 ]; then
+ ifconfig eth0 up 2>/dev/null || :
+ udhcpc -i eth0 -s /etc/network/udhcpc-script -b -t 3 -T 3 \
+   >/run/x360os/dhcp.log 2>&1 || :
+fi
+echo "[X360OS] Starting independent framebuffer interface..."
+while :; do
+ /usr/bin/x360os-ui >>/run/x360os/ui.log 2>&1
+ rc="$?"
+ echo "[X360OS] UI exited ($rc). Log /run/x360os/ui.log"
+ if [ "$rc" -eq 3 ]; then
+  echo "[X360OS] No /dev/fb0. Recovery shell on console."
+  exec /bin/sh </dev/console >/dev/console 2>&1
+ fi
+ sleep 2
+done

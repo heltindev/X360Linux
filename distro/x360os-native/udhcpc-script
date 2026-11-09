@@ -1,0 +1,18 @@
+#!/bin/sh
+# X360OS wired Ethernet DHCP, no Ubuntu NetworkManager.
+[ -n "$interface" ] || exit 0
+case "$1" in
+ deconfig)
+  ifconfig "$interface" 0.0.0.0 2>/dev/null || :
+  ;;
+ bound|renew)
+  mask="$subnet"
+  [ -n "$mask" ] || mask=255.255.255.0
+  ifconfig "$interface" "$ip" netmask "$mask" up || exit 1
+  set -- $router
+  [ "$#" -lt 1 ] || route add default gw "$1" dev "$interface" 2>/dev/null || :
+  : > /etc/resolv.conf
+  for server in $dns; do echo "nameserver $server" >>/etc/resolv.conf; done
+  ;;
+esac
+exit 0
