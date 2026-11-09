@@ -1,14 +1,14 @@
 #KBOOTCONFIG
-; X360Linux - Auto-boot experimental via XeLL Eject para Ubuntu ext4.
-; XeLL ainda pode imprimir o menu por instantes; tempo de espera = 0.
-; 0 = tenta iniciar o Ubuntu ja instalado, sem instalador.
-; 1 = mesma tentativa, com mensagens para descobrir erros.
-; 2 = kernel antigo confirmado; ele entra no Ubuntu Live/instalador.
-; Apenas arquivos de USB: nao atualiza a NAND nem o HD interno.
+; X360Linux - Diagnostic menu for Xbox 360 Corona Phison.
+; Waits 25 seconds, then automatically starts option 0 with visible logs.
+; 0 = diagnostic boot of the preinstalled Ubuntu system.
+; 1 = quiet boot attempt; previous hardware test resulted in a black screen.
+; 2 = verified legacy kernel; opens Ubuntu Live/installer, not the installed system.
+; USB files only. Does not update NAND or modify the Xbox internal HDD.
 
-default=ABRIR O LINUX JA INSTALADO
-timeout=0
+default=DIAGNOSTIC BOOT - SHOW ERRORS
+timeout=25
 
-ABRIR O LINUX JA INSTALADO="uda:/x360linux.elf rdinit=/init x360distro=ubuntu-x360 x360id=X360LINUX-UBUNTU-EXT4-V05 x360debug=0 console=tty0 console=ttyS0,115200n8 video=xenonfb panic=60 maxcpus=3 quiet splash loglevel=3"
-VER ERROS DO LINUX="uda:/x360linux.elf rdinit=/init x360distro=ubuntu-x360 x360id=X360LINUX-UBUNTU-EXT4-V05 x360debug=1 console=tty0 console=ttyS0,115200n8 video=xenonfb panic=60 maxcpus=3 loglevel=7 noplymouth nosplash"
-SISTEMA ANTIGO - ABRE INSTALADOR="uda:/vmlinux boot=casper console=tty0 console=ttyS0,115200n8 video=xenonfb panic=60 maxcpus=3"
+DIAGNOSTIC BOOT - SHOW ERRORS="uda:/x360linux.elf rdinit=/init x360distro=ubuntu-x360 x360id=X360LINUX-UBUNTU-EXT4-V05 x360debug=1 console=tty0 console=ttyS0,115200n8 video=xenonfb panic=60 maxcpus=3 loglevel=7 noplymouth nosplash"
+NORMAL BOOT - QUIET="uda:/x360linux.elf rdinit=/init x360distro=ubuntu-x360 x360id=X360LINUX-UBUNTU-EXT4-V05 x360debug=0 console=tty0 console=ttyS0,115200n8 video=xenonfb panic=60 maxcpus=3 quiet splash loglevel=3"
+LEGACY UBUNTU LIVE - INSTALLER="uda:/vmlinux boot=casper console=tty0 console=ttyS0,115200n8 video=xenonfb panic=60 maxcpus=3"
