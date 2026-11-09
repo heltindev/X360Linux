@@ -37,7 +37,7 @@ percent.sprite = Sprite ();
 percent.sprite.SetPosition ((screen_width / 2) - 20, bar.y + 27, 10);
 percent.last = -1;
 
-fun show_progress (duration, progress)
+fun show_progress (progress, time)
 {
     # Plymouth reports userspace progress in the range [0.0, 1.0].
     # XeLL startup and early kernel boot are not covered by this callback.
