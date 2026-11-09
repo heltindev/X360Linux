@@ -1,0 +1,19 @@
+#!/bin/sh
+# X360OS gamepad-to-pointer bridge. No root requirement, starts inside GDM X11 session.
+[ -n "$DISPLAY" ] || exit 0
+[ -r /usr/share/x360os/controller.py ] || exit 0
+[ -x /usr/bin/python2.6 ] || exit 0
+mkdir -p "$HOME/.x360os" 2>/dev/null || exit 0
+if [ -x /usr/bin/pgrep ] && /usr/bin/pgrep -f '/usr/share/x360os/controller.py' >/dev/null 2>&1; then
+ exit 0
+fi
+# Avoid modprobe as unprivileged login. Original /etc/rc.local loads joydev+evdev.
+if [ -x /usr/bin/xdpyinfo ]; then
+ /usr/bin/xdpyinfo -display "$DISPLAY" >/dev/null 2>&1 || {
+  echo "Controller disabled: X server unavailable" >>"$HOME/.x360os/controller.log"
+  exit 0
+ }
+fi
+/usr/bin/python2.6 -u /usr/share/x360os/controller.py >>"$HOME/.x360os/controller.log" 2>&1 &
+echo "Started controller mapping PID $! on DISPLAY=$DISPLAY" >>"$HOME/.x360os/session.log"
+exit 0

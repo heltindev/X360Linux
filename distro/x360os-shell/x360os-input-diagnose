@@ -1,0 +1,25 @@
+#!/bin/sh
+# Read-only diagnostic. Do not collect Wi-Fi credentials, accounts or sensitive files.
+out=/var/log/x360os-input-hardware.txt
+mkdir -p /var/log 2>/dev/null || :
+{
+ echo "X360OS Xbox 360 input diagnostic (no secrets)"
+ date
+ uname -a
+ echo "== Input devices =="
+ cat /proc/bus/input/devices 2>/dev/null || :
+ echo "== Nodes =="
+ ls -l /dev/input /dev/input/js* /dev/input/event* 2>/dev/null || :
+ echo "== USB =="
+ for d in /sys/bus/usb/devices/*; do
+  [ -r "$d/idVendor" ] || continue
+  printf '%s vendor=%s product=%s name=' "$d" "$(cat "$d/idVendor")" "$(cat "$d/idProduct")"
+  cat "$d/product" 2>/dev/null || echo '?'
+ done
+ echo "== Modules =="
+ grep -E '^(joydev|evdev|xpad) ' /proc/modules 2>/dev/null || :
+ echo "== Controller driver kernel config =="
+ grep -E 'CONFIG_JOYSTICK_XPAD=|CONFIG_INPUT_JOYDEV=|CONFIG_INPUT_EVDEV=' /boot/config-2.6.36.2-xenon 2>/dev/null || :
+ echo "USB controller detection is NOT wireless RF driver support."
+} >"$out" 2>&1
+exit 0

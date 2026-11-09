@@ -1,0 +1,8 @@
+[Desktop Entry]
+Encoding=UTF-8
+Type=Application
+Name=X360OS
+Comment=Xbox 360 PowerPC custom shell with Xenos hardware graphics
+Exec=/usr/bin/x360os-session
+TryExec=/usr/bin/x360os-session
+Icon=computer

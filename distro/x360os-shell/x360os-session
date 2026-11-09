@@ -1,0 +1,30 @@
+#!/bin/sh
+# X360OS 7.2: dedicated graphical session, no GNOME panel at normal startup.
+# GDM/Xorg/xenosfb from proven Xbox 360 legacy image are preserved.
+export PATH=/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin
+export XDG_CURRENT_DESKTOP=X360OS
+export DESKTOP_SESSION=x360os
+state="$HOME/.x360os"
+mkdir -p "$state" || :
+exec >>"$state/session.log" 2>&1
+echo "X360OS SESSION START: $(date) DISPLAY=$DISPLAY"
+# Never block the menu on XeLL DHCP, internal Wi-Fi or controller detection.
+if [ -z "$DISPLAY" ] || [ ! -x /usr/bin/python2.6 ] || [ ! -r /usr/share/x360os/home.py ]; then
+ echo "X360OS preflight failed: recovering to original GNOME."
+ exec /usr/bin/gnome-session
+fi
+if [ -x /usr/bin/metacity ]; then
+ /usr/bin/metacity --sm-disable >>"$state/window-manager.log" 2>&1 &
+ echo "Window manager: metacity"
+fi
+# Device logs are for USB-controller diagnosis, not required for display.
+if [ -x /usr/bin/x360os-input-start ]; then
+ /usr/bin/x360os-input-start || :
+fi
+# Keep the original recovery GNOME session installed, but never start it normally.
+# The main window is fullscreen and does not use raw framebuffer writes.
+echo "Starting X360OS custom home..."
+/usr/bin/python2.6 /usr/share/x360os/home.py >>"$state/home.log" 2>&1
+code=$?
+echo "X360OS home exited ($code): GNOME graphics recovery."
+exec /usr/bin/gnome-session

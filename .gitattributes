@@ -25,3 +25,10 @@ distro/x360os-native/*.c text eol=lf
 # X360OS recovery scripts must have Unix LF line endings
 distro/x360os-recovery/*.sh text eol=lf
 distro/x360os-recovery/x360os-safe-start text eol=lf
+
+# Native line endings for X360OS custom shell scripts and PPC programs
+distro/x360os-shell/*.sh text eol=lf
+distro/x360os-shell/x360os-session text eol=lf
+distro/x360os-shell/x360os-input-start text eol=lf
+distro/x360os-shell/x360os-input-diagnose text eol=lf
+distro/x360os-shell/*.py text eol=lf
