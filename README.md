@@ -70,3 +70,9 @@ The new [X360OS Native](distro/x360os-native/README.md) is a **fully custom, Ubu
 The verified Free60 Xenon kernel remains unchanged. **The kernel's pre-existing Casper first-stage loader is still used temporarily**, so the complete boot chain is not yet entirely independent of Ubuntu. A new custom initramfs and real Xbox console testing are required for full independence.
 
 The native-alpha image is built separately from the working v5/v6 distributions, does **not** reuse Ubuntu `casper-rw`, does not modify the Xbox NAND/HDD, and is not a stable release. Its USB-ready testing files are produced only by the local workstation build scripts under `distro/x360os-native`. This development does not use GitHub Actions.
+
+## X360OS 7.1 Recovery (after native framebuffer crash on Xbox 360)
+
+The real Xbox 360 test of the v7.0 native alpha produced a corrupt/checkerboard console display and boot errors. Do not use that image as a known-working replacement. The [7.1 recovery bridge](distro/x360os-recovery/README.md) preserves the **original v5 Xenon kernel, Xorg/xenosfb video driver and GDM/GNOME autologin**, then starts a custom X360OS fullscreen dashboard through GNOME autostart. If the menu fails, the original desktop remains available.
+
+**Transparency:** v7.1 is an Ubuntu 10.10 PPC32 **compatibility build**, not yet an Ubuntu-free system; we need that proven graphics/boot stage until a native replacement passes physical Xbox tests. The independently built Ubuntu-free native rootfs code remains on branch `v7-native-development` for continued engineering. The test image uses `nopersistent` and must be tested on a separate FAT32 USB without old Ubuntu `casper-rw` overlays. Neither XeLL/NAND nor internal HDD is modified. DHCP messages from XeLL may occur before Linux boots and are unrelated to Linux DHCP.

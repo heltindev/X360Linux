@@ -21,3 +21,7 @@ distro/x360os-native/*.sh text eol=lf
 distro/x360os-native/init text eol=lf
 distro/x360os-native/udhcpc-script text eol=lf
 distro/x360os-native/*.c text eol=lf
+
+# X360OS recovery scripts must have Unix LF line endings
+distro/x360os-recovery/*.sh text eol=lf
+distro/x360os-recovery/x360os-safe-start text eol=lf

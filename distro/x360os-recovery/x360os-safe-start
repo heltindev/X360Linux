@@ -1,0 +1,34 @@
+#!/bin/sh
+# X360OS recovery entry point. Never write directly to Xenon /dev/fb0.
+# GDM + original xenosfb Xorg server must already be running.
+[ -n "$DISPLAY" ] || exit 0
+[ -x /usr/bin/python2.6 ] || exit 0
+[ -r /usr/share/x360os/home.py ] || exit 0
+state="$HOME/.x360os"
+mkdir -p "$state" || exit 0
+# Multiple GNOME autostart mechanisms are safe; one X360OS per login.
+lock="$state/starting.lock"
+mkdir "$lock" 2>/dev/null || exit 0
+trap 'rmdir "$lock" 2>/dev/null || :' EXIT HUP INT TERM
+{
+ echo "X360OS RECOVERY 7.1 started. DISPLAY=$DISPLAY"
+ echo "Old Xenon kernel and original Xorg/xenosfb remain in use."
+ date
+} >>"$state/recovery.log" 2>&1
+# Do not make boot wait for DHCP, Wi-Fi or wireless pad.
+sleep 2
+/usr/bin/python2.6 -c "import gtk" >>"$state/recovery.log" 2>&1 || {
+ echo "PyGTK2 unavailable, leaving verified GNOME desktop usable" >>"$state/recovery.log"
+ exit 0
+}
+if [ -x /usr/bin/x360os-install-launcher ]; then
+ /usr/bin/x360os-install-launcher >/dev/null 2>&1 || :
+fi
+if [ -x /usr/bin/x360os-input-start ]; then
+ /usr/bin/x360os-input-start >/dev/null 2>&1 || :
+fi
+/usr/bin/python2.6 /usr/share/x360os/probe.py >"$state/hardware.txt" 2>&1 || :
+/usr/bin/python2.6 /usr/share/x360os/home.py >>"$state/home.log" 2>&1
+result=$?
+echo "X360OS menu returned $result; GNOME recovery desktop remains available" >>"$state/recovery.log"
+exit 0

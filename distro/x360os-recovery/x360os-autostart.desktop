@@ -1,0 +1,8 @@
+[Desktop Entry]
+Type=Application
+Name=X360OS Recovery 7.1
+Comment=Automatically start the Xbox 360 menu in the proven Xorg session
+Exec=/usr/bin/x360os-safe-start
+Terminal=false
+X-GNOME-Autostart-enabled=true
+NoDisplay=true
