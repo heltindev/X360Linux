@@ -86,3 +86,7 @@ See [verified status and new architecture](V04-STATUS-AND-MULTIDISTRO.md). Hardw
 - [ ] Add another compatible Xenon PowerPC Linux userland.
 
 [Detailed implementation](V041-EXT4-BOOT-EXPERIMENTAL.md).
+
+## Local USB boot repair verification
+
+The PowerPC initrd now accepts an explicit distro name and root marker; the XeLL menu passes these arguments. Plymouth callback ordering was fixed in the source and local ext4 Ubuntu image. These are PC-verified changes, not a confirmed successful boot on Corona Phison RGH. Wireless networking, XeLL offline DHCP, faster boot and Aurora default.xex remain open. [Details](V041-REPAIR-LOG.md).
