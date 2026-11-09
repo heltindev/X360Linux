@@ -66,6 +66,7 @@ Large USB images are not committed to Git. Build instructions are provided in
 
 ## Documentation
 
+[**X360OS roadmap and checklist**](docs/X360OS-ROADMAP.md) ·
 [Persistent USB design](docs/PERSISTENT-USB-LEGACY-KERNEL.md) ·
 [Hardware test log](docs/V041-CORONA-TEST-2026-11-08.md) ·
 [Credits and licenses](docs/CREDITS.md)
