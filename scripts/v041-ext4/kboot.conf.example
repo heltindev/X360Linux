@@ -1,14 +1,10 @@
 #KBOOTCONFIG
-; X360Linux - Diagnostic menu for Xbox 360 Corona Phison.
-; Waits 25 seconds, then automatically starts option 0 with visible logs.
-; 0 = diagnostic boot of the preinstalled Ubuntu system.
-; 1 = quiet boot attempt; previous hardware test resulted in a black screen.
-; 2 = verified legacy kernel; opens Ubuntu Live/installer, not the installed system.
+; X360Linux persistent USB system.
+; Automatically starts the verified legacy kernel with persistent storage.
+; The XeLL title may flash briefly because it is part of the console firmware.
 ; USB files only. Does not update NAND or modify the Xbox internal HDD.
 
-default=DIAGNOSTIC BOOT - SHOW ERRORS
-timeout=25
+default=X360LINUX PERSISTENT
+timeout=0
 
-DIAGNOSTIC BOOT - SHOW ERRORS="uda:/x360linux.elf rdinit=/init x360distro=ubuntu-x360 x360id=X360LINUX-UBUNTU-EXT4-V05 x360debug=1 console=tty0 console=ttyS0,115200n8 video=xenonfb panic=60 maxcpus=3 loglevel=7 noplymouth nosplash"
-NORMAL BOOT - QUIET="uda:/x360linux.elf rdinit=/init x360distro=ubuntu-x360 x360id=X360LINUX-UBUNTU-EXT4-V05 x360debug=0 console=tty0 console=ttyS0,115200n8 video=xenonfb panic=60 maxcpus=3 quiet splash loglevel=3"
-LEGACY UBUNTU LIVE - INSTALLER="uda:/vmlinux boot=casper console=tty0 console=ttyS0,115200n8 video=xenonfb panic=60 maxcpus=3"
+X360LINUX PERSISTENT="uda:/vmlinux boot=casper persistent console=tty0 console=ttyS0,115200n8 video=xenonfb panic=60 maxcpus=3 quiet splash"
