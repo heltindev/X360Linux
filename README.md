@@ -2,52 +2,70 @@
 
 **USB-first Linux development for Xbox 360 RGH/JTAG.**
 
-The goal is to boot a preinstalled Linux desktop from a USB drive, with no console-side installation. This is experimental: **a complete Linux desktop boot has not yet been verified on the Corona Phison Xbox 360**.
+The current hardware-tested path boots an Ubuntu 10.10 desktop directly
+from USB on an Xbox 360 Corona Phison. It uses the verified legacy Xenon
+kernel, a modified Casper SquashFS without the Ubiquity installer launcher,
+and a 3 GiB persistent `casper-rw` filesystem.
 
 ## Development checklist
 
-- [ ] **1. Show 0–100% progress from XeLL/XEX until the Linux desktop opens.** A PowerPC framebuffer prototype displays Linux boot milestones (10/30/50/75/90); it does not cover early XeLL startup or provide verified full-boot progress.
-- [ ] **2. Boot straight into a preinstalled Linux desktop without an installer.** The 3 GiB Ubuntu PowerPC ext4 image exists on the USB, but **real console boot is not yet working**. The older `legacy_v04` entry reaches Ubuntu Live/the installer, not this preinstalled root. A PC-verified, new embedded-initramfs `x360linux.elf` is awaiting Xbox testing.
-- [ ] **3. Enable internet without an Ethernet cable.** Identify a supported Wi-Fi adapter, driver and firmware; test Linux wireless networking. The XeLL DHCP error is a separate pre-Linux issue.
-- [ ] **4. Support multiple Linux distributions.** The experimental initramfs can select different distro folders, but Debian still needs a compatible Xenon kernel, initramfs and drivers. **Arbitrary x86/ARM ISOs cannot boot natively.**
-- [ ] **5. Reduce boot time.** Measure XeLL, USB, kernel, initramfs and desktop startup on the console before claiming any speed improvement.
-- [ ] **6. Replace visible boot messages with a graphical loading screen.** A green Linux framebuffer/Plymouth prototype exists, but XeLL and early kernel messages are not hidden. Keep a verbose recovery mode.
-- [x] **7. Keep distributions in separate folders.** The local package uses `distros/ubuntu-x360/`; adding Debian and verifying the XeLL boot menu are still pending.
-- [ ] **8. Boot Linux from `default.xex` in Aurora, as well as via XeLL/Eject.** Develop and test a Corona Phison-compatible XEX launcher that starts the Linux boot chain without a black screen. The old 2011 `default.xex` is known to fail on this console.
+- [ ] **1. Show 0–100% progress from XeLL/XEX until the Linux desktop opens.** Linux-side framebuffer prototypes exist; early XeLL progress is not controllable from `kboot.conf`.
+- [x] **2. Boot directly into a Linux desktop without presenting the installer.** Confirmed on Corona Phison on November 8, 2026 using the legacy kernel plus persistent Casper. The custom ext4/initramfs path still black-screens.
+- [ ] **3. Confirm persistence across a second physical reboot.** Create a desktop file, reboot, and verify it remains in the `casper-rw` overlay.
+- [ ] **4. Enable internet without an Ethernet cable.** Identify and test a supported Wi-Fi adapter, driver and firmware.
+- [ ] **5. Build the new X360Linux distribution.** Define its interface, included software, branding and update path.
+- [ ] **6. Reduce boot time.** Measure XeLL, kernel and desktop startup on the console.
+- [ ] **7. Replace visible Linux boot messages with a graphical loading screen.** Keep a verbose recovery mode.
+- [ ] **8. Boot from `default.xex` in Aurora.** The historical XEX still black-screens on this console.
 
-Checked boxes indicate **PC preparation or file layout only**, not successful Xbox 360 hardware testing.
-
-## Current USB development layout
+## Active USB layout
 
 ```text
 BOOT-DIRETO/
-├── kboot.conf                   # Beginner-friendly boot choices
-├── x360linux.elf                # Experimental embedded-initramfs kernel
-├── vmlinux                       # Legacy Xbox 360 PowerPC kernel
+├── kboot.conf                    # one automatic persistent entry, timeout=0
+├── vmlinux                      # verified legacy Xenon PowerPC kernel
+├── casper-rw                    # 3 GiB writable persistent ext3 overlay
 ├── casper/
-│   └── filesystem.squashfs       # Older compressed Ubuntu Live fallback
-└── distros/
-    └── ubuntu-x360/
-        ├── vmlinux
-        ├── initrd.gz
-        ├── ROOTFS.ID
-        └── rootfs.ext4           # Preinstalled, unpacked Ubuntu in ext4
+│   └── filesystem.squashfs      # Ubuntu desktop; Install launcher removed
+├── x360linux.elf                # preserved experimental kernel
+└── distros/ubuntu-x360/
+    ├── vmlinux
+    ├── initrd.gz
+    ├── ROOTFS.ID
+    └── rootfs.ext4              # preserved experimental preinstalled root
 ```
 
-**Real hardware test (November 8, 2026):** Eject boots XeLL and displays its menu. The old `legacy_v04` kernel **loads**, but displays the Ubuntu Live/installer. The earlier normal/debug entries failed. The updated `x360linux.elf` with embedded X360Linux initramfs has passed PC checks only; the preinstalled GUI has **not** been proven to boot. Aurora's old `default.xex` still black-screens on Corona Phison.
+## Confirmed hardware result
 
-**Automatic XeLL/Eject boot (PC-configured, hardware boot UNTESTED):**
-The USB kboot.conf now selects ABRIR O LINUX JA INSTALADO with timeout=0.
-No manual menu selection is required. XeLL might still briefly print its
-English menu, which cannot be removed from XeLL firmware using kboot.conf.
-The experimental preinstalled ext4 desktop is not yet proven to boot.
-The original 25-second diagnostic menu is backed up in the local work folder.
-No NAND flash or internal Xbox HDD changes were made.
+On November 8, 2026:
+
+- experimental entries 0 and 1 produced a black screen;
+- the original legacy entry 2 opened the Ubuntu desktop;
+- the visible **Install** launcher was removed in the rebuilt SquashFS;
+- the rebuilt system automatically opened the desktop on real hardware;
+- `stderr error 0` and `can't open /dev/sr0: No medium found` were visible
+  but did not prevent the desktop from opening.
+
+The `/dev/sr0` warning means the live system looked for optical media and
+found none. Persistence is prepared and PC-verified, but retention after a
+physical reboot still needs confirmation.
+
+## XeLL limitation
+
+The active `kboot.conf` uses one English entry and `timeout=0`. The words
+**XeLL Main Menu** may flash briefly because they are rendered by XeLL itself.
+Removing that firmware screen would require changing the installed XeLL/NAND,
+which this project intentionally does not do.
+
+## Release
+
+The current source/configuration release is
+[**v0.5.0-persistent-alpha**](RELEASE-v0.5.0-persistent-alpha.md).
+Large USB images are not committed to Git. Build instructions are provided in
+[scripts/casper-persistent/build-persistent.sh](scripts/casper-persistent/build-persistent.sh).
 
 ## Documentation
 
-[Development source](scripts/v041-ext4/README.md) · [Boot files and Debian compatibility](docs/BOOT-CASPER-VMLINUX-DEBIAN.md) · [Detailed technical status](docs/V041-EXT4-BOOT-EXPERIMENTAL.md) · [Latest published alpha](https://github.com/heltindev/X360Linux/releases/tag/v0.4.0-alpha) · [Credits and licenses](docs/CREDITS.md)
-
-**The local v0.4.1-dev files are experimental and are not included in the published v0.4.0-alpha ZIP.**
-
-[Boot repair status](docs/V041-REPAIR-LOG.md) · [Inicialização automática via Eject (PT-BR)](docs/COMO-INICIAR-PTBR.md) — iniciar sem selecionar opções e recuperar o menu caso trave.
+[Persistent USB design](docs/PERSISTENT-USB-LEGACY-KERNEL.md) ·
+[Hardware test log](docs/V041-CORONA-TEST-2026-11-08.md) ·
+[Credits and licenses](docs/CREDITS.md)
