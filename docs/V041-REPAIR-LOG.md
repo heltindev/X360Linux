@@ -32,3 +32,7 @@ Upstream references:
 - https://github.com/Free60Project/xell-reloaded/blob/master/source/lv2/config.h
 - https://github.com/Free60Project/xell-reloaded/blob/master/CHANGELOG
 - https://github.com/heltindev/X360Linux/issues/3
+
+## Actual Corona Phison hardware test — 2026-11-08
+
+Legacy v0.4 launches Ubuntu Live/the installer; normal and debug entries previously failed. The new experimental x360linux.elf embeds the custom initramfs into the original Xenon ELF data section to avoid requiring a separate initrd load. PC checks passed; physical boot of this candidate remains unproven. [Hardware report](V041-CORONA-TEST-2026-11-08.md).

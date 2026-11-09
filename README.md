@@ -7,7 +7,7 @@ The goal is to boot a preinstalled Linux desktop from a USB drive, with no conso
 ## Development checklist
 
 - [ ] **1. Show 0–100% progress from XeLL/XEX until the Linux desktop opens.** A PowerPC framebuffer prototype displays Linux boot milestones (10/30/50/75/90); it does not cover early XeLL startup or provide verified full-boot progress.
-- [x] **2. Prepare Linux already installed and unpacked.** A 3 GiB Ubuntu PowerPC root filesystem was built inside a writable ext4 image for the USB, without needing the Ubuntu installer. **Still to test:** real console boot, graphical desktop and persistence.
+- [ ] **2. Boot straight into a preinstalled Linux desktop without an installer.** The 3 GiB Ubuntu PowerPC ext4 image exists on the USB, but **real console boot is not yet working**. The older `legacy_v04` entry reaches Ubuntu Live/the installer, not this preinstalled root. A PC-verified, new embedded-initramfs `x360linux.elf` is awaiting Xbox testing.
 - [ ] **3. Enable internet without an Ethernet cable.** Identify a supported Wi-Fi adapter, driver and firmware; test Linux wireless networking. The XeLL DHCP error is a separate pre-Linux issue.
 - [ ] **4. Support multiple Linux distributions.** The experimental initramfs can select different distro folders, but Debian still needs a compatible Xenon kernel, initramfs and drivers. **Arbitrary x86/ARM ISOs cannot boot natively.**
 - [ ] **5. Reduce boot time.** Measure XeLL, USB, kernel, initramfs and desktop startup on the console before claiming any speed improvement.
@@ -21,7 +21,8 @@ Checked boxes indicate **PC preparation or file layout only**, not successful Xb
 
 ```text
 BOOT-DIRETO/
-├── kboot.conf
+├── kboot.conf                   # Beginner-friendly boot choices
+├── x360linux.elf                # Experimental embedded-initramfs kernel
 ├── vmlinux                       # Legacy Xbox 360 PowerPC kernel
 ├── casper/
 │   └── filesystem.squashfs       # Older compressed Ubuntu Live fallback
@@ -33,7 +34,9 @@ BOOT-DIRETO/
         └── rootfs.ext4           # Preinstalled, unpacked Ubuntu in ext4
 ```
 
-**Hardware status:** On Corona Phison RGH, the console opens XeLL with **Eject**; the old `default.xex` launched from Aurora gives a **black screen**. The new XeLL menu, ext4 boot, GUI, Wi-Fi and progress display still require real-console testing. Do not flash NAND or modify the internal Xbox HDD.
+**Real hardware test (November 8, 2026):** Eject boots XeLL and displays its menu. The old `legacy_v04` kernel **loads**, but displays the Ubuntu Live/installer. The earlier normal/debug entries failed. The updated `x360linux.elf` with embedded X360Linux initramfs has passed PC checks only; the preinstalled GUI has **not** been proven to boot. Aurora's old `default.xex` still black-screens on Corona Phison.
+
+**Simplified XeLL menu:** `0 = ABRIR O LINUX JA INSTALADO` (experimental), `1 = VER ERROS DO LINUX` (diagnostics), `2 = SISTEMA ANTIGO - ABRE INSTALADOR` (known older installer). The English 'XeLL Main Menu' heading comes from XeLL firmware and cannot be translated via `kboot.conf`. No NAND flash or internal HDD changes.
 
 ## Documentation
 
@@ -41,4 +44,4 @@ BOOT-DIRETO/
 
 **The local v0.4.1-dev files are experimental and are not included in the published v0.4.0-alpha ZIP.**
 
-[Boot repair status](docs/V041-REPAIR-LOG.md) — verified code changes and outstanding hardware tests.
+[Boot repair status](docs/V041-REPAIR-LOG.md) · [Como iniciar no Corona Phison (PT-BR)](docs/COMO-INICIAR-PTBR.md) — menu simples, teste de erros e arquivos de recuperação.

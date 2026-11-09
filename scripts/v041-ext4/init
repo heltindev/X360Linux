@@ -1,6 +1,7 @@
 #!/bin/sh
 # X360Linux PowerPC early init - USB-only distro selection (development test).
-# Intended for XeLL external initrd. Never flashes NAND or probes internal HDD.
+# Designed for either embedded Xenon initramfs or XeLL external initrd.
+# Never flashes NAND or probes internal Xbox HDD.
 PATH=/bin:/sbin:/usr/bin
 export PATH
 BB=/bin/busybox
@@ -10,6 +11,11 @@ DISTRO=ubuntu-x360
 MARKER=X360LINUX-UBUNTU-EXT4-V05
 DEBUG=0
 READONLY=0
+
+# /proc must be mounted BEFORE reading the kernel's command line.
+$BB mkdir -p /proc /sys
+$BB mount -t proc proc /proc 2>/dev/null || :
+$BB mount -t sysfs sysfs /sys 2>/dev/null || :
 
 # Values are supplied by the verified kboot.conf, not from the network.
 for arg in $($BB cat /proc/cmdline 2>/dev/null); do
@@ -29,10 +35,10 @@ case "$MARKER" in
 esac
 REL=distros/$DISTRO
 
-$BB mkdir -p /proc /sys /dev /run "$USB" "$ROOT"
-$BB mount -t proc proc /proc 2>/dev/null || :
-$BB mount -t sysfs sysfs /sys 2>/dev/null || :
+$BB mkdir -p /dev /run "$USB" "$ROOT"
 $BB mount -t devtmpfs devtmpfs /dev 2>/dev/null || :
+# Watch late USB insertion even when the old kernel lacks devtmpfs autoload.
+echo /bin/mdev > /proc/sys/kernel/hotplug 2>/dev/null || :
 $BB mdev -s 2>/dev/null || :
 $BB mkdir -p /dev/pts /run/x360linux
 $BB mount -t devpts devpts /dev/pts 2>/dev/null || :

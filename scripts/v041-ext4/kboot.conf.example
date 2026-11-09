@@ -1,16 +1,14 @@
 #KBOOTCONFIG
-; X360Linux v0.4.1-dev — experimental Corona Phison Eject XeLL menu.
-; Requires a XeLL version supporting kboot.conf, USB paths and external initrd.
-; default.xex/XellLaunch from 2011 black-screens on this Corona.
-; No flash of Xbox NAND/HDD occurs; only FAT32 USB is accessed.
-;
-; Normal mode: boot quiet with Ubuntu 10.10 ext4 preinstalled, Plymouth theme.
-; Debug mode: show kernel and early userspace errors on screen.
-; Legacy: use original vmlinux + SquashFS, does not require an XEX.
+; X360Linux - Menu simples para XeLL no Xbox 360 Corona Phison RGH.
+; O titulo 'XeLL Main Menu' vem do proprio XeLL e nao pode ser editado aqui.
+; 0 = tenta iniciar o Ubuntu ja instalado, sem instalador.
+; 1 = mesma tentativa, com mensagens para descobrir erros.
+; 2 = kernel antigo confirmado; ele entra no Ubuntu Live/instalador.
+; Apenas arquivos de USB: nao atualiza a NAND nem o HD interno.
 
-default=x360linux
-timeout=3
+default=ABRIR O LINUX JA INSTALADO
+timeout=25
 
-x360linux="uda:/distros/ubuntu-x360/vmlinux initrd=uda:/distros/ubuntu-x360/initrd.gz x360distro=ubuntu-x360 x360id=X360LINUX-UBUNTU-EXT4-V05 x360debug=0 console=tty0 console=ttyS0,115200n8 video=xenonfb panic=60 maxcpus=3 quiet splash loglevel=3"
-x360linux_debug="uda:/distros/ubuntu-x360/vmlinux initrd=uda:/distros/ubuntu-x360/initrd.gz x360distro=ubuntu-x360 x360id=X360LINUX-UBUNTU-EXT4-V05 x360debug=1 console=tty0 console=ttyS0,115200n8 video=xenonfb panic=60 maxcpus=3 loglevel=7 noplymouth nosplash"
-legacy_v04="uda:/vmlinux boot=casper console=tty0 console=ttyS0,115200n8 video=xenonfb panic=60 maxcpus=3"
+ABRIR O LINUX JA INSTALADO="uda:/x360linux.elf rdinit=/init x360distro=ubuntu-x360 x360id=X360LINUX-UBUNTU-EXT4-V05 x360debug=0 console=tty0 console=ttyS0,115200n8 video=xenonfb panic=60 maxcpus=3 quiet splash loglevel=3"
+VER ERROS DO LINUX="uda:/x360linux.elf rdinit=/init x360distro=ubuntu-x360 x360id=X360LINUX-UBUNTU-EXT4-V05 x360debug=1 console=tty0 console=ttyS0,115200n8 video=xenonfb panic=60 maxcpus=3 loglevel=7 noplymouth nosplash"
+SISTEMA ANTIGO - ABRE INSTALADOR="uda:/vmlinux boot=casper console=tty0 console=ttyS0,115200n8 video=xenonfb panic=60 maxcpus=3"

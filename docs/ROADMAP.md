@@ -90,3 +90,13 @@ See [verified status and new architecture](V04-STATUS-AND-MULTIDISTRO.md). Hardw
 ## Local USB boot repair verification
 
 The PowerPC initrd now accepts an explicit distro name and root marker; the XeLL menu passes these arguments. Plymouth callback ordering was fixed in the source and local ext4 Ubuntu image. These are PC-verified changes, not a confirmed successful boot on Corona Phison RGH. Wireless networking, XeLL offline DHCP, faster boot and Aurora default.xex remain open. [Details](V041-REPAIR-LOG.md).
+
+## Corona Phison boot test 2026-11-08
+
+- [x] Physical Eject XeLL menu and legacy Ubuntu Live/installer boot confirmed.
+- [x] Experimental embedded-initramfs PowerPC kernel and preinstalled ext4 image prepared on PC and USB.
+- [ ] Verify that the new kernel reaches the preinstalled Ubuntu desktop on Corona Phison.
+- [ ] Verify persistence, input drivers, startup speed and Wi-Fi.
+- [ ] Fix Aurora default.xex black screen.
+
+[Details](V041-CORONA-TEST-2026-11-08.md).
