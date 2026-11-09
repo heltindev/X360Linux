@@ -27,3 +27,7 @@ distro/x360os-v8/*.sh text eol=lf
 distro/x360os-v8/init text eol=lf
 distro/x360os-v8/*.c text eol=lf
 distro/x360os-v8/*.py text eol=lf
+
+# X360OS v9 source, embedded rootfs kernel patcher and bootstrap tools
+distro/x360os-v9/*.py text eol=lf
+distro/x360os-v9/*.sh text eol=lf
