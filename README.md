@@ -36,7 +36,13 @@ BOOT-DIRETO/
 
 **Real hardware test (November 8, 2026):** Eject boots XeLL and displays its menu. The old `legacy_v04` kernel **loads**, but displays the Ubuntu Live/installer. The earlier normal/debug entries failed. The updated `x360linux.elf` with embedded X360Linux initramfs has passed PC checks only; the preinstalled GUI has **not** been proven to boot. Aurora's old `default.xex` still black-screens on Corona Phison.
 
-**Simplified XeLL menu:** `0 = ABRIR O LINUX JA INSTALADO` (experimental), `1 = VER ERROS DO LINUX` (diagnostics), `2 = SISTEMA ANTIGO - ABRE INSTALADOR` (known older installer). The English 'XeLL Main Menu' heading comes from XeLL firmware and cannot be translated via `kboot.conf`. No NAND flash or internal HDD changes.
+**Automatic XeLL/Eject boot (PC-configured, hardware boot UNTESTED):**
+The USB kboot.conf now selects ABRIR O LINUX JA INSTALADO with timeout=0.
+No manual menu selection is required. XeLL might still briefly print its
+English menu, which cannot be removed from XeLL firmware using kboot.conf.
+The experimental preinstalled ext4 desktop is not yet proven to boot.
+The original 25-second diagnostic menu is backed up in the local work folder.
+No NAND flash or internal Xbox HDD changes were made.
 
 ## Documentation
 
@@ -44,4 +50,4 @@ BOOT-DIRETO/
 
 **The local v0.4.1-dev files are experimental and are not included in the published v0.4.0-alpha ZIP.**
 
-[Boot repair status](docs/V041-REPAIR-LOG.md) · [Como iniciar no Corona Phison (PT-BR)](docs/COMO-INICIAR-PTBR.md) — menu simples, teste de erros e arquivos de recuperação.
+[Boot repair status](docs/V041-REPAIR-LOG.md) · [Inicialização automática via Eject (PT-BR)](docs/COMO-INICIAR-PTBR.md) — iniciar sem selecionar opções e recuperar o menu caso trave.

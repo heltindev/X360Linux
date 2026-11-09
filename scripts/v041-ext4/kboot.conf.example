@@ -1,13 +1,13 @@
 #KBOOTCONFIG
-; X360Linux - Menu simples para XeLL no Xbox 360 Corona Phison RGH.
-; O titulo 'XeLL Main Menu' vem do proprio XeLL e nao pode ser editado aqui.
+; X360Linux - Auto-boot experimental via XeLL Eject para Ubuntu ext4.
+; XeLL ainda pode imprimir o menu por instantes; tempo de espera = 0.
 ; 0 = tenta iniciar o Ubuntu ja instalado, sem instalador.
 ; 1 = mesma tentativa, com mensagens para descobrir erros.
 ; 2 = kernel antigo confirmado; ele entra no Ubuntu Live/instalador.
 ; Apenas arquivos de USB: nao atualiza a NAND nem o HD interno.
 
 default=ABRIR O LINUX JA INSTALADO
-timeout=25
+timeout=0
 
 ABRIR O LINUX JA INSTALADO="uda:/x360linux.elf rdinit=/init x360distro=ubuntu-x360 x360id=X360LINUX-UBUNTU-EXT4-V05 x360debug=0 console=tty0 console=ttyS0,115200n8 video=xenonfb panic=60 maxcpus=3 quiet splash loglevel=3"
 VER ERROS DO LINUX="uda:/x360linux.elf rdinit=/init x360distro=ubuntu-x360 x360id=X360LINUX-UBUNTU-EXT4-V05 x360debug=1 console=tty0 console=ttyS0,115200n8 video=xenonfb panic=60 maxcpus=3 loglevel=7 noplymouth nosplash"
