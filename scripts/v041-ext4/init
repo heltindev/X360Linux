@@ -1,21 +1,40 @@
 #!/bin/sh
-# X360Linux v0.5-dev - Xenon PowerPC32 USB ext4 loop boot
-# Needs XeLL support for EXTERNAL initrd and kernel arguments.
-# Experimental only: NEVER writes Xbox NAND or internal HDD.
+# X360Linux PowerPC early init - USB-only distro selection (development test).
+# Intended for XeLL external initrd. Never flashes NAND or probes internal HDD.
 PATH=/bin:/sbin:/usr/bin
 export PATH
 BB=/bin/busybox
 USB=/bootusb
 ROOT=/newroot
-IDENTITY=X360LINUX-UBUNTU-EXT4-V05
-REL=distros/ubuntu-x360
+DISTRO=ubuntu-x360
+MARKER=X360LINUX-UBUNTU-EXT4-V05
+DEBUG=0
+READONLY=0
 
-$BB mount -t proc proc /proc 2>/dev/null
-$BB mount -t sysfs sysfs /sys 2>/dev/null
+# Values are supplied by the verified kboot.conf, not from the network.
+for arg in $($BB cat /proc/cmdline 2>/dev/null); do
+    case "$arg" in
+        x360distro=*) DISTRO=${arg#x360distro=} ;;
+        x360id=*) MARKER=${arg#x360id=} ;;
+        x360debug=1|debug) DEBUG=1 ;;
+        x360ro=1) READONLY=1 ;;
+    esac
+done
+# Strictly one directory component to avoid accessing unexpected locations.
+case "$DISTRO" in
+    ""|*/*|*..*|*[!A-Za-z0-9_-]*) DISTRO=INVALID ;;
+esac
+case "$MARKER" in
+    ""|*/*|*..*|*[!A-Za-z0-9_-]*) MARKER=INVALID ;;
+esac
+REL=distros/$DISTRO
+
+$BB mkdir -p /proc /sys /dev /run "$USB" "$ROOT"
+$BB mount -t proc proc /proc 2>/dev/null || :
+$BB mount -t sysfs sysfs /sys 2>/dev/null || :
 $BB mount -t devtmpfs devtmpfs /dev 2>/dev/null || :
-echo /bin/mdev > /proc/sys/kernel/hotplug 2>/dev/null || :
 $BB mdev -s 2>/dev/null || :
-$BB mkdir -p /dev/pts /run "$USB" "$ROOT"
+$BB mkdir -p /dev/pts /run/x360linux
 $BB mount -t devpts devpts /dev/pts 2>/dev/null || :
 $BB mount -t tmpfs -o size=12m,mode=0755 tmpfs /run 2>/dev/null || :
 $BB mkdir -p /run/x360linux
@@ -23,43 +42,46 @@ LOG=/run/x360linux/boot.log
 $BB touch "$LOG"
 exec 3>>"$LOG"
 
-DEBUG=0
-for arg in $($BB cat /proc/cmdline 2>/dev/null); do
-    case "$arg" in x360debug=1|debug) DEBUG=1;; esac
-done
 report() {
-    echo "X360Linux: $*" >&3
+    uptime=$($BB cat /proc/uptime 2>/dev/null)
+    echo "x360linux uptime=${uptime%% *} $*" >&3
     if [ "$DEBUG" = 1 ]; then echo "X360Linux: $*" >/dev/console; fi
+}
+progress() {
+    if [ "$DEBUG" = 0 ]; then
+        /bin/fbprogress "$1" 2>/dev/null || :
+    fi
 }
 fail() {
     echo "BOOT FAILURE: $*" >&3
-    echo "X360Linux: erro - $*" >/dev/console
-    if [ -f "$USB/$REL/ROOTFS.ID" ]; then
-        $BB cp "$LOG" "$USB/BOOT-DIAGNOSTICS.txt" 2>/dev/null || :
+    echo "X360Linux: $*" >/dev/console
+    if [ -f "$USB/$REL/ROOTFS.ID" ] && [ -w "$USB" ]; then
+        $BB cp "$LOG" "$USB/X360LINUX-BOOT-ERROR.txt" 2>/dev/null || :
     fi
-    echo "X360Linux: modo de recuperacao. NAND nao modificada." >/dev/console
+    echo "X360Linux: console de recuperacao / modo debug disponivel." >/dev/console
     exec /bin/sh </dev/console >/dev/console 2>&1
 }
+[ "$DISTRO" != INVALID ] && [ "$MARKER" != INVALID ] || fail "Invalid x360distro or x360id argument."
+report "stage=10 starting USB discovery for $DISTRO"
+progress 10
 
-report "stage=10 kernel launched; waiting for USB storage"
-if [ "$DEBUG" = 0 ]; then /bin/fbprogress 10 2>/dev/null || :; fi
 FOUND=
 ATTEMPT=0
-while [ "$ATTEMPT" -lt 14 ] && [ -z "$FOUND" ]; do
+while [ "$ATTEMPT" -lt 16 ] && [ -z "$FOUND" ]; do
     $BB mdev -s 2>/dev/null || :
     for link in /sys/class/block/*; do
         [ -e "$link" ] || continue
         physical=$($BB readlink -f "$link" 2>/dev/null) || continue
-        # Probe USB storage only; not SATA or Xbox internal HDD.
+        # USB topology only. Never scan or mount internal Xbox SATA disk.
         case "$physical" in */usb[0-9]*/*) ;; *) continue ;; esac
         node=/dev/$($BB basename "$link")
         [ -b "$node" ] || continue
         $BB mount -t vfat -o ro,umask=0077 "$node" "$USB" 2>/dev/null || continue
-        if [ "$($BB cat "$USB/$REL/ROOTFS.ID" 2>/dev/null)" = "$IDENTITY" ] &&
+        if [ "$($BB cat "$USB/$REL/ROOTFS.ID" 2>/dev/null)" = "$MARKER" ] &&
            [ -f "$USB/$REL/rootfs.ext4" ]; then
             FOUND=$node
-            report "stage=30 USB FAT32 found at $node"
-            if [ "$DEBUG" = 0 ]; then /bin/fbprogress 30 2>/dev/null || :; fi
+            report "stage=30 USB found ($node), distro $DISTRO"
+            progress 30
             break
         fi
         $BB umount "$USB" 2>/dev/null || :
@@ -67,29 +89,40 @@ while [ "$ATTEMPT" -lt 14 ] && [ -z "$FOUND" ]; do
     [ -n "$FOUND" ] || $BB sleep 1
     ATTEMPT=$((ATTEMPT + 1))
 done
-[ -n "$FOUND" ] || fail "USB FAT32 rootfs marker not found after 14s."
-$BB mount -o remount,rw "$USB" 2>/dev/null || fail "USB FAT32 could not be remounted writable."
-report "stage=50 mounting uncompressed Linux root image"
-if [ "$DEBUG" = 0 ]; then /bin/fbprogress 50 2>/dev/null || :; fi
+[ -n "$FOUND" ] || fail "USB distro $DISTRO not found (or wrong ROOTFS.ID) after 16 scans."
+
+if [ "$READONLY" = 0 ]; then
+    $BB mount -o remount,rw "$USB" 2>/dev/null ||
+        fail "Cannot remount FAT32 USB writable; select x360ro=1 for recovery."
+fi
+report "stage=50 mounting preinstalled ext4 image"
+progress 50
 [ -b /dev/loop0 ] || $BB mknod /dev/loop0 b 7 0 2>/dev/null || :
-$BB mount -t ext4 -o loop,rw,noatime "$USB/$REL/rootfs.ext4" "$ROOT" 2>/dev/null || {
-    $BB losetup /dev/loop0 "$USB/$REL/rootfs.ext4" 2>/dev/null || :
+[ -b /dev/loop0 ] || fail "No /dev/loop0 (kernel loop support needed)."
+if [ "$READONLY" = 1 ]; then
+    # BusyBox v1.15.3 losetup does not support -r; mount -o loop,ro owns setup.
+    $BB mount -t ext4 -o loop,ro,noload "$USB/$REL/rootfs.ext4" "$ROOT" 2>/dev/null ||
+        fail "Read-only ext4 mount failed (check kernel/filesystem compatibility)."
+else
+    $BB losetup /dev/loop0 "$USB/$REL/rootfs.ext4" 2>/dev/null ||
+        fail "Cannot attach ext4 file to loop0 (kernel USB/loop support needed)."
     $BB mount -t ext4 -o rw,noatime /dev/loop0 "$ROOT" 2>/dev/null ||
-        fail "ext4 loop mount failed: check Xenon kernel and filesystem features."
-}
-[ -x "$ROOT/sbin/init" ] || fail "Preinstalled PowerPC Linux /sbin/init is missing."
-[ -x "$ROOT/usr/bin/gnome-session" ] || fail "GNOME desktop is missing."
-report "stage=75 Linux root mounted; preparing system services"
-if [ "$DEBUG" = 0 ]; then /bin/fbprogress 75 2>/dev/null || :; fi
+        fail "Writable ext4 mount failed (check kernel/filesystem compatibility)."
+fi
+[ -x "$ROOT/sbin/init" ] || fail "Distro /sbin/init missing."
+[ -x "$ROOT/bin/sh" ] || fail "Distro /bin/sh missing."
+report "stage=75 rootfs mounted; preparing distro handoff"
+progress 75
 $BB mkdir -p "$ROOT/bootusb" "$ROOT/dev" "$ROOT/proc" "$ROOT/sys" "$ROOT/run"
-$BB mount -o bind "$USB" "$ROOT/bootusb" || fail "Cannot bind USB mount."
-$BB mount -o bind /proc "$ROOT/proc" || fail "Cannot bind /proc."
-$BB mount -o bind /sys "$ROOT/sys" || fail "Cannot bind /sys."
-$BB mount -o rbind /dev "$ROOT/dev" || fail "Cannot bind /dev."
-$BB mount -t tmpfs -o mode=0755,size=32m tmpfs "$ROOT/run" || :
-$BB mkdir -p "$ROOT/var/log/x360linux"
-$BB cp "$LOG" "$ROOT/var/log/x360linux/boot.log" 2>/dev/null || :
-report "stage=90 handing off to Ubuntu/GDM; 100% only after desktop starts."
-if [ "$DEBUG" = 0 ]; then /bin/fbprogress 90 2>/dev/null || :; fi
+$BB mount -o bind "$USB" "$ROOT/bootusb" || fail "Could not bind boot USB."
+$BB mount -o bind /proc "$ROOT/proc" || fail "Could not bind proc."
+$BB mount -o bind /sys "$ROOT/sys" || fail "Could not bind sys."
+$BB mount -o rbind /dev "$ROOT/dev" || fail "Could not bind dev."
+if [ "$READONLY" = 0 ]; then
+    $BB mkdir -p "$ROOT/var/log/x360linux"
+    $BB cp "$LOG" "$ROOT/var/log/x360linux/boot.log" 2>/dev/null || :
+fi
+report "stage=90 entering distro init. Desktop success NOT yet verified."
+progress 90
 exec /bin/run-init "$ROOT" /sbin/init
-fail "switch_root failed."
+fail "run-init could not start distro."
