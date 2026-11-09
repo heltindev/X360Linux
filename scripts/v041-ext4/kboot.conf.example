@@ -11,6 +11,6 @@
 default=x360linux
 timeout=3
 
-x360linux="uda:/distros/ubuntu-x360/vmlinux initrd=uda:/distros/ubuntu-x360/initrd.gz x360debug=0 console=tty0 console=ttyS0,115200n8 video=xenonfb panic=60 maxcpus=3 quiet splash loglevel=3"
-x360linux_debug="uda:/distros/ubuntu-x360/vmlinux initrd=uda:/distros/ubuntu-x360/initrd.gz x360debug=1 console=tty0 console=ttyS0,115200n8 video=xenonfb panic=60 maxcpus=3 loglevel=7 noplymouth nosplash"
+x360linux="uda:/distros/ubuntu-x360/vmlinux initrd=uda:/distros/ubuntu-x360/initrd.gz x360distro=ubuntu-x360 x360id=X360LINUX-UBUNTU-EXT4-V05 x360debug=0 console=tty0 console=ttyS0,115200n8 video=xenonfb panic=60 maxcpus=3 quiet splash loglevel=3"
+x360linux_debug="uda:/distros/ubuntu-x360/vmlinux initrd=uda:/distros/ubuntu-x360/initrd.gz x360distro=ubuntu-x360 x360id=X360LINUX-UBUNTU-EXT4-V05 x360debug=1 console=tty0 console=ttyS0,115200n8 video=xenonfb panic=60 maxcpus=3 loglevel=7 noplymouth nosplash"
 legacy_v04="uda:/vmlinux boot=casper console=tty0 console=ttyS0,115200n8 video=xenonfb panic=60 maxcpus=3"
