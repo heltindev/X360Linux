@@ -1,0 +1,10 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=X360OS
+Comment=Return to X360OS TV home
+Exec=/usr/bin/x360os-toggle
+Icon=computer
+Terminal=false
+Categories=Utility;System;
+StartupNotify=false

@@ -3,6 +3,7 @@
 [ -n "$DISPLAY" ] || exit 0
 [ -x /usr/bin/python2.6 ] || exit 0
 if [ -x /usr/bin/pgrep ] && /usr/bin/pgrep -f '^/usr/bin/python2.6 /usr/share/x360os/home.py$' >/dev/null 2>&1; then exit 0; fi
+/usr/bin/x360os-install-launcher
 mkdir -p "$HOME/.x360os" 2>/dev/null || :
 [ -x /usr/bin/x360os-input-start ] && /usr/bin/x360os-input-start
 /usr/bin/python2.6 /usr/share/x360os/probe.py > "$HOME/.x360os/hardware.txt" 2>&1 || :

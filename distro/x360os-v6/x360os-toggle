@@ -1,0 +1,20 @@
+#!/bin/sh
+# Bring back the running X360OS from GNOME; otherwise start it.
+[ -n "$DISPLAY" ] || exit 1
+state="$HOME/.x360os"
+pidfile="$state/home.pid"
+if [ -r "$pidfile" ]; then
+    pid=$(cat "$pidfile" 2>/dev/null)
+    case "$pid" in
+      ''|*[!0-9]*) ;;
+      *)
+        if [ -r "/proc/$pid/cmdline" ] && \
+           tr '\000' ' ' < "/proc/$pid/cmdline" | \
+           grep -Fq '/usr/share/x360os/home.py'; then
+          kill -USR1 "$pid" && exit 0
+        fi
+        ;;
+    esac
+fi
+/usr/bin/x360os-start-gnome >/dev/null 2>&1 &
+exit 0

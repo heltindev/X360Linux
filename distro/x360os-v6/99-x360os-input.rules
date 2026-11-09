@@ -1,0 +1,5 @@
+# The existing legacy Xenon kernel supplies xpad built-in and joydev/evdev as modules.
+# Allow the live-user session to read gamepad events without running as root.
+SUBSYSTEM=="input", KERNEL=="js[0-9]*", MODE="0666"
+SUBSYSTEM=="input", KERNEL=="event[0-9]*", ATTRS{name}=="*Xbox*", MODE="0666"
+SUBSYSTEM=="input", KERNEL=="event[0-9]*", ATTRS{name}=="*X-Box*", MODE="0666"

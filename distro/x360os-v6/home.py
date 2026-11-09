@@ -6,6 +6,8 @@ import os
 import subprocess
 import gtk
 import gobject
+import signal
+import atexit
 
 BG = '#0B141D'
 CARD = '#1B2D36'
@@ -122,10 +124,11 @@ class Home(object):
                          xpadding=9, ypadding=9)
             self.buttons.append(btn)
 
-        footer = self.label('D-pad: navigate    A: open    X: mouse mode    F9: keyboard    F10: classic desktop', 12, MUTED)
+        footer = self.label('D-pad: navigate    A: open    Back: Home    X: mouse    F10: desktop', 12, MUTED)
         outer.pack_end(footer, False, False, 10)
         self.win.show_all()
         self.buttons[0].grab_focus()
+        self.install_return_signal()
         self.refresh_status()
         gobject.timeout_add(5000, self.refresh_status)
 
@@ -234,9 +237,51 @@ class Home(object):
             entry.insert_text(text, pos)
             entry.set_position(pos + len(text))
 
+    def install_return_signal(self):
+        self.state_dir = os.path.join(os.path.expanduser('~'), '.x360os')
+        try:
+            if not os.path.isdir(self.state_dir):
+                os.makedirs(self.state_dir)
+            self.pidfile = os.path.join(self.state_dir, 'home.pid')
+            open(self.pidfile, 'w').write(str(os.getpid()) + '\n')
+            atexit.register(self.cleanup_pidfile)
+        except (IOError, OSError):
+            self.pidfile = None
+        signal.signal(signal.SIGUSR1, self.request_show)
+
+    def cleanup_pidfile(self):
+        try:
+            if self.pidfile and open(self.pidfile).read().strip() == str(os.getpid()):
+                os.unlink(self.pidfile)
+        except (IOError, OSError):
+            pass
+
+    def request_show(self, signum, frame):
+        gobject.idle_add(self.show_home)
+
+    def show_home(self):
+        self.win.show_all()
+        self.win.fullscreen()
+        self.win.present()
+        self.buttons[0].grab_focus()
+        return False
+
     def classic_desktop(self):
-        self.notify('Recovery mode', 'Opening the classic Ubuntu desktop.')
-        gtk.main_quit()
+        # Keep X360OS alive: the desktop launcher or gamepad Back will restore it.
+        self.win.hide()
+        running = False
+        try:
+            with open(os.devnull, 'w') as devnull:
+                running = subprocess.call(['pgrep', '-x', 'gnome-session'],
+                                          stdout=devnull, stderr=devnull) == 0
+        except OSError:
+            pass
+        if not running and find_executable('gnome-session'):
+            try:
+                subprocess.Popen(['gnome-session'], close_fds=True)
+            except OSError as err:
+                self.show_home()
+                self.notify('Desktop could not start', str(err))
 
     def on_key(self, widget, event):
         if event.keyval == gtk.keysyms.F10:

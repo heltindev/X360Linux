@@ -4,6 +4,10 @@
 
 X360OS v6 reuses the working 32-bit big-endian PowerPC Ubuntu 10.10 Casper system and the original Xenon Linux 2.6.36.2 kernel. It does **not** install Steam or replace XeLL.
 
+## v6.0.2 boot/input and desktop-return fix
+
+See [v6.0.2-TESTING.md](v6.0.2-TESTING.md). The verified old kernel **already contains** `xpad` and Xbox wired Ethernet. `joydev` and `evdev` were modular, and user-session `modprobe` was failing; the new image now loads them at boot as root. The Ubuntu desktop receives a **X360OS** icon to return to the TV home without rebooting; the controller Back/Guide button will also return if Linux detects a gamepad. The kernel was built without any WLAN support, so the internal Marvell USB Wi-Fi cannot be enabled by adding random driver binaries.
+
 ## v6.0.1 boot/input fix
 
 A real console test of the initial v6 loaded the old Ubuntu desktop rather than X360OS. This revision includes a GNOME XDG autostart fallback in addition to GDM's custom-session preference. The fallback opens X360OS on top of GNOME if GDM ignores the custom session, and writes startup/controller/hardware logs under /home/ubuntu/.x360os/. Its appearance and RAM consumption still need physical testing.

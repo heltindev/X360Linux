@@ -11,15 +11,25 @@ ast.parse(home)
 ast.parse(controller)
 assert 'class Home' in home and 'browser_prompt' in home
 assert 'network_info' in home and 'gtk.main()' in home
+assert 'SIGUSR1' in home and 'def show_home' in home
+assert 'self.win.hide()' in home and 'gtk.main_quit()' not in home
+assert "subprocess.Popen(['gnome-session']" in home
 assert 'XTestFakeRelativeMotionEvent' in controller
 assert 'decode_event' in controller and 'pointer_step' in controller
 assert 'x360os.desktop' in (here/'build-local.sh').read_text()
 assert 'x360os-start-gnome' in (here/'build-local.sh').read_text()
+assert 'x360os-toggle' in (here/'build-local.sh').read_text()
+assert 'etc/modules' in (here/'build-local.sh').read_text()
+assert 'rc.local' in (here/'build-local.sh').read_text()
+assert 'X360OS.desktop' in (here/'x360os-install-launcher').read_text()
+assert 'Exec=/usr/bin/x360os-toggle' in (here/'x360os-home.desktop').read_text()
+assert 'joydev' in (here/'99-x360os-input.rules').read_text() or 'KERNEL' in (here/'99-x360os-input.rules').read_text()
 assert 'etc/xdg/autostart/x360os.desktop' in (here/'build-local.sh').read_text()
 assert 'x360os-start-gnome' in (here/'x360os-autostart.desktop').read_text()
 assert 'gnome-session' in (here/'x360os-session').read_text()
 assert 'probe.py' in (here/'x360os-session').read_text()
 assert 'candidate_event_device' in controller
+assert 'number in (6, 8)' in controller
 assert 'handle_evdev' in controller
 assert 'XBOX_360_INTERNAL_WIFI_DETECTED' in (here/'probe.py').read_text()
 assert '045e' in (here/'probe.py').read_text() and '0765' in (here/'probe.py').read_text()
@@ -53,4 +63,4 @@ namespace['handle_evdev'](pad, struct.pack(endian + 'IIHHi', 1, 0, 1, 304, 1), 0
 assert pad.actions == [('button', 0, True)], pad.actions
 namespace['handle_evdev'](pad, struct.pack(endian + 'IIHHi', 1, 0, 3, 16, -1), 0)
 assert pad.axes[6] == -32767
-print('PASS: Python syntax, joystick and evdev mapping, startup fallback, network probe and build paths')
+print('PASS: syntax, input mapping, return from GNOME, root module autoload and build paths')

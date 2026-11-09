@@ -1,0 +1,11 @@
+#!/bin/sh
+# The live-casper Ubuntu user may already exist in persistence.
+# Reinstalling the desktop shortcut is idempotent and does not require root.
+if [ ! -d "$HOME/Desktop" ]; then
+  mkdir -p "$HOME/Desktop" 2>/dev/null || :
+fi
+if [ -d "$HOME/Desktop" ] && [ -r /usr/share/applications/x360os-home.desktop ]; then
+  cp /usr/share/applications/x360os-home.desktop "$HOME/Desktop/X360OS.desktop" 2>/dev/null || :
+  chmod 0755 "$HOME/Desktop/X360OS.desktop" 2>/dev/null || :
+fi
+exit 0

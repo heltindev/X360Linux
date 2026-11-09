@@ -38,6 +38,28 @@ print('XBOX_360_INTERNAL_WIFI_DETECTED:', built_in)
 print('Known internal Wi-Fi chip for Xbox 360 Slim: Marvell 88W8786U (USB 045e:0765)')
 print('Legacy Xenon Linux 2.6.36 driver support for this chip: NOT CONFIRMED')
 print('js devices:', ','.join(glob.glob('/dev/input/js*')) or 'NONE')
+print('INPUT DRIVER STATE:')
+try:
+    for line in open('/proc/modules'):
+        if line.startswith(('joydev ', 'evdev ', 'xpad ')):
+            print('  ', line.strip())
+except IOError:
+    pass
+try:
+    for line in open('/proc/bus/input/devices'):
+        if line.startswith(('N:', 'H:', 'I:', 'B:')):
+            print(' ', line.strip())
+except IOError:
+    print('  /proc/bus/input/devices unavailable')
+print('KERNEL CONFIG:')
+for config in ('/boot/config-2.6.36.2-xenon', '/boot/config'):
+    if os.path.isfile(config):
+        for line in open(config):
+            if line.startswith(('CONFIG_JOYSTICK_XPAD=', 'CONFIG_XENON_ENET=',
+                                '# CONFIG_WLAN', '# CONFIG_WIRELESS',
+                                'CONFIG_INPUT_JOYDEV=', 'CONFIG_INPUT_EVDEV=')):
+                print(' ', line.strip())
+        break
 print('wireless interfaces:', ','.join(glob.glob('/sys/class/net/wlan*')) or 'NONE')
 print('Routing table (interfaces only):')
 try:

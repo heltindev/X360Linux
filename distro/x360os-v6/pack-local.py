@@ -18,7 +18,7 @@ def main():
     if args.output.exists():
         raise SystemExit('Refusing to overwrite: %s' % args.output)
     args.output.parent.mkdir(parents=True, exist_ok=True)
-    readme = """X360OS v6.0.1 DEVELOPMENT TEST - XBOX 360 RGH/JTAG
+    readme = """X360OS v6.0.2 DEVELOPMENT TEST - XBOX 360 RGH/JTAG
 THIS VERSION HAS NOT YET BEEN BOOT-TESTED ON REAL XBOX HARDWARE.
 1. Keep a backup of your known-working X360Linux v5 USB.
 2. Prepare a different 8 GB+ FAT32 USB drive (formatting erases data).
@@ -26,10 +26,10 @@ THIS VERSION HAS NOT YET BEEN BOOT-TESTED ON REAL XBOX HARDWARE.
 4. Plug the drive into an RGH/JTAG Xbox 360 with XeLL.
 5. Start via Eject. A successful boot should show the green X360OS home.
 6. Use D-pad to navigate, A to open, X to toggle controller mouse mode.
-7. Press F10 on a USB keyboard to switch to classic Ubuntu if the shell opens.
+7. Press F10 on a USB keyboard to open Ubuntu desktop; click X360OS desktop icon to return.\n8. On a detected controller, press Back or Guide to return to X360OS.
 
 BROWSER NOTE: Firefox 3.6 in the old Ubuntu is obsolete; do not use passwords.
-CONTROLLER NOTE: js/evdev support is included, but internal wireless gamepad input is not guaranteed.
+CONTROLLER NOTE: xpad is built-in, joydev/evdev now autoload as root. The console RF controller still requires physical verification.
 NETWORK NOTE: internal Xbox 360 Slim Marvell Wi-Fi driver is NOT available; try wired Ethernet for Internet tests.
 BOOT NOTE: XeLL DHCP and stdin/stderr error messages may appear before Linux; not fixed by Ubuntu.
 Do not use this as a verified production release. No NAND/HDD changes.

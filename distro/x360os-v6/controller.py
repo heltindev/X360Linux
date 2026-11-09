@@ -12,6 +12,7 @@ import time
 import struct
 import select
 import ctypes
+import subprocess
 
 X11 = ctypes.CDLL('libX11.so.6')
 XTST = ctypes.CDLL('libXtst.so.6')
@@ -94,6 +95,9 @@ class Mapper(object):
                 self.click(3, down)
             elif down and not was:
                 self.key('escape')
+        elif number in (6, 8) and down and not was:  # Back/Guide: return home
+            if os.path.isfile('/usr/bin/x360os-toggle'):
+                subprocess.Popen(['/usr/bin/x360os-toggle'], close_fds=True)
         elif number == 3 and down and not was:  # Y: on-screen URL keyboard
             self.key('f9')
         elif number == 4 and down and not was:
@@ -106,6 +110,8 @@ class Mapper(object):
 
     def event(self, kind, number, value):
         if kind == 1:
+            if value:
+                print('JOYSTICK_BUTTON', number, 'DOWN')
             self.button(number, value != 0)
         elif kind == 2:
             self.axes[number] = value
