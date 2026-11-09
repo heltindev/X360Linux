@@ -46,6 +46,10 @@ The words **XeLL Main Menu** may flash briefly because XeLL renders them before 
 
 The persistent overlay is prepared and host-verified. Retention after a second physical Xbox reboot still needs confirmation.
 
+## X360OS v6 — work in progress
+
+The new [X360OS v6 prototype](distro/x360os-v6/README.md) is a controller-first, SteamOS-style lightweight GTK2 desktop built on the existing Xenon/Ubuntu PowerPC system. The prototype includes a home screen, experimental gamepad mouse mapping, an on-screen browser URL keyboard, NetworkManager and existing Ubuntu applications. **It has not yet been boot-tested on Xbox hardware.** The v5 download below remains the verified baseline.
+
 ## Release
 
 Download [**X360Linux v5.0.0 — Persistent USB Direct Boot**](https://github.com/heltindev/X360Linux/releases/tag/v5.0.0).

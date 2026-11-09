@@ -176,6 +176,10 @@ not a package we can assume exists.
 - [ ] Provide upgrade and rollback instructions.
 - [ ] Never ship NAND-flashing files in the active USB tree.
 
+## v6.0 development implementation (November 2026)
+
+The implementation source lives in `distro/x360os-v6/`. A local Windows/WSL build produces an isolated experimental v6 SquashFS and ZIP while preserving the v5 Xenon kernel and its proven USB boot chain. Included: GTK2 full-screen home, launcher for existing Ubuntu apps, browser URL on-screen keyboard, NetworkManager setup, X11/XTest joydev controller mapper, small X session, and F10 classic-desktop recovery. Host-only checks have passed. These steps are **PC preparation, not Xbox hardware validation**. Gamepad compatibility, Ethernet connectivity, true idle RAM, Firefox website loading and persistence across physical power cycles still require console tests. The old Firefox is unsuitable for sensitive websites.
+
 ## First milestone
 
 **X360OS Milestone 1: Controller Browser Prototype**

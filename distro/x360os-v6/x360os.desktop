@@ -1,0 +1,8 @@
+[Desktop Entry]
+Encoding=UTF-8
+Type=Application
+Name=X360OS v6
+Comment=Lightweight Xbox 360 home screen
+Exec=/usr/bin/x360os-session
+TryExec=/usr/bin/x360os-session
+Icon=computer

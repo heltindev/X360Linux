@@ -1,0 +1,20 @@
+#!/bin/sh
+# X360OS v6 X session: leave the verified kernel, XeLL and Casper unchanged.
+# The classic GNOME desktop remains a recovery fallback when the shell exits.
+export PATH=/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin
+if [ -x /usr/bin/metacity ]; then
+  /usr/bin/metacity --sm-disable >/tmp/x360os-window.log 2>&1 &
+fi
+if [ -x /usr/bin/nm-applet ]; then
+  /usr/bin/nm-applet >/tmp/x360os-network.log 2>&1 &
+fi
+[ -x /usr/bin/python2.6 ] || exec /usr/bin/gnome-session
+# Load the input bridges if the old Xenon kernel ships them as modules.
+[ -x /sbin/modprobe ] && /sbin/modprobe joydev >/dev/null 2>&1 || :
+[ -x /sbin/modprobe ] && /sbin/modprobe evdev >/dev/null 2>&1 || :
+/usr/bin/python2.6 /usr/share/x360os/controller.py >/tmp/x360os-controller.log 2>&1 &
+PAD_PID=$!
+/usr/bin/python2.6 /usr/share/x360os/home.py >/tmp/x360os-home.log 2>&1
+# Exit/F10 recovers the known Ubuntu desktop, without touching NAND/HDD.
+kill "$PAD_PID" 2>/dev/null || :
+exec /usr/bin/gnome-session
