@@ -7,7 +7,7 @@ import stat
 import subprocess
 import sys
 
-base = Path(sys.argv[1]).resolve() if len(sys.argv)>1 else Path.cwd().resolve()
+base = Path(sys.argv[1]).resolve() if len(sys.argv) > 1 else Path(__file__).resolve().parents[2]
 source = Path(__file__).resolve().parent
 target = base / "BOOT-DIRETO/distros/ubuntu-x360/initrd.gz"
 squash = base / "BOOT-DIRETO/casper/filesystem.squashfs"
@@ -78,14 +78,19 @@ for n, (name, mode, content, major, minor) in enumerate(members, 1):
     write_entry(blob, n, name, mode, content, major, minor)
 write_entry(blob, len(members) + 1, "TRAILER!!!", 0)
 assert blob[:6] == b"070701" and blob.rfind(b"TRAILER!!!") > len(blob) - 140
-with target.open("wb") as raw:
+staged = target.with_suffix(".gz.building")
+assert not staged.exists(), "Refusing to overwrite partial previous build"
+with staged.open("wb") as raw:
     with gzip.GzipFile(filename="", mode="wb", fileobj=raw, compresslevel=9, mtime=0) as z:
         z.write(blob)
-with gzip.open(target, "rb") as z:
+with gzip.open(staged, "rb") as z:
     assert z.read() == blob
-print("INITRAMFS_CREATED", target, target.stat().st_size)
+# Replace only after archive integrity and shell syntax checks have passed.
+print("INITRAMFS_STAGED", staged, staged.stat().st_size)
 print("INITRAMFS_PPC32_BUSYBOX", len(bb), "for older Linux ABI")
 print("INIT_SCRIPT_STATIC_SYNTAX")
 chk = subprocess.run(["dash", "-n", str(source / "init")], capture_output=True, text=True)
 assert chk.returncode == 0, chk.stderr
 print("INIT_SCRIPT_DASH_SYNTAX_OK")
+staged.replace(target)
+print("INITRAMFS_ATOMIC_INSTALL_OK", target, target.stat().st_size)
